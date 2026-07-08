@@ -1,0 +1,322 @@
+<section class="notifications-page">
+
+  <div class="notifications-container">
+
+    <!-- CABECERA -->
+    <header class="notifications-header">
+
+      <div>
+
+        <span class="notifications-badge">
+          Tus novedades
+        </span>
+
+        <h1>
+          Mis
+          <span>notificaciones</span>
+        </h1>
+
+        <p>
+          Mantente al día con tus conexiones,
+          matches y actividad dentro de RoomMatch.
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="mark-all-button"
+        [disabled]="
+          procesandoTodas ||
+          contarNoLeidas() === 0
+        "
+        (click)="marcarTodasComoLeidas()"
+      >
+
+        {{ procesandoTodas
+          ? 'Actualizando...'
+          : 'Marcar todo como leído'
+        }}
+
+      </button>
+
+    </header>
+
+
+    <!-- ERROR -->
+    <div
+      *ngIf="mensajeError"
+      class="notification-message error"
+    >
+
+      {{ mensajeError }}
+
+    </div>
+
+
+    <!-- ÉXITO -->
+    <div
+      *ngIf="mensajeExito"
+      class="notification-message success"
+    >
+
+      {{ mensajeExito }}
+
+    </div>
+
+
+    <!-- RESUMEN -->
+    <section class="notifications-summary">
+
+      <div class="unread-summary">
+
+        <strong>
+          {{ contarNoLeidas() }}
+        </strong>
+
+        <span>
+          {{
+            contarNoLeidas() === 1
+              ? 'notificación sin leer'
+              : 'notificaciones sin leer'
+          }}
+        </span>
+
+      </div>
+
+
+      <div class="notification-filters">
+
+        <button
+          type="button"
+          [class.active]="filtro === 'todas'"
+          (click)="cambiarFiltro('todas')"
+        >
+          Todas
+        </button>
+
+
+        <button
+          type="button"
+          [class.active]="filtro === 'no-leidas'"
+          (click)="cambiarFiltro('no-leidas')"
+        >
+          No leídas
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- CARGANDO -->
+    <section
+      *ngIf="cargando"
+      class="notifications-state"
+    >
+
+      <div class="state-icon">
+        ◌
+      </div>
+
+      <h2>
+        Cargando notificaciones...
+      </h2>
+
+      <p>
+        Estamos consultando tus novedades.
+      </p>
+
+    </section>
+
+
+    <!-- LISTA -->
+    <section
+      *ngIf="
+        !cargando &&
+        obtenerNotificacionesVisibles().length > 0
+      "
+      class="notifications-list"
+    >
+
+      <article
+        *ngFor="
+          let notificacion
+          of obtenerNotificacionesVisibles()
+        "
+        class="notification-card"
+        [class.unread]="!notificacion.leido"
+        (click)="abrirNotificacion(notificacion)"
+      >
+
+        <span
+          *ngIf="!notificacion.leido"
+          class="unread-dot"
+        >
+        </span>
+
+
+        <div class="notification-icon">
+
+          {{
+            obtenerIcono(
+              notificacion.tipo
+            )
+          }}
+
+        </div>
+
+
+        <div class="notification-content">
+
+          <div class="notification-top">
+
+            <span class="notification-type">
+
+              {{
+                obtenerNombreTipo(
+                  notificacion.tipo
+                )
+              }}
+
+            </span>
+
+
+            <span class="notification-date">
+
+              {{
+                formatearFecha(
+                  notificacion.fechaCreacion
+                )
+              }}
+
+            </span>
+
+          </div>
+
+
+          <h2>
+            {{ notificacion.titulo }}
+          </h2>
+
+
+          <p>
+            {{ notificacion.mensaje }}
+          </p>
+
+        </div>
+
+
+        <div class="notification-actions">
+
+          <button
+            *ngIf="!notificacion.leido"
+            type="button"
+            class="read-button"
+            (click)="
+              marcarComoLeida(
+                notificacion,
+                $event
+              )
+            "
+          >
+            Marcar leída
+          </button>
+
+
+          <span
+            *ngIf="notificacion.urlDestino"
+            class="open-notification"
+          >
+            Ver →
+          </span>
+
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <!-- VACÍO -->
+    <section
+      *ngIf="
+        !cargando &&
+        obtenerNotificacionesVisibles().length === 0
+      "
+      class="notifications-state"
+    >
+
+      <div class="state-icon">
+        ✓
+      </div>
+
+
+      <h2>
+
+        {{
+          filtro === 'no-leidas'
+            ? 'Estás al día'
+            : 'Todavía no tienes notificaciones'
+        }}
+
+      </h2>
+
+
+      <p>
+
+        {{
+          filtro === 'no-leidas'
+            ? 'No tienes notificaciones pendientes por leer.'
+            : 'Cuando exista actividad nueva en RoomMatch, aparecerá aquí.'
+        }}
+
+      </p>
+
+    </section>
+
+
+    <!-- PAGINACIÓN -->
+    <nav
+      *ngIf="
+        !cargando &&
+        totalPaginas > 1
+      "
+      class="notifications-pagination"
+    >
+
+      <button
+        type="button"
+        [disabled]="paginaActual === 0"
+        (click)="paginaAnterior()"
+      >
+        ← Anterior
+      </button>
+
+
+      <span>
+
+        Página
+        {{ paginaActual + 1 }}
+        de
+        {{ totalPaginas }}
+
+      </span>
+
+
+      <button
+        type="button"
+        [disabled]="
+          paginaActual >= totalPaginas - 1
+        "
+        (click)="paginaSiguiente()"
+      >
+        Siguiente →
+      </button>
+
+    </nav>
+
+  </div>
+
+</section>

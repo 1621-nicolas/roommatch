@@ -1,0 +1,849 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.roomie-page {
+  min-height: calc(100vh - 100px);
+  padding: 64px 24px 80px;
+  background:
+    radial-gradient(
+      circle at 12% 15%,
+      rgba(114, 86, 255, 0.06),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 88% 30%,
+      rgba(64, 142, 255, 0.05),
+      transparent 20%
+    ),
+    #f7f9fc;
+}
+
+.roomie-container {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.roomie-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.roomie-header > div {
+  max-width: 720px;
+}
+
+.roomie-pill {
+  display: inline-flex;
+  padding: 8px 15px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: #eeeaff;
+  color: #4e3ce0;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.roomie-header h1 {
+  margin: 0;
+  color: #11182c;
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.roomie-header h1 span {
+  color: #5546ee;
+}
+
+.roomie-header p {
+  max-width: 650px;
+  margin: 18px 0 0;
+  color: #65738a;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.roomie-create-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 23px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    #5143ef,
+    #7529e8
+  );
+  box-shadow:
+    0 14px 30px
+    rgba(91, 62, 233, 0.22);
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.roomie-create-button span {
+  font-size: 1.35rem;
+}
+
+
+/* =========================================================
+   TIPOS
+========================================================= */
+
+.roomie-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #dfe4ed;
+  border-radius: 16px;
+  background: white;
+}
+
+.roomie-type-tabs button {
+  min-height: 43px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #536077;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roomie-type-tabs button:hover {
+  color: #5546ee;
+  background: #f5f2ff;
+}
+
+.roomie-type-tabs button.active {
+  color: #5546ee;
+  background: #eeeaff;
+}
+
+
+/* =========================================================
+   FILTROS
+========================================================= */
+
+.roomie-filters {
+  display: grid;
+  grid-template-columns:
+    1.35fr
+    repeat(3, minmax(0, 1fr))
+    auto
+    auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  margin-bottom: 18px;
+  border: 1px solid #dfe4ed;
+  border-radius: 16px;
+  background: white;
+  box-shadow:
+    0 10px 25px
+    rgba(30, 40, 70, 0.035);
+}
+
+.roomie-filter-field {
+  display: grid;
+  gap: 7px;
+}
+
+.roomie-filter-field label {
+  color: #172036;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.roomie-filter-field input,
+.roomie-filter-field select,
+.roomie-order select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid #d5dce8;
+  border-radius: 10px;
+  outline: none;
+  background: white;
+  color: #172036;
+}
+
+.roomie-filter-field input:focus,
+.roomie-filter-field select:focus,
+.roomie-order select:focus {
+  border-color: #7468f4;
+  box-shadow:
+    0 0 0 3px
+    rgba(85, 70, 238, 0.1);
+}
+
+.roomie-search-button,
+.roomie-clear-button {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.roomie-search-button {
+  border: 0;
+  background: #5546ee;
+  color: white;
+}
+
+.roomie-clear-button {
+  border: 1px solid #d5dce8;
+  background: white;
+  color: #5546ee;
+}
+
+
+/* =========================================================
+   MENSAJE ERROR
+========================================================= */
+
+.roomie-error {
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border: 1px solid #ffb9b9;
+  border-radius: 11px;
+  background: #ffe4e4;
+  color: #a31e1e;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   RESULTADOS
+========================================================= */
+
+.roomie-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 62px;
+  padding: 12px 18px;
+  margin-bottom: 22px;
+  border: 1px solid #dfe4ed;
+  border-radius: 14px;
+  background: white;
+  color: #68758c;
+}
+
+.roomie-results-bar strong {
+  margin-right: 5px;
+  color: #5546ee;
+  font-size: 1.35rem;
+}
+
+.roomie-order {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roomie-order label {
+  color: #172036;
+  font-weight: 700;
+}
+
+.roomie-order select {
+  min-width: 210px;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.roomie-loading {
+  display: grid;
+  justify-items: center;
+  padding: 90px 30px;
+  border: 1px solid #dfe4ed;
+  border-radius: 18px;
+  background: white;
+  text-align: center;
+}
+
+.roomie-loading-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 15px;
+  border-radius: 50%;
+  background: #eeeaff;
+  color: #5546ee;
+  font-size: 1.8rem;
+}
+
+.roomie-loading h2 {
+  margin: 0 0 8px;
+}
+
+.roomie-loading p {
+  margin: 0;
+  color: #6c7890;
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.roomie-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.roomie-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #dfe4ed;
+  border-radius: 18px;
+  background: white;
+  box-shadow:
+    0 12px 32px
+    rgba(30, 40, 70, 0.045);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.roomie-card:hover {
+  transform: translateY(-3px);
+  border-color: #c8c1ff;
+  box-shadow:
+    0 18px 40px
+    rgba(69, 57, 170, 0.09);
+}
+
+
+/* =========================================================
+   USUARIO
+========================================================= */
+
+.roomie-card-user {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 20px 20px 15px;
+}
+
+.roomie-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 53px;
+  height: 53px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    #eeeaff,
+    #e3ddff
+  );
+  color: #5546ee;
+  font-weight: 800;
+}
+
+.roomie-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roomie-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.roomie-user-info h2 {
+  margin: 0 0 4px;
+  color: #12192c;
+  font-size: 1rem;
+}
+
+.roomie-user-info h2 span {
+  font-weight: 500;
+}
+
+.roomie-user-info p {
+  margin: 0;
+  color: #738097;
+  font-size: 0.8rem;
+}
+
+.roomie-own-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eeeaff;
+  color: #5546ee;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.roomie-match-badge {
+  display: grid;
+  justify-items: center;
+  min-width: 79px;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.roomie-match-badge strong {
+  font-size: 1rem;
+}
+
+.roomie-match-badge span {
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.roomie-match-badge.excellent {
+  color: #067632;
+  background: #ddf9e7;
+}
+
+.roomie-match-badge.good {
+  color: #137155;
+  background: #e1f8ef;
+}
+
+.roomie-match-badge.moderate {
+  color: #a35d00;
+  background: #fff1c8;
+}
+
+.roomie-match-badge.low {
+  color: #ad3030;
+  background: #ffe1e1;
+}
+
+.roomie-match-badge.unknown {
+  color: #67748b;
+  background: #eef1f5;
+}
+
+
+/* =========================================================
+   TIPO
+========================================================= */
+
+.roomie-publication-type {
+  align-self: flex-start;
+  margin: 0 20px 16px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 0.69rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.roomie-publication-type.type-roomie {
+  color: #5546ee;
+  background: #eeeaff;
+}
+
+.roomie-publication-type.type-room {
+  color: #1f68c7;
+  background: #e4f0ff;
+}
+
+.roomie-publication-type.type-share {
+  color: #087b34;
+  background: #def9e7;
+}
+
+
+/* =========================================================
+   CONTENIDO
+========================================================= */
+
+.roomie-card-content {
+  padding: 0 20px;
+}
+
+.roomie-card-content h3 {
+  margin: 0 0 10px;
+  color: #11182b;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.roomie-description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 73px;
+  margin: 0 0 17px;
+  color: #59677f;
+  line-height: 1.55;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.roomie-publication-data {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roomie-publication-data > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 61px;
+  padding: 10px;
+  border-radius: 11px;
+  background: #f7f8fb;
+}
+
+.roomie-publication-data > div > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 33px;
+  height: 33px;
+  border-radius: 9px;
+  background: #eeeaff;
+  color: #5546ee;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.roomie-publication-data section {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.roomie-publication-data small {
+  color: #77839a;
+  font-size: 0.64rem;
+}
+
+.roomie-publication-data strong {
+  overflow: hidden;
+  color: #172036;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   COMPATIBILIDAD
+========================================================= */
+
+.roomie-compatibility {
+  margin: 18px 20px 0;
+  padding: 15px;
+  border: 1px solid #e4e0ff;
+  border-radius: 13px;
+  background: #faf9ff;
+}
+
+.roomie-compatibility-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: #536077;
+  font-size: 0.78rem;
+}
+
+.roomie-compatibility-title strong {
+  color: #5546ee;
+}
+
+.roomie-progress {
+  overflow: hidden;
+  height: 7px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: #e8e8f1;
+}
+
+.roomie-progress div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #5546ee,
+    #8236eb
+  );
+}
+
+.roomie-coincidences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.roomie-coincidences span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #e5f9eb;
+  color: #14733a;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.roomie-no-compatibility {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.roomie-no-compatibility > div {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eeeaff;
+  color: #5546ee;
+}
+
+.roomie-no-compatibility strong {
+  color: #172036;
+  font-size: 0.83rem;
+}
+
+.roomie-no-compatibility p {
+  margin: 4px 0 0;
+  color: #6c7890;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   FECHA
+========================================================= */
+
+.roomie-publication-date {
+  padding: 15px 20px 0;
+  color: #8791a4;
+  font-size: 0.67rem;
+}
+
+
+/* =========================================================
+   ACCIONES
+========================================================= */
+
+.roomie-card-actions {
+  margin-top: auto;
+  padding: 17px 20px 20px;
+}
+
+.roomie-detail-button,
+.roomie-manage-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 45px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.roomie-detail-button {
+  border: 1px solid #8275ff;
+  color: #5546ee;
+}
+
+.roomie-detail-button:hover {
+  color: white;
+  background: #5546ee;
+}
+
+.roomie-manage-button {
+  background: #eeeaff;
+  color: #5546ee;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.roomie-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  padding: 80px 30px;
+  border: 1px solid #dfe4ed;
+  border-radius: 18px;
+  background: white;
+  text-align: center;
+}
+
+.roomie-empty > div {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  margin-bottom: 15px;
+  border-radius: 50%;
+  background: #eeeaff;
+  font-size: 1.7rem;
+}
+
+.roomie-empty h2 {
+  margin: 0 0 8px;
+}
+
+.roomie-empty p {
+  max-width: 440px;
+  margin: 0 0 20px;
+  color: #6b7890;
+  line-height: 1.6;
+}
+
+.roomie-empty button {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: #5546ee;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   PAGINACIÓN
+========================================================= */
+
+.roomie-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.roomie-pagination button {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid #d5dce8;
+  border-radius: 10px;
+  background: white;
+  color: #5546ee;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.roomie-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.roomie-pagination span {
+  color: #6c7890;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1050px) {
+
+  .roomie-filters {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 800px) {
+
+  .roomie-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .roomie-create-button {
+    align-self: flex-start;
+  }
+
+  .roomie-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 620px) {
+
+  .roomie-page {
+    padding:
+      35px
+      14px
+      60px;
+  }
+
+  .roomie-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .roomie-results-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .roomie-order {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .roomie-order select {
+    min-width: 0;
+  }
+
+  .roomie-publication-data {
+    grid-template-columns: 1fr;
+  }
+
+  .roomie-card-user {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+}

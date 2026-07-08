@@ -1,0 +1,439 @@
+<section class="favorites-page">
+
+  <div class="favorites-container">
+
+    <header class="favorites-header">
+
+      <div>
+
+        <p class="favorites-pill">
+          Personas guardadas
+        </p>
+
+        <h1>
+          Mis
+          <span>favoritos</span>
+        </h1>
+
+        <p>
+          Guarda los perfiles que más te interesan
+          y contáctalos cuando estés listo.
+        </p>
+
+      </div>
+
+
+      <a
+        routerLink="/matches"
+        class="favorites-explore-button"
+      >
+        Explorar matches
+      </a>
+
+    </header>
+
+
+    @if (mensajeError) {
+
+      <div class="auth-error">
+        {{ mensajeError }}
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="profile-success">
+        {{ mensajeExito }}
+      </div>
+
+    }
+
+
+    <section class="favorites-summary">
+
+      <div>
+
+        <strong>
+          {{ favoritos.length }}
+        </strong>
+
+        <span>
+          perfiles guardados
+        </span>
+
+      </div>
+
+
+      <p>
+        Tus favoritos son privados
+        y solo tú puedes verlos.
+      </p>
+
+    </section>
+
+
+    @if (cargando) {
+
+      <section class="favorites-loading">
+
+        <h2>
+          Cargando tus favoritos...
+        </h2>
+
+        <p>
+          Estamos consultando los perfiles
+          que guardaste.
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <section class="favorites-grid">
+
+        @for (
+          favorito of favoritos;
+          track favorito.idFavorito
+        ) {
+
+          <article class="favorite-profile-card">
+
+
+            <header class="favorite-card-header">
+
+              @if (favorito.foto) {
+
+                <img
+                  [src]="favorito.foto"
+                  [alt]="obtenerNombreCompleto(favorito)"
+                  class="favorite-photo"
+                >
+
+              } @else {
+
+                <div class="favorite-avatar">
+                  {{ obtenerIniciales(favorito) }}
+                </div>
+
+              }
+
+
+              <div class="favorite-person-info">
+
+                <h2>
+                  {{ obtenerNombreCompleto(favorito) }}
+                </h2>
+
+
+                <p>
+
+                  @if (favorito.edad) {
+
+                    {{ favorito.edad }} años
+
+                  }
+
+                  @if (
+                    favorito.edad &&
+                    favorito.ocupacion
+                  ) {
+
+                    ·
+
+                  }
+
+                  @if (favorito.ocupacion) {
+
+                    {{ favorito.ocupacion }}
+
+                  }
+
+                </p>
+
+
+                @if (favorito.universidad) {
+
+                  <small>
+                    {{ favorito.universidad }}
+                  </small>
+
+                }
+
+              </div>
+
+
+              <button
+                type="button"
+                class="favorite-remove-icon"
+                title="Quitar de favoritos"
+                (click)="abrirEliminar(favorito)"
+              >
+                ♥
+              </button>
+
+            </header>
+
+
+            <section class="favorite-info">
+
+              <div>
+
+                <span>
+                  Correo registrado
+                </span>
+
+                <strong>
+                  {{ favorito.email }}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Guardado el
+                </span>
+
+                <strong>
+                  {{ formatearFecha(favorito.fechaFavorito) }}
+                </strong>
+
+              </div>
+
+            </section>
+
+
+            <section class="favorite-privacy-note">
+
+              <span>
+                🔒
+              </span>
+
+              <p>
+                Los datos de contacto privados
+                se desbloquearán cuando la solicitud
+                sea aceptada.
+              </p>
+
+            </section>
+
+
+            <footer class="favorite-actions">
+
+              <button
+                type="button"
+                class="favorite-contact-button"
+                (click)="abrirSolicitud(favorito)"
+              >
+                Enviar solicitud
+              </button>
+
+
+              <button
+                type="button"
+                class="favorite-remove-button"
+                (click)="abrirEliminar(favorito)"
+              >
+                Quitar favorito
+              </button>
+
+            </footer>
+
+          </article>
+
+        } @empty {
+
+          <section class="favorites-empty">
+
+            <div>
+              ♡
+            </div>
+
+            <h2>
+              Todavía no tienes favoritos
+            </h2>
+
+            <p>
+              Explora tus matches y guarda
+              a las personas que más te interesen.
+            </p>
+
+            <a routerLink="/matches">
+              Explorar matches
+            </a>
+
+          </section>
+
+        }
+
+      </section>
+
+    }
+
+  </div>
+
+
+  @if (usuarioSolicitud) {
+
+    <div
+      class="match-modal-overlay"
+      (click)="cerrarSolicitud()"
+    >
+
+      <section
+        class="match-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <button
+          type="button"
+          class="match-modal-close"
+          (click)="cerrarSolicitud()"
+        >
+          ×
+        </button>
+
+
+        <div class="match-modal-avatar">
+          {{ obtenerIniciales(usuarioSolicitud) }}
+        </div>
+
+
+        <h2>
+          Contactar a
+          {{ usuarioSolicitud.nombres }}
+        </h2>
+
+
+        <p>
+          Envía una solicitud de contacto.
+          Si la acepta, podrán compartir
+          los datos permitidos por privacidad.
+        </p>
+
+
+        <form
+          (ngSubmit)="enviarSolicitud()"
+        >
+
+          <label for="mensajeFavorito">
+            Mensaje
+          </label>
+
+
+          <textarea
+            id="mensajeFavorito"
+            name="mensajeFavorito"
+            rows="5"
+            maxlength="500"
+            [(ngModel)]="mensajeSolicitud"
+          >
+          </textarea>
+
+
+          <small>
+            {{ mensajeSolicitud.length }}
+            / 500 caracteres
+          </small>
+
+
+          <button
+            type="submit"
+            [disabled]="enviandoSolicitud"
+          >
+
+            @if (enviandoSolicitud) {
+
+              Enviando...
+
+            } @else {
+
+              Enviar solicitud
+
+            }
+
+          </button>
+
+        </form>
+
+      </section>
+
+    </div>
+
+  }
+
+
+  @if (favoritoEliminar) {
+
+    <div
+      class="favorite-modal-overlay"
+      (click)="cerrarEliminar()"
+    >
+
+      <section
+        class="favorite-delete-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="favorite-delete-icon">
+          ♥
+        </div>
+
+
+        <h2>
+          ¿Quitar de favoritos?
+        </h2>
+
+
+        <p>
+          Vas a quitar a
+          <strong>
+            {{ obtenerNombreCompleto(favoritoEliminar) }}
+          </strong>
+          de tus perfiles guardados.
+        </p>
+
+
+        <div class="favorite-delete-actions">
+
+          <button
+            type="button"
+            class="favorite-cancel-button"
+            (click)="cerrarEliminar()"
+          >
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="favorite-confirm-delete"
+            [disabled]="eliminando"
+            (click)="confirmarEliminar()"
+          >
+
+            @if (eliminando) {
+
+              Eliminando...
+
+            } @else {
+
+              Quitar favorito
+
+            }
+
+          </button>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  }
+
+</section>

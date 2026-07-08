@@ -1,0 +1,1691 @@
+<div class="publicaciones-page">
+
+  <main class="publicaciones-container">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <section class="publicaciones-header">
+
+      <div>
+
+        <span class="header-tag">
+          Tus búsquedas
+        </span>
+
+
+        <h1>
+
+          Mis
+
+          <span>
+            publicaciones
+          </span>
+
+        </h1>
+
+
+        <p>
+
+          Crea y administra tus publicaciones para encontrar
+          roomie, habitación o una persona con quien compartir.
+
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="nuevaPublicacion()"
+      >
+
+        <span class="button-plus">
+          +
+        </span>
+
+        Nueva publicación
+
+      </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         MENSAJES
+    ====================================================== -->
+
+    @if (mensajeError) {
+
+      <div class="message message-error">
+
+        {{ mensajeError }}
+
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="message message-success">
+
+        {{ mensajeExito }}
+
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         RESUMEN
+    ====================================================== -->
+
+    <section class="summary-grid">
+
+      <article class="summary-card">
+
+        <div class="summary-icon summary-icon-purple">
+
+          ◇
+
+        </div>
+
+
+        <div>
+
+          <span class="summary-label">
+            Total
+          </span>
+
+          <strong>
+
+            {{ publicaciones.length }}
+
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card">
+
+        <div class="summary-icon summary-icon-green">
+
+          ✓
+
+        </div>
+
+
+        <div>
+
+          <span class="summary-label">
+            Activas
+          </span>
+
+          <strong>
+
+            {{ contarActivas() }}
+
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card">
+
+        <div class="summary-icon summary-icon-yellow">
+
+          II
+
+        </div>
+
+
+        <div>
+
+          <span class="summary-label">
+            Pausadas
+          </span>
+
+          <strong>
+
+            {{ contarPausadas() }}
+
+          </strong>
+
+        </div>
+
+      </article>
+
+
+      <article class="summary-card">
+
+        <div class="summary-icon summary-icon-gray">
+
+          ✓
+
+        </div>
+
+
+        <div>
+
+          <span class="summary-label">
+            Cerradas
+          </span>
+
+          <strong>
+
+            {{ contarCerradas() }}
+
+          </strong>
+
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <!-- =====================================================
+         FORMULARIO
+    ====================================================== -->
+
+    @if (formularioVisible) {
+
+      <section
+        id="formulario-publicacion"
+        class="publication-form-card"
+      >
+
+        <div class="form-header">
+
+          <div>
+
+            <span class="form-tag">
+
+              {{
+                editando
+                  ? 'Editar búsqueda'
+                  : 'Nueva búsqueda'
+              }}
+
+            </span>
+
+
+            <h2>
+
+              {{
+                editando
+                  ? 'Actualiza tu publicación'
+                  : '¿Qué estás buscando?'
+              }}
+
+            </h2>
+
+
+            <p>
+
+              Cuéntale a la comunidad de RoomMatch
+              qué necesitas encontrar.
+
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="close-form"
+            (click)="cancelarFormulario()"
+          >
+
+            ×
+
+          </button>
+
+        </div>
+
+
+        <form
+          (ngSubmit)="guardarPublicacion()"
+        >
+
+
+          <!-- TIPO -->
+
+          <div class="form-section">
+
+            <label class="main-label">
+
+              Tipo de búsqueda
+
+            </label>
+
+
+            <div class="type-grid">
+
+
+              <label
+                class="type-option"
+                [class.type-selected]="
+                  formulario.tipoPublicacion
+                  === 'busco_roomie'
+                "
+              >
+
+                <input
+                  type="radio"
+                  name="tipoPublicacion"
+                  value="busco_roomie"
+                  [(ngModel)]="
+                    formulario.tipoPublicacion
+                  "
+                  (change)="cambiarTipoPublicacion()"
+                >
+
+
+                <span class="type-icon">
+                  ♟
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    Busco roomie
+                  </strong>
+
+                  <small>
+                    Quiero encontrar compañero
+                  </small>
+
+                </span>
+
+              </label>
+
+
+              <label
+                class="type-option"
+                [class.type-selected]="
+                  formulario.tipoPublicacion
+                  === 'busco_cuarto'
+                "
+              >
+
+                <input
+                  type="radio"
+                  name="tipoPublicacion"
+                  value="busco_cuarto"
+                  [(ngModel)]="
+                    formulario.tipoPublicacion
+                  "
+                  (change)="cambiarTipoPublicacion()"
+                >
+
+
+                <span class="type-icon">
+                  ⌂
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    Busco habitación
+                  </strong>
+
+                  <small>
+                    Necesito un lugar para vivir
+                  </small>
+
+                </span>
+
+              </label>
+
+
+              <label
+                class="type-option"
+                [class.type-selected]="
+                  formulario.tipoPublicacion
+                  === 'busco_compartir'
+                "
+              >
+
+                <input
+                  type="radio"
+                  name="tipoPublicacion"
+                  value="busco_compartir"
+                  [(ngModel)]="
+                    formulario.tipoPublicacion
+                  "
+                  (change)="cambiarTipoPublicacion()"
+                >
+
+
+                <span class="type-icon">
+                  ⚿
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    Busco compartir
+                  </strong>
+
+                  <small>
+                    Tengo una opción de vivienda
+                  </small>
+
+                </span>
+
+              </label>
+
+            </div>
+
+          </div>
+          <!-- =====================================================
+     VINCULACIÓN DE VIVIENDA
+====================================================== -->
+
+@if (
+  formulario.tipoPublicacion
+  === 'busco_compartir'
+) {
+
+  <div class="form-section housing-section">
+
+    <div class="housing-heading">
+
+      <span class="housing-icon">
+        🏠
+      </span>
+
+      <div>
+
+        <h3>
+          ¿Ya tienes una vivienda para compartir?
+        </h3>
+
+        <p>
+          Esta información es opcional. Puedes vincular una
+          habitación de RoomMatch o agregar una referencia externa.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="housing-options">
+
+
+      <!-- SIN VIVIENDA -->
+
+      <label
+        class="housing-option"
+        [class.housing-selected]="
+          formulario.tipoVinculacionVivienda
+          === null
+        "
+      >
+
+        <input
+          type="radio"
+          name="tipoVinculacionVivienda"
+          [checked]="
+            formulario.tipoVinculacionVivienda
+            === null
+          "
+          (change)="
+            seleccionarVinculacion(null)
+          "
+        >
+
+
+        <span class="housing-option-icon">
+          ◌
+        </span>
+
+
+        <span class="housing-option-content">
+
+          <strong>
+            Todavía no
+          </strong>
+
+          <small>
+            Solo estoy buscando una opción de vivienda
+            y una persona compatible.
+          </small>
+
+        </span>
+
+      </label>
+
+
+      <!-- ROOMMATCH -->
+
+      <label
+        class="housing-option"
+        [class.housing-selected]="
+          formulario.tipoVinculacionVivienda
+          === 'roommatch'
+        "
+      >
+
+        <input
+          type="radio"
+          name="tipoVinculacionVivienda"
+          value="roommatch"
+          [checked]="
+            formulario.tipoVinculacionVivienda
+            === 'roommatch'
+          "
+          (change)="
+            seleccionarVinculacion('roommatch')
+          "
+        >
+
+
+        <span class="housing-option-icon">
+          ⌂
+        </span>
+
+
+        <span class="housing-option-content">
+
+          <strong>
+            Habitación de RoomMatch
+          </strong>
+
+          <small>
+            Vincula una habitación publicada
+            dentro de la plataforma.
+          </small>
+
+        </span>
+
+      </label>
+
+
+      <!-- EXTERNA -->
+
+      <label
+        class="housing-option"
+        [class.housing-selected]="
+          formulario.tipoVinculacionVivienda
+          === 'externa'
+        "
+      >
+
+        <input
+          type="radio"
+          name="tipoVinculacionVivienda"
+          value="externa"
+          [checked]="
+            formulario.tipoVinculacionVivienda
+            === 'externa'
+          "
+          (change)="
+            seleccionarVinculacion('externa')
+          "
+        >
+
+
+        <span class="housing-option-icon">
+          📍
+        </span>
+
+
+        <span class="housing-option-content">
+
+          <strong>
+            Tengo una vivienda externa
+          </strong>
+
+          <small>
+            Agrega una referencia de una vivienda
+            que no está publicada en RoomMatch.
+          </small>
+
+        </span>
+
+      </label>
+
+    </div>
+
+
+    <!-- =================================================
+         HABITACIONES ROOMMATCH
+    ================================================== -->
+
+    @if (
+      formulario.tipoVinculacionVivienda
+      === 'roommatch'
+    ) {
+
+      <div class="roommatch-housing-panel">
+
+        <div class="housing-panel-header">
+
+          <div>
+
+            <span class="housing-panel-tag">
+              RoomMatch
+            </span>
+
+            <h3>
+              Selecciona una habitación
+            </h3>
+
+            <p>
+              La publicación mostrará una referencia directa
+              a la habitación seleccionada.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        @if (cargandoHabitaciones) {
+
+          <div class="housing-loading">
+
+            Cargando habitaciones disponibles...
+
+          </div>
+
+        } @else if (
+          habitacionesDisponibles.length === 0
+        ) {
+
+          <div class="housing-empty">
+
+            <span>
+              ⌂
+            </span>
+
+            <strong>
+              No hay habitaciones disponibles
+            </strong>
+
+            <p>
+              Actualmente no encontramos habitaciones
+              activas para vincular.
+            </p>
+
+          </div>
+
+        } @else {
+
+          <div class="housing-room-list">
+
+
+            @for (
+              habitacion of habitacionesDisponibles;
+              track habitacion.idHabitacion
+            ) {
+
+              <button
+                type="button"
+                class="housing-room-card"
+                [class.housing-room-selected]="
+                  formulario.idHabitacion
+                  === habitacion.idHabitacion
+                "
+                (click)="
+                  seleccionarHabitacion(
+                    habitacion
+                  )
+                "
+              >
+
+                <span class="room-card-icon">
+
+                  ⌂
+
+                </span>
+
+
+                <span class="room-card-content">
+
+                  <strong>
+
+                    {{ habitacion.titulo }}
+
+                  </strong>
+
+
+                  <small>
+
+                    📍 {{ habitacion.distrito }}
+
+                  </small>
+
+
+                  <span class="room-owner">
+
+                    {{
+                      habitacion.nombrePropietario
+                    }}
+
+                    @if (
+                      habitacion.propietarioVerificado
+                    ) {
+
+                      <span class="verified-small">
+                        ✓ Verificado
+                      </span>
+
+                    }
+
+                  </span>
+
+                </span>
+
+
+                <span class="room-card-price">
+
+                  S/
+                  {{
+                    habitacion.precio
+                    | number:'1.0-0'
+                  }}
+
+                  <small>
+                    / mes
+                  </small>
+
+                </span>
+
+
+                <span class="room-card-check">
+
+                  {{
+                    formulario.idHabitacion
+                    === habitacion.idHabitacion
+
+                      ? '✓'
+
+                      : 'Seleccionar'
+                  }}
+
+                </span>
+
+              </button>
+
+            }
+
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+
+    <!-- =================================================
+         VIVIENDA EXTERNA
+    ================================================== -->
+
+    @if (
+      formulario.tipoVinculacionVivienda
+      === 'externa'
+    ) {
+
+      <div class="external-housing-panel">
+
+        <div class="housing-panel-header">
+
+          <div>
+
+            <span class="housing-panel-tag external-tag">
+              Vivienda externa
+            </span>
+
+            <h3>
+              Agrega una referencia de la vivienda
+            </h3>
+
+            <p>
+              No publicaremos una dirección exacta.
+              Utiliza una ubicación referencial.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+          <div class="form-group form-full">
+
+            <label for="viviendaExternaTitulo">
+
+              Nombre o referencia de vivienda
+
+            </label>
+
+
+            <input
+              id="viviendaExternaTitulo"
+              type="text"
+              name="viviendaExternaTitulo"
+              maxlength="150"
+              placeholder="Ej. Departamento cerca a UPN"
+              [(ngModel)]="
+                formulario.viviendaExternaTitulo
+              "
+            >
+
+          </div>
+
+
+          <div class="form-group form-full">
+
+            <label for="viviendaExternaDireccion">
+
+              Dirección referencial
+
+            </label>
+
+
+            <input
+              id="viviendaExternaDireccion"
+              type="text"
+              name="viviendaExternaDireccion"
+              maxlength="255"
+              placeholder="Ej. A cinco minutos de UPN Los Olivos"
+              [(ngModel)]="
+                formulario.viviendaExternaDireccion
+              "
+            >
+
+
+            <small class="privacy-hint">
+
+              🔒 Evita ingresar número de departamento
+              o una dirección privada exacta.
+
+            </small>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="viviendaExternaPrecio">
+
+              Precio mensual aproximado
+
+            </label>
+
+
+            <div class="money-input">
+
+              <span>
+                S/
+              </span>
+
+
+              <input
+                id="viviendaExternaPrecio"
+                type="number"
+                name="viviendaExternaPrecio"
+                min="1"
+                placeholder="900"
+                [(ngModel)]="
+                  formulario.viviendaExternaPrecio
+                "
+              >
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+}
+          
+
+
+          <!-- INFORMACIÓN -->
+
+          <div class="form-section">
+
+            <div class="form-grid">
+
+
+              <div class="form-group form-full">
+
+                <label for="titulo">
+
+                  Título de tu publicación
+
+                </label>
+
+
+                <input
+                  id="titulo"
+                  type="text"
+                  name="titulo"
+                  maxlength="150"
+                  placeholder="Ej. Busco roomie en Los Olivos"
+                  [(ngModel)]="
+                    formulario.titulo
+                    
+                  "
+                  (change)="cambiarTipoPublicacion()"
+                >
+
+              </div>
+
+
+              <div class="form-group form-full">
+
+                <label for="descripcion">
+
+                  Describe qué estás buscando
+
+                </label>
+
+
+                <textarea
+                  id="descripcion"
+                  name="descripcion"
+                  maxlength="1000"
+                  rows="5"
+                  placeholder="Cuéntanos qué tipo de persona, habitación o convivencia estás buscando..."
+                  [(ngModel)]="
+                    formulario.descripcion
+                  "
+                ></textarea>
+
+
+                <small class="counter">
+
+                  {{
+formulario.descripcion.length
+                    || 0
+                  }}
+
+                  / 1000
+
+                </small>
+
+              </div>
+
+
+              <div class="form-group form-full">
+
+                <label for="distrito">
+
+                  Distrito
+
+                </label>
+
+
+                <input
+                  id="distrito"
+                  type="text"
+                  name="distrito"
+                  placeholder="Ej. Los Olivos"
+                  [(ngModel)]="
+                    formulario.distrito
+                  "
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="presupuestoMin">
+
+                  Presupuesto mínimo
+
+                </label>
+
+
+                <div class="money-input">
+
+                  <span>
+                    S/
+                  </span>
+
+
+                  <input
+                    id="presupuestoMin"
+                    type="number"
+                    name="presupuestoMin"
+                    min="0"
+                    placeholder="500"
+                    [(ngModel)]="
+                      formulario.presupuestoMin
+                    "
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="presupuestoMax">
+
+                  Presupuesto máximo
+
+                </label>
+
+
+                <div class="money-input">
+
+                  <span>
+                    S/
+                  </span>
+
+
+                  <input
+                    id="presupuestoMax"
+                    type="number"
+                    name="presupuestoMax"
+                    min="0"
+                    placeholder="1000"
+                    [(ngModel)]="
+                      formulario.presupuestoMax
+                    "
+                  >
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- BOTONES -->
+
+          <div class="form-actions">
+
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="cancelarFormulario()"
+            >
+
+              Cancelar
+
+            </button>
+
+
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="guardando"
+            >
+
+              @if (guardando) {
+
+                Guardando...
+
+              } @else if (editando) {
+
+                Guardar cambios
+
+              } @else {
+
+                Publicar búsqueda
+
+              }
+
+            </button>
+
+          </div>
+
+        </form>
+
+      </section>
+
+    }
+
+
+    <!-- =====================================================
+         LISTADO
+    ====================================================== -->
+
+    <section class="publication-list-section">
+
+      <div class="section-title">
+
+        <div>
+
+          <span class="section-tag">
+            Tu actividad
+          </span>
+
+
+          <h2>
+            Publicaciones creadas
+          </h2>
+
+
+          <p>
+            Controla el estado y la información de tus búsquedas.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      @if (cargando) {
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+
+            ◌
+
+          </div>
+
+
+          <h3>
+
+            Cargando tus publicaciones...
+
+          </h3>
+
+
+          <p>
+
+            Estamos consultando tu actividad en RoomMatch.
+
+          </p>
+
+        </div>
+
+      } @else if (publicaciones.length === 0) {
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+
+            ♡
+
+          </div>
+
+
+          <h3>
+
+            Todavía no tienes publicaciones
+
+          </h3>
+
+
+          <p>
+
+            Crea tu primera búsqueda y deja que
+            RoomMatch te ayude a conectar.
+
+          </p>
+
+
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="nuevaPublicacion()"
+          >
+
+            Crear mi primera publicación
+
+          </button>
+
+        </div>
+
+      } @else {
+
+        <div class="publication-grid">
+
+
+          @for (
+            publicacion of publicaciones;
+            track publicacion.idPublicacion
+          ) {
+
+            <article class="publication-card">
+
+
+              <!-- HEADER TARJETA -->
+
+              <div class="card-header">
+
+                <span
+                  class="publication-type"
+                  [class.type-roomie]="
+                    publicacion.tipoPublicacion
+                    === 'busco_roomie'
+                  "
+                  [class.type-room]="
+                    publicacion.tipoPublicacion
+                    === 'busco_cuarto'
+                  "
+                  [class.type-share]="
+                    publicacion.tipoPublicacion
+                    === 'busco_compartir'
+                  "
+                >
+
+                  {{
+                    obtenerTipo(
+                      publicacion.tipoPublicacion
+                    )
+                  }}
+
+                </span>
+
+
+                <span
+                  class="status"
+                  [class.status-active]="
+                    publicacion.estado
+                      .toLowerCase()
+                    === 'activa'
+                  "
+                  [class.status-paused]="
+                    publicacion.estado
+                      .toLowerCase()
+                    === 'pausada'
+                  "
+                  [class.status-closed]="
+                    publicacion.estado
+                      .toLowerCase()
+                    === 'cerrada'
+                  "
+                >
+
+                  {{ publicacion.estado }}
+
+                </span>
+
+              </div>
+
+
+              <!-- CONTENIDO -->
+
+              <div class="card-content">
+
+                <h3>
+
+                  {{ publicacion.titulo }}
+
+                </h3>
+
+
+                <p class="publication-description">
+
+                  {{ publicacion.descripcion }}
+
+                </p>
+
+
+                <div class="publication-data">
+
+
+                  <div class="data-card">
+
+                    <span class="data-icon">
+
+                      📍
+
+                    </span>
+
+
+                    <span>
+
+                      <small>
+                        Distrito
+                      </small>
+
+                      <strong>
+
+                        {{ publicacion.distrito }}
+
+                      </strong>
+
+                    </span>
+
+                  </div>
+
+
+                  <div class="data-card">
+
+                    <span class="data-icon">
+
+                      S/
+
+                    </span>
+
+
+                    <span>
+
+                      <small>
+                        Presupuesto
+                      </small>
+
+                      <strong>
+
+                        S/
+                        {{
+                          publicacion.presupuestoMin
+                          | number:'1.0-0'
+                        }}
+
+                        -
+
+                        S/
+                        {{
+                          publicacion.presupuestoMax
+                          | number:'1.0-0'
+                        }}
+
+                      </strong>
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     VIVIENDA VINCULADA
+                ================================================== -->
+
+                @if (
+                  publicacion.tipoVinculacionVivienda
+                  === 'roommatch'
+                ) {
+
+                  <div class="linked-housing linked-roommatch">
+
+                    <div class="linked-housing-icon">
+                      ⌂
+                    </div>
+
+                    <div class="linked-housing-content">
+
+                      <small>
+                        Habitación vinculada en RoomMatch
+                      </small>
+
+                      <strong>
+                        {{ publicacion.habitacionTitulo }}
+                      </strong>
+
+                      <span>
+
+                        📍 {{ publicacion.habitacionDistrito }}
+
+                        ·
+
+                        S/
+                        {{
+                          publicacion.habitacionPrecio
+                          | number:'1.0-0'
+                        }}
+
+                        / mes
+
+                      </span>
+
+                      @if (
+                        publicacion.nombrePropietarioHabitacion
+                      ) {
+
+                        <span class="linked-owner">
+
+                          Publicado por
+
+                          <strong>
+                            {{
+                              publicacion
+                                .nombrePropietarioHabitacion
+                            }}
+                          </strong>
+
+                        </span>
+
+                      }
+
+                    </div>
+
+                    @if (publicacion.idHabitacion) {
+
+                      <a
+                        class="linked-housing-action"
+                        [routerLink]="[
+                          '/habitaciones',
+                          publicacion.idHabitacion
+                        ]"
+                      >
+                        Ver habitación →
+                      </a>
+
+                    }
+
+                  </div>
+
+                }
+
+
+                @if (
+                  publicacion.tipoVinculacionVivienda
+                  === 'externa'
+                ) {
+
+                  <div class="linked-housing linked-external">
+
+                    <div class="linked-housing-icon">
+                      📍
+                    </div>
+
+                    <div class="linked-housing-content">
+
+                      <small>
+                        Opción de vivienda externa
+                      </small>
+
+                      <strong>
+                        {{ publicacion.viviendaExternaTitulo }}
+                      </strong>
+
+                      <span>
+                        {{
+                          publicacion
+                            .viviendaExternaDireccion
+                        }}
+                      </span>
+
+                      <span class="external-price">
+
+                        S/
+                        {{
+                          publicacion.viviendaExternaPrecio
+                          | number:'1.0-0'
+                        }}
+
+                        / mes
+
+                      </span>
+
+                      <span class="external-reference">
+                        Información proporcionada por ti
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                }
+
+
+                <div class="publication-date">
+
+                  Publicado
+
+                  {{
+                    formatearFecha(
+                      publicacion.fechaPublicacion
+                    )
+                  }}
+
+                </div>
+
+              </div>
+
+
+              <!-- ACCIONES -->
+
+              <div class="card-actions">
+
+                <button
+                  type="button"
+                  class="action action-edit"
+                  (click)="
+                    editarPublicacion(
+                      publicacion
+                    )
+                  "
+                >
+
+                  Editar
+
+                </button>
+
+
+                @if (
+                  publicacion.estado
+                    .toLowerCase()
+                  === 'activa'
+                ) {
+
+                  <button
+                    type="button"
+                    class="action"
+                    [disabled]="
+                      accionandoId
+                      === publicacion.idPublicacion
+                    "
+                    (click)="
+                      pausarPublicacion(
+                        publicacion
+                      )
+                    "
+                  >
+
+                    Pausar
+
+                  </button>
+
+                }
+
+
+                @if (
+                  publicacion.estado
+                    .toLowerCase()
+                  === 'pausada'
+                ) {
+
+                  <button
+                    type="button"
+                    class="action action-activate"
+                    [disabled]="
+                      accionandoId
+                      === publicacion.idPublicacion
+                    "
+                    (click)="
+                      activarPublicacion(
+                        publicacion
+                      )
+                    "
+                  >
+
+                    Activar
+
+                  </button>
+
+                }
+
+
+                @if (
+                  publicacion.estado
+                    .toLowerCase()
+                  !== 'cerrada'
+                ) {
+
+                  <button
+                    type="button"
+                    class="action"
+                    [disabled]="
+                      accionandoId
+                      === publicacion.idPublicacion
+                    "
+                    (click)="
+                      cerrarPublicacion(
+                        publicacion
+                      )
+                    "
+                  >
+
+                    Cerrar
+
+                  </button>
+
+                }
+
+
+                <a
+                  class="action"
+                  [routerLink]="[
+                    '/publicaciones-roomie',
+                    publicacion.idPublicacion
+                  ]"
+                >
+
+                  Ver
+
+                </a>
+
+
+                <button
+                  type="button"
+                  class="action action-delete"
+                  (click)="
+                    abrirEliminar(
+                      publicacion
+                    )
+                  "
+                >
+
+                  Eliminar
+
+                </button>
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+      }
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       MODAL ELIMINAR
+  ====================================================== -->
+
+  @if (publicacionEliminar) {
+
+    <div class="modal-backdrop">
+
+      <div class="delete-modal">
+
+        <div class="delete-icon">
+
+          !
+
+        </div>
+
+
+        <h2>
+
+          ¿Eliminar publicación?
+
+        </h2>
+
+
+        <p>
+
+          Vas a eliminar
+
+          <strong>
+
+            "{{ publicacionEliminar.titulo }}"
+
+          </strong>
+
+          de tus publicaciones.
+
+        </p>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cancelarEliminar()"
+          >
+
+            Cancelar
+
+          </button>
+
+
+          <button
+            type="button"
+            class="btn-delete"
+            [disabled]="
+              accionandoId
+              === publicacionEliminar.idPublicacion
+            "
+            (click)="confirmarEliminar()"
+          >
+
+            {{
+              accionandoId
+              === publicacionEliminar.idPublicacion
+
+                ? 'Eliminando...'
+
+                : 'Sí, eliminar'
+            }}
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

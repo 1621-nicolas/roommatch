@@ -1,0 +1,568 @@
+<section class="rooms-page">
+
+  <div class="rooms-container">
+
+    <!-- =====================================================
+         CABECERA
+    ====================================================== -->
+    <header class="rooms-header">
+
+      <span class="rooms-eyebrow">
+        Espacios para ti
+      </span>
+
+      <h1>
+        Encuentra tu próxima
+        <span>habitación</span>
+      </h1>
+
+      <p>
+        Explora habitaciones según tu presupuesto,
+        ubicación y estilo de vida.
+      </p>
+
+    </header>
+
+
+    <!-- =====================================================
+         FILTROS
+    ====================================================== -->
+    <section class="rooms-filters">
+
+      <div class="filter-main">
+
+        <!-- DISTRITO -->
+        <div class="filter-field district-field">
+
+          <label for="distrito">
+            Distrito
+          </label>
+
+          <input
+            id="distrito"
+            type="text"
+            name="distrito"
+            [(ngModel)]="filtros.distrito"
+            placeholder="Ej. Los Olivos"
+          />
+
+        </div>
+
+
+        <!-- PRECIO MÍNIMO -->
+        <div class="filter-field">
+
+          <label for="precioMin">
+            Precio mínimo
+          </label>
+
+          <input
+            id="precioMin"
+            type="number"
+            name="precioMin"
+            [(ngModel)]="filtros.precioMin"
+            placeholder="S/ 500"
+            min="0"
+          />
+
+        </div>
+
+
+        <!-- PRECIO MÁXIMO -->
+        <div class="filter-field">
+
+          <label for="precioMax">
+            Precio máximo
+          </label>
+
+          <input
+            id="precioMax"
+            type="number"
+            name="precioMax"
+            [(ngModel)]="filtros.precioMax"
+            placeholder="S/ 1500"
+            min="0"
+          />
+
+        </div>
+
+
+        <!-- BUSCAR -->
+        <button
+          type="button"
+          class="search-button"
+          [disabled]="cargando"
+          (click)="aplicarFiltros()"
+        >
+
+          {{
+            cargando
+              ? 'Buscando...'
+              : 'Buscar'
+          }}
+
+        </button>
+
+      </div>
+
+
+      <!-- FILTROS SECUNDARIOS -->
+      <div class="filter-options">
+
+        <div class="select-filter">
+
+          <label for="amoblado">
+            Amoblado
+          </label>
+
+          <select
+            id="amoblado"
+            name="amoblado"
+            [(ngModel)]="filtros.amoblado"
+          >
+
+            <option value="">
+              Cualquiera
+            </option>
+
+            <option value="true">
+              Sí
+            </option>
+
+            <option value="false">
+              No
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="select-filter">
+
+          <label for="banoPrivado">
+            Baño privado
+          </label>
+
+          <select
+            id="banoPrivado"
+            name="banoPrivado"
+            [(ngModel)]="filtros.banoPrivado"
+          >
+
+            <option value="">
+              Cualquiera
+            </option>
+
+            <option value="true">
+              Sí
+            </option>
+
+            <option value="false">
+              No
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="select-filter">
+
+          <label for="permiteMascotas">
+            Mascotas
+          </label>
+
+          <select
+            id="permiteMascotas"
+            name="permiteMascotas"
+            [(ngModel)]="filtros.permiteMascotas"
+          >
+
+            <option value="">
+              Cualquiera
+            </option>
+
+            <option value="true">
+              Permitidas
+            </option>
+
+            <option value="false">
+              No permitidas
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="clear-button"
+          (click)="limpiarFiltros()"
+        >
+          Limpiar filtros
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+    <div
+      *ngIf="mensajeError"
+      class="rooms-message error"
+    >
+
+      {{ mensajeError }}
+
+    </div>
+
+
+    <!-- =====================================================
+         RESUMEN
+    ====================================================== -->
+    <section
+      *ngIf="!cargando"
+      class="rooms-summary"
+    >
+
+      <div>
+
+        <strong>
+          {{ totalElementos }}
+        </strong>
+
+        <span>
+
+          {{
+            totalElementos === 1
+              ? 'habitación encontrada'
+              : 'habitaciones encontradas'
+          }}
+
+        </span>
+
+      </div>
+
+
+      <span>
+        Publicaciones activas de propietarios RoomMatch
+      </span>
+
+    </section>
+
+
+    <!-- =====================================================
+         CARGANDO
+    ====================================================== -->
+    <section
+      *ngIf="cargando"
+      class="rooms-state"
+    >
+
+      <div class="state-icon">
+        ⌂
+      </div>
+
+      <h2>
+        Buscando habitaciones...
+      </h2>
+
+      <p>
+        Estamos consultando los espacios disponibles.
+      </p>
+
+    </section>
+
+
+    <!-- =====================================================
+         HABITACIONES
+    ====================================================== -->
+    <section
+      *ngIf="
+        !cargando &&
+        habitaciones.length > 0
+      "
+      class="rooms-grid"
+    >
+
+      <article
+        *ngFor="
+          let habitacion
+          of habitaciones
+        "
+        class="room-card"
+        [class.featured]="habitacion.destacada"
+      >
+
+        <!-- IMAGEN -->
+        <div class="room-image">
+
+          <!--
+            La API de habitaciones todavía no devuelve
+            la imagen principal.
+
+            Luego conectaremos imagen_habitacion.
+          -->
+
+          <span
+            *ngIf="habitacion.destacada"
+            class="featured-badge"
+          >
+            ★ Destacada
+          </span>
+
+
+          <div class="room-placeholder">
+
+            <span>
+              ⌂
+            </span>
+
+            <small>
+              {{ habitacion.distrito }}
+            </small>
+
+          </div>
+
+        </div>
+
+
+        <!-- CONTENIDO -->
+        <div class="room-content">
+
+          <div class="room-owner">
+
+            <span>
+              {{ habitacion.nombrePropietario }}
+            </span>
+
+
+            <span
+              *ngIf="habitacion.propietarioVerificado"
+              class="verified-owner"
+            >
+              ✓ Verificado
+            </span>
+
+          </div>
+
+
+          <h2>
+            {{ habitacion.titulo }}
+          </h2>
+
+
+          <p class="room-location">
+
+            ⌖
+            {{ habitacion.distrito }}
+
+          </p>
+
+
+          <div class="room-price">
+
+            {{
+              formatearPrecio(
+                habitacion.precio
+              )
+            }}
+
+            <span>
+              / mes
+            </span>
+
+          </div>
+
+
+          <!-- CARACTERÍSTICAS -->
+          <div class="room-features">
+
+            <span
+              *ngIf="habitacion.amoblado"
+            >
+              Amoblado
+            </span>
+
+
+            <span
+              *ngIf="habitacion.banoPrivado"
+            >
+              Baño privado
+            </span>
+
+
+            <span
+              *ngIf="habitacion.internetIncluido"
+            >
+              Wi-Fi
+            </span>
+
+
+            <span
+              *ngIf="habitacion.permiteMascotas"
+            >
+              Mascotas
+            </span>
+
+          </div>
+
+
+          <!-- SERVICIOS -->
+          <div class="room-services">
+
+            <span>
+
+              {{
+                contarServiciosIncluidos(
+                  habitacion
+                )
+              }}
+
+              servicios incluidos
+
+            </span>
+
+
+            <span
+              *ngIf="habitacion.areaM2"
+            >
+
+              {{ habitacion.areaM2 }} m²
+
+            </span>
+
+          </div>
+
+
+          <div class="room-availability">
+
+            Disponible desde:
+
+            <strong>
+
+              {{
+                formatearFecha(
+                  habitacion.disponibleDesde
+                )
+              }}
+
+            </strong>
+
+          </div>
+
+
+          <!-- BOTÓN -->
+          <a
+            class="room-detail-button"
+            [routerLink]="[
+              '/habitaciones',
+              habitacion.idHabitacion
+            ]"
+          >
+
+            Ver detalle
+
+            <span>
+              →
+            </span>
+
+          </a>
+
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <!-- =====================================================
+         VACÍO
+    ====================================================== -->
+    <section
+      *ngIf="
+        !cargando &&
+        habitaciones.length === 0 &&
+        !mensajeError
+      "
+      class="rooms-state"
+    >
+
+      <div class="state-icon">
+        ⌕
+      </div>
+
+
+      <h2>
+        No encontramos habitaciones
+      </h2>
+
+
+      <p>
+        Prueba cambiando el distrito,
+        precio o características seleccionadas.
+      </p>
+
+
+      <button
+        type="button"
+        class="search-button"
+        (click)="limpiarFiltros()"
+      >
+        Ver todas las habitaciones
+      </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         PAGINACIÓN
+    ====================================================== -->
+    <nav
+      *ngIf="
+        !cargando &&
+        totalPaginas > 1
+      "
+      class="rooms-pagination"
+    >
+
+      <button
+        type="button"
+        [disabled]="paginaActual === 0"
+        (click)="paginaAnterior()"
+      >
+        ← Anterior
+      </button>
+
+
+      <span>
+
+        Página
+        {{ paginaActual + 1 }}
+        de
+        {{ totalPaginas }}
+
+      </span>
+
+
+      <button
+        type="button"
+        [disabled]="
+          paginaActual >=
+          totalPaginas - 1
+        "
+        (click)="paginaSiguiente()"
+      >
+        Siguiente →
+      </button>
+
+    </nav>
+
+  </div>
+
+</section>

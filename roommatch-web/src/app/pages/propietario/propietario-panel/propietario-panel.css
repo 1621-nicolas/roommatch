@@ -1,0 +1,638 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.owner-page {
+  min-height: calc(100vh - 90px);
+  padding: 52px 24px 80px;
+  background:
+    radial-gradient(
+      circle at 85% 5%,
+      rgba(113, 70, 255, 0.08),
+      transparent 25%
+    ),
+    #f7f9fc;
+}
+
+.owner-container {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.owner-eyebrow {
+  display: inline-flex;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: #eee9ff;
+  color: #5b3df5;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.owner-alert {
+  margin-bottom: 22px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.owner-alert-error {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #c62828;
+}
+
+.owner-loading {
+  min-height: 450px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 10px;
+}
+
+.owner-loading span {
+  color: #64748b;
+}
+
+.loading-spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #e8e5ff;
+  border-top-color: #633cf5;
+  border-radius: 50%;
+  animation: owner-spin 0.8s linear infinite;
+}
+
+@keyframes owner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   ONBOARDING
+========================================================= */
+
+.owner-onboarding {
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.owner-onboarding-content {
+  padding: 60px;
+  background:
+    linear-gradient(
+      125deg,
+      #ffffff 45%,
+      #f1edff
+    );
+}
+
+.owner-onboarding h1 {
+  max-width: 720px;
+  margin: 18px 0;
+  font-size: clamp(42px, 5vw, 68px);
+  line-height: 0.98;
+  letter-spacing: -3px;
+  color: #101729;
+}
+
+.owner-onboarding h1 span {
+  color: #5c3df5;
+}
+
+.owner-onboarding p {
+  max-width: 610px;
+  margin: 0 0 30px;
+  color: #58667e;
+  line-height: 1.6;
+  font-size: 17px;
+}
+
+.owner-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 28px;
+}
+
+.owner-benefits article {
+  display: flex;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.owner-benefits strong {
+  color: #111827;
+}
+
+.owner-benefits p {
+  margin: 5px 0 0;
+  color: #64748b;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+.benefit-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #f1edff;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.owner-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 42px;
+  border: 1px solid #e1e5ee;
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      120deg,
+      #ffffff 48%,
+      #f0ecff
+    );
+}
+
+.owner-hero h1 {
+  margin: 14px 0 9px;
+  font-size: clamp(38px, 4vw, 54px);
+  line-height: 1;
+  color: #111827;
+  letter-spacing: -2px;
+}
+
+.owner-hero h1 span {
+  color: #5a3df4;
+}
+
+.owner-hero p {
+  margin: 0;
+  color: #59677f;
+  font-size: 16px;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 22px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.primary-button {
+  color: #ffffff;
+  background:
+    linear-gradient(
+      135deg,
+      #5740ef,
+      #7928e8
+    );
+  box-shadow:
+    0 14px 28px rgba(93, 61, 244, 0.23);
+}
+
+.secondary-button {
+  border: 1px solid #c9befd;
+  color: #5a3df4;
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   MÉTRICAS
+========================================================= */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 130px;
+  padding: 21px;
+  border: 1px solid #e1e5ee;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.metric-icon {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 21px;
+}
+
+.metric-purple {
+  background: #efebff;
+}
+
+.metric-blue {
+  background: #e5f2ff;
+}
+
+.metric-green {
+  background: #dcfce7;
+}
+
+.metric-yellow {
+  background: #fff4cf;
+}
+
+.metric-card div {
+  min-width: 0;
+}
+
+.metric-card small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.metric-card strong {
+  display: block;
+  margin: 3px 0 5px;
+  color: #111827;
+  font-size: 27px;
+}
+
+.metric-card a {
+  color: #5a3df4;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+
+/* =========================================================
+   PLAN
+========================================================= */
+
+.owner-plan-card,
+.owner-activity {
+  margin-top: 24px;
+  padding: 30px;
+  border: 1px solid #e1e5ee;
+  border-radius: 22px;
+  background: #ffffff;
+}
+
+.plan-header,
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.plan-header h2,
+.section-heading h2 {
+  margin: 10px 0 0;
+  font-size: 28px;
+  color: #111827;
+}
+
+.plan-usage {
+  margin-top: 27px;
+}
+
+.plan-usage-header {
+  display: flex;
+  justify-content: space-between;
+  color: #475569;
+  font-size: 14px;
+}
+
+.plan-usage-header strong {
+  color: #111827;
+}
+
+.plan-progress {
+  height: 10px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #eceff5;
+  overflow: hidden;
+}
+
+.plan-progress-value {
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      #5a40f2,
+      #8129e9
+    );
+  transition: width 0.3s ease;
+}
+
+.plan-limit-message {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 17px 18px;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: #fffbeb;
+}
+
+.plan-limit-message span {
+  font-size: 21px;
+}
+
+.plan-limit-message div {
+  flex: 1;
+}
+
+.plan-limit-message strong {
+  color: #92400e;
+}
+
+.plan-limit-message p {
+  margin: 4px 0 0;
+  color: #a16207;
+  font-size: 13px;
+}
+
+.plan-limit-message a {
+  color: #7c3aed;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.plan-available {
+  margin: 15px 0 0;
+  color: #64748b;
+}
+
+
+/* =========================================================
+   ACTIVIDAD
+========================================================= */
+
+.section-heading p {
+  margin: 5px 0 0;
+  color: #64748b;
+}
+
+.section-heading > a {
+  color: #5a3df4;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.activity-list {
+  margin-top: 25px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 4px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-avatar {
+  flex: 0 0 45px;
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ece8ff;
+  color: #593af3;
+  font-weight: 800;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-content strong {
+  color: #111827;
+}
+
+.activity-content p {
+  margin: 3px 0;
+  color: #526078;
+  font-size: 14px;
+}
+
+.activity-content small {
+  color: #94a3b8;
+}
+
+.activity-status {
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  color: #a16207;
+  background: #fef3c7;
+}
+
+.status-contacted {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.empty-activity {
+  min-height: 220px;
+  margin-top: 25px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  border: 1px dashed #cfc6ff;
+  border-radius: 18px;
+  background: #faf9ff;
+}
+
+.empty-activity span {
+  font-size: 29px;
+}
+
+.empty-activity strong {
+  margin-top: 10px;
+}
+
+.empty-activity p {
+  margin: 5px 0 0;
+  color: #64748b;
+}
+
+
+/* =========================================================
+   SHORTCUTS
+========================================================= */
+
+.owner-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+  margin-top: 24px;
+}
+
+.owner-shortcuts a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #e1e5ee;
+  border-radius: 18px;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.owner-shortcuts a:hover {
+  transform: translateY(-3px);
+  border-color: #a998ff;
+}
+
+.owner-shortcuts > a > span {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #f0edff;
+}
+
+.owner-shortcuts div {
+  flex: 1;
+}
+
+.owner-shortcuts strong {
+  display: block;
+  color: #111827;
+}
+
+.owner-shortcuts small {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+}
+
+.owner-shortcuts b {
+  color: #5b3df5;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .owner-shortcuts {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-benefits {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .owner-page {
+    padding:
+      28px 14px
+      60px;
+  }
+
+  .owner-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 28px;
+  }
+
+  .hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-header,
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .plan-limit-message {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .activity-status {
+    display: none;
+  }
+
+  .owner-onboarding-content {
+    padding: 35px 25px;
+  }
+}

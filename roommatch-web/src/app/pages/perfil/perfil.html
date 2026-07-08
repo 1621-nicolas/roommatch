@@ -1,0 +1,841 @@
+<section class="profile-page">
+
+  <div class="profile-container">
+
+    <header class="profile-header">
+
+      <div>
+
+        <p class="profile-pill">
+          Tu compatibilidad comienza aquí
+        </p>
+
+        <h1>
+          Mi perfil de
+          <span>convivencia</span>
+        </h1>
+
+        <p>
+          Cuéntanos cómo te gusta convivir.
+          RoomMatch utilizará estas respuestas
+          para encontrar personas compatibles contigo.
+        </p>
+
+      </div>
+
+      <div class="profile-header-action">
+
+        @if (perfilExiste) {
+
+          <span class="profile-status complete">
+            Perfil completado
+          </span>
+
+        } @else {
+
+          <span class="profile-status pending">
+            Perfil pendiente
+          </span>
+
+        }
+
+        <a routerLink="/matches">
+          Ver mis matches
+        </a>
+
+      </div>
+
+    </header>
+
+
+    @if (cargando) {
+
+      <section class="profile-loading">
+        <h2>Cargando tu perfil...</h2>
+
+        <p>
+          Estamos consultando tus preferencias de convivencia.
+        </p>
+      </section>
+
+    } @else {
+
+      <section class="profile-layout">
+
+        <aside class="profile-steps">
+
+          <h2>
+            Tu progreso
+          </h2>
+
+          <div class="profile-progress">
+
+            <div
+              class="profile-progress-value"
+              [style.width.%]="porcentajeProgreso()"
+            >
+            </div>
+
+          </div>
+
+          <p>
+            {{ porcentajeProgreso() }}% completado
+          </p>
+
+
+          <button
+            type="button"
+            [class.active]="pasoActual === 1"
+            (click)="irAlPaso(1)"
+          >
+
+            <span>1</span>
+
+            <div>
+              <strong>
+                Ubicación y presupuesto
+              </strong>
+
+              <small>
+                Dónde y cuánto
+              </small>
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pasoActual === 2"
+            (click)="irAlPaso(2)"
+          >
+
+            <span>2</span>
+
+            <div>
+              <strong>
+                Tus hábitos
+              </strong>
+
+              <small>
+                Cómo es tu día a día
+              </small>
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pasoActual === 3"
+            (click)="irAlPaso(3)"
+          >
+
+            <span>3</span>
+
+            <div>
+              <strong>
+                Preferencias
+              </strong>
+
+              <small>
+                Reglas de convivencia
+              </small>
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pasoActual === 4"
+            (click)="irAlPaso(4)"
+          >
+
+            <span>4</span>
+
+            <div>
+              <strong>
+                Sobre ti
+              </strong>
+
+              <small>
+                Preséntate
+              </small>
+            </div>
+
+          </button>
+
+        </aside>
+
+
+        <main class="profile-form-card">
+
+          @if (mensajeError) {
+
+            <div class="auth-error">
+              {{ mensajeError }}
+            </div>
+
+          }
+
+          @if (mensajeExito) {
+
+            <div class="profile-success">
+              {{ mensajeExito }}
+            </div>
+
+          }
+
+
+          <form
+            (ngSubmit)="guardarPerfil()"
+          >
+
+            @if (pasoActual === 1) {
+
+              <section class="profile-step">
+
+                <header>
+
+                  <span>
+                    Paso 1 de 4
+                  </span>
+
+                  <h2>
+                    ¿Dónde quieres vivir?
+                  </h2>
+
+                  <p>
+                    Define tu zona preferida y el rango
+                    de presupuesto que manejas.
+                  </p>
+
+                </header>
+
+
+                <div class="profile-form-grid">
+
+                  <div class="profile-field">
+
+                    <label for="presupuestoMin">
+                      Presupuesto mínimo
+                    </label>
+
+                    <div class="profile-input">
+
+                      <span>
+                        S/
+                      </span>
+
+                      <input
+                        type="number"
+                        id="presupuestoMin"
+                        name="presupuestoMin"
+                        placeholder="500"
+                        min="0"
+                        [(ngModel)]="perfilData.presupuestoMin"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="presupuestoMax">
+                      Presupuesto máximo
+                    </label>
+
+                    <div class="profile-input">
+
+                      <span>
+                        S/
+                      </span>
+
+                      <input
+                        type="number"
+                        id="presupuestoMax"
+                        name="presupuestoMax"
+                        placeholder="1000"
+                        min="0"
+                        [(ngModel)]="perfilData.presupuestoMax"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="profile-field profile-full-field">
+
+                    <label for="distritoPreferido">
+                      Distrito preferido
+                    </label>
+
+                    <div class="profile-input">
+
+                      <span>
+                        ⌖
+                      </span>
+
+                      <input
+                        type="text"
+                        id="distritoPreferido"
+                        name="distritoPreferido"
+                        placeholder="Ej. Los Olivos"
+                        [(ngModel)]="perfilData.distritoPreferido"
+                      >
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="profile-field profile-full-field">
+
+                    <label for="fechaMudanza">
+                      ¿Cuándo planeas mudarte?
+                    </label>
+
+                    <div class="profile-input">
+
+                      <span>
+                        ◷
+                      </span>
+
+                      <input
+                        type="date"
+                        id="fechaMudanza"
+                        name="fechaMudanza"
+                        [(ngModel)]="perfilData.fechaMudanza"
+                      >
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+            }
+
+
+            @if (pasoActual === 2) {
+
+              <section class="profile-step">
+
+                <header>
+
+                  <span>
+                    Paso 2 de 4
+                  </span>
+
+                  <h2>
+                    Cuéntanos sobre tus hábitos
+                  </h2>
+
+                  <p>
+                    No hay respuestas correctas.
+                    Lo importante es encontrar personas
+                    compatibles contigo.
+                  </p>
+
+                </header>
+
+
+                <div class="profile-range-field">
+
+                  <div class="profile-range-header">
+
+                    <label for="limpieza">
+                      Nivel de limpieza
+                    </label>
+
+                    <strong>
+                      {{ perfilData.limpieza ?? 'Sin elegir' }}
+                    </strong>
+
+                  </div>
+
+                  <input
+                    type="range"
+                    id="limpieza"
+                    name="limpieza"
+                    min="1"
+                    max="5"
+                    [(ngModel)]="perfilData.limpieza"
+                  >
+
+                  <div class="profile-range-labels">
+                    <span>Relajado</span>
+                    <span>Muy ordenado</span>
+                  </div>
+
+                </div>
+
+
+                <div class="profile-range-field">
+
+                  <div class="profile-range-header">
+
+                    <label for="ruido">
+                      Tolerancia al ruido
+                    </label>
+
+                    <strong>
+                      {{ perfilData.ruido ?? 'Sin elegir' }}
+                    </strong>
+
+                  </div>
+
+                  <input
+                    type="range"
+                    id="ruido"
+                    name="ruido"
+                    min="1"
+                    max="5"
+                    [(ngModel)]="perfilData.ruido"
+                  >
+
+                  <div class="profile-range-labels">
+                    <span>Prefiero silencio</span>
+                    <span>Tolero ruido</span>
+                  </div>
+
+                </div>
+
+
+                <div class="profile-range-field">
+
+                  <div class="profile-range-header">
+
+                    <label for="sociabilidad">
+                      Sociabilidad
+                    </label>
+
+                    <strong>
+                      {{ perfilData.sociabilidad ?? 'Sin elegir' }}
+                    </strong>
+
+                  </div>
+
+                  <input
+                    type="range"
+                    id="sociabilidad"
+                    name="sociabilidad"
+                    min="1"
+                    max="5"
+                    [(ngModel)]="perfilData.sociabilidad"
+                  >
+
+                  <div class="profile-range-labels">
+                    <span>Reservado</span>
+                    <span>Muy sociable</span>
+                  </div>
+
+                </div>
+
+
+                <div class="profile-field">
+
+                  <label for="horario">
+                    ¿Qué horario tienes normalmente?
+                  </label>
+
+                  <select
+                    id="horario"
+                    name="horario"
+                    [(ngModel)]="perfilData.horario"
+                  >
+
+                    <option value="">
+                      Selecciona una opción
+                    </option>
+
+                    <option value="mañana">
+                      Madrugador
+                    </option>
+
+                    <option value="tarde">
+                      Horario de tarde
+                    </option>
+
+                    <option value="noche">
+                      Nocturno
+                    </option>
+
+                    <option value="variable">
+                      Horario variable
+                    </option>
+
+                  </select>
+
+                </div>
+
+              </section>
+
+            }
+
+
+            @if (pasoActual === 3) {
+
+              <section class="profile-step">
+
+                <header>
+
+                  <span>
+                    Paso 3 de 4
+                  </span>
+
+                  <h2>
+                    Tus preferencias de convivencia
+                  </h2>
+
+                  <p>
+                    Estas respuestas ayudan a evitar conflictos
+                    y encontrar un mejor match.
+                  </p>
+
+                </header>
+
+
+                <div class="profile-form-grid">
+
+                  <div class="profile-field">
+
+                    <label for="visitas">
+                      Visitas
+                    </label>
+
+                    <select
+                      id="visitas"
+                      name="visitas"
+                      [(ngModel)]="perfilData.visitas"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="bajas">
+                        Pocas visitas
+                      </option>
+
+                      <option value="moderadas">
+                        Visitas moderadas
+                      </option>
+
+                      <option value="frecuentes">
+                        Visitas frecuentes
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="mascotas">
+                      Mascotas
+                    </label>
+
+                    <select
+                      id="mascotas"
+                      name="mascotas"
+                      [(ngModel)]="perfilData.mascotas"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="si">
+                        Me gustan / acepto
+                      </option>
+
+                      <option value="no">
+                        Prefiero sin mascotas
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="fumar">
+                      Fumar
+                    </label>
+
+                    <select
+                      id="fumar"
+                      name="fumar"
+                      [(ngModel)]="perfilData.fumar"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="si">
+                        Acepto
+                      </option>
+
+                      <option value="no">
+                        No acepto
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="alcohol">
+                      Alcohol
+                    </label>
+
+                    <select
+                      id="alcohol"
+                      name="alcohol"
+                      [(ngModel)]="perfilData.alcohol"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="si">
+                        Consumo responsable
+                      </option>
+
+                      <option value="no">
+                        Prefiero evitarlo
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="gastos">
+                      División de gastos
+                    </label>
+
+                    <select
+                      id="gastos"
+                      name="gastos"
+                      [(ngModel)]="perfilData.gastos"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="divididos">
+                        Dividir por igual
+                      </option>
+
+                      <option value="proporcional">
+                        División proporcional
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="profile-field">
+
+                    <label for="convivencia">
+                      Tipo de convivencia
+                    </label>
+
+                    <select
+                      id="convivencia"
+                      name="convivencia"
+                      [(ngModel)]="perfilData.convivencia"
+                    >
+
+                      <option value="">
+                        Selecciona
+                      </option>
+
+                      <option value="tranquila">
+                        Tranquila
+                      </option>
+
+                      <option value="social">
+                        Social
+                      </option>
+
+                      <option value="independiente">
+                        Independiente
+                      </option>
+
+                      <option value="mixta">
+                        Mixta
+                      </option>
+
+                    </select>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+            }
+
+
+            @if (pasoActual === 4) {
+
+              <section class="profile-step">
+
+                <header>
+
+                  <span>
+                    Paso 4 de 4
+                  </span>
+
+                  <h2>
+                    Preséntate a tus futuros roomies
+                  </h2>
+
+                  <p>
+                    Escribe una descripción corta y auténtica.
+                    Esto aparecerá en tu perfil.
+                  </p>
+
+                </header>
+
+
+                <div class="profile-field">
+
+                  <label for="descripcionPersonal">
+                    Sobre mí
+                  </label>
+
+                  <textarea
+                    id="descripcionPersonal"
+                    name="descripcionPersonal"
+                    rows="8"
+                    maxlength="800"
+                    placeholder="Ej. Soy estudiante de ingeniería, trabajo por las tardes y busco una convivencia tranquila, ordenada y respetuosa..."
+                    [(ngModel)]="perfilData.descripcionPersonal"
+                  >
+                  </textarea>
+
+                  <small>
+                   {{
+  perfilData.descripcionPersonal?.length
+  ?? 0
+}}
+/ 800 caracteres
+                  </small>
+
+                </div>
+
+
+                <div class="profile-summary">
+
+                  <h3>
+                    Resumen de tu perfil
+                  </h3>
+
+                  <p>
+                    <strong>Distrito:</strong>
+                    {{ perfilData.distritoPreferido }}
+                  </p>
+
+                  <p>
+                    <strong>Presupuesto:</strong>
+                    S/ {{ perfilData.presupuestoMin }}
+                    -
+                    S/ {{ perfilData.presupuestoMax }}
+                  </p>
+
+                  <p>
+                    <strong>Convivencia:</strong>
+                    {{ perfilData.convivencia }}
+                  </p>
+
+                </div>
+
+              </section>
+
+            }
+
+
+            <footer class="profile-form-actions">
+
+              @if (pasoActual > 1) {
+
+                <button
+                  type="button"
+                  class="profile-back-button"
+                  (click)="pasoAnterior()"
+                >
+                  Anterior
+                </button>
+
+              }
+
+
+              @if (pasoActual < 4) {
+
+                <button
+                  type="button"
+                  class="profile-next-button"
+                  (click)="siguientePaso()"
+                >
+                  Continuar
+                </button>
+
+              } @else {
+
+                <button
+                  type="submit"
+                  class="profile-next-button"
+                  [disabled]="guardando"
+                >
+
+                  @if (guardando) {
+
+                    Guardando...
+
+                  } @else if (perfilExiste) {
+
+                    Actualizar perfil
+
+                  } @else {
+
+                    Completar perfil
+
+                  }
+
+                </button>
+
+              }
+
+            </footer>
+
+          </form>
+
+        </main>
+
+      </section>
+
+    }
+
+  </div>
+
+</section>

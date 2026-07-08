@@ -1,0 +1,568 @@
+<div class="plans-page">
+
+  <main class="plans-container">
+
+
+    <!-- HERO -->
+
+    <section class="plans-hero">
+
+      <div>
+
+        <span class="section-pill">
+          Tu suscripción
+        </span>
+
+        <h1>
+          Mi
+          <span>
+            plan
+          </span>
+        </h1>
+
+        <p>
+          Administra las herramientas y capacidad
+          de tu cuenta de propietario.
+        </p>
+
+      </div>
+
+
+      <a
+        routerLink="/propietario"
+        class="secondary-button"
+      >
+        Volver al panel
+      </a>
+
+    </section>
+
+
+    @if (mensajeError) {
+
+      <div class="alert alert-error">
+
+        <span>!</span>
+
+        <div>
+
+          <strong>
+            No se pudo completar la operación
+          </strong>
+
+          <p>
+            {{ mensajeError }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="alert alert-success">
+
+        <span>✓</span>
+
+        <div>
+
+          <strong>
+            Plan actualizado
+          </strong>
+
+          <p>
+            {{ mensajeExito }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    @if (cargando) {
+
+      <section class="loading-card">
+
+        <span class="loader"></span>
+
+        <p>
+          Cargando tu suscripción...
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <!-- PLAN ACTUAL -->
+
+      @if (miPlan) {
+
+        <section class="current-plan">
+
+          <div class="current-plan-header">
+
+            <div>
+
+              <span class="current-label">
+                Plan actual
+              </span>
+
+              <h2>
+                {{ miPlan.nombrePlan }}
+              </h2>
+
+              <p>
+                {{ miPlan.descripcionPlan }}
+              </p>
+
+            </div>
+
+
+            <div class="current-status">
+
+              <span>
+                {{ miPlan.estadoSuscripcion }}
+              </span>
+
+              <strong>
+
+                S/
+                {{
+                  formatearPrecio(
+                    miPlan.precioMensual
+                  )
+                }}
+
+                <small>
+                  / mes
+                </small>
+
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="usage-header">
+
+            <span>
+              Habitaciones utilizadas
+            </span>
+
+            <strong>
+
+              {{ contarHabitacionesActivas() }}
+
+              /
+
+              {{ miPlan.limiteHabitaciones }}
+
+            </strong>
+
+          </div>
+
+
+          <div class="usage-progress">
+
+            <span
+              [style.width.%]="obtenerPorcentajeUso()"
+            >
+            </span>
+
+          </div>
+
+
+          <div class="current-features">
+
+            <div>
+
+              <span>🏠</span>
+
+              <strong>
+                Hasta {{ miPlan.limiteHabitaciones }}
+                habitaciones
+              </strong>
+
+            </div>
+
+
+            <div
+              [class.feature-disabled]="
+                !miPlan.permiteDestacar
+              "
+            >
+
+              <span>
+                {{
+                  miPlan.permiteDestacar
+                    ? '✓'
+                    : '×'
+                }}
+              </span>
+
+              <strong>
+                Publicaciones destacadas
+              </strong>
+
+            </div>
+
+
+            <div
+              [class.feature-disabled]="
+                !miPlan.permiteEstadisticas
+              "
+            >
+
+              <span>
+                {{
+                  miPlan.permiteEstadisticas
+                    ? '✓'
+                    : '×'
+                }}
+              </span>
+
+              <strong>
+                Estadísticas avanzadas
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="subscription-date">
+
+            <span>
+              Suscripción activa desde
+            </span>
+
+            <strong>
+              {{ formatearFecha(miPlan.fechaInicio) }}
+            </strong>
+
+          </div>
+
+        </section>
+
+      }
+
+
+      <!-- PLANES -->
+
+      <section class="plans-section">
+
+        <div class="section-heading">
+
+          <span class="section-pill">
+            Planes RoomMatch
+          </span>
+
+          <h2>
+            Elige el plan que crece contigo
+          </h2>
+
+          <p>
+            Publica más espacios y accede a herramientas
+            para gestionar mejor tus interesados.
+          </p>
+
+        </div>
+
+
+        <div class="plans-grid">
+
+          @for (
+            plan of planes;
+            track plan.idPlan
+          ) {
+
+            <article
+              class="plan-card"
+              [class.plan-current]="
+                esPlanActual(plan)
+              "
+              [class.plan-recommended]="
+                esPlanPro(plan)
+              "
+            >
+
+              @if (
+                esPlanPro(plan) &&
+                !esPlanActual(plan)
+              ) {
+
+                <span class="recommended-badge">
+                  Recomendado
+                </span>
+
+              }
+
+
+              @if (
+                esPlanActual(plan)
+              ) {
+
+                <span class="actual-badge">
+                  Plan actual
+                </span>
+
+              }
+
+
+              <div class="plan-card-header">
+
+                <h3>
+                  {{ plan.nombrePlan }}
+                </h3>
+
+                <p>
+                  {{ plan.descripcion }}
+                </p>
+
+              </div>
+
+
+              <div class="plan-price">
+
+                <small>
+                  S/
+                </small>
+
+                <strong>
+
+                  {{
+                    formatearPrecio(
+                      plan.precioMensual
+                    )
+                  }}
+
+                </strong>
+
+                <span>
+                  / mes
+                </span>
+
+              </div>
+
+
+              <div class="plan-features">
+
+                <div class="feature-enabled">
+
+                  <span>✓</span>
+
+                  Hasta
+                  <strong>
+                    {{ plan.limiteHabitaciones }}
+                  </strong>
+                  habitaciones
+
+                </div>
+
+
+                <div
+                  [class.feature-enabled]="
+                    plan.permiteDestacar
+                  "
+                  [class.feature-disabled]="
+                    !plan.permiteDestacar
+                  "
+                >
+
+                  <span>
+
+                    {{
+                      plan.permiteDestacar
+                        ? '✓'
+                        : '×'
+                    }}
+
+                  </span>
+
+                  Publicaciones destacadas
+
+                </div>
+
+
+                <div
+                  [class.feature-enabled]="
+                    plan.permiteEstadisticas
+                  "
+                  [class.feature-disabled]="
+                    !plan.permiteEstadisticas
+                  "
+                >
+
+                  <span>
+
+                    {{
+                      plan.permiteEstadisticas
+                        ? '✓'
+                        : '×'
+                    }}
+
+                  </span>
+
+                  Estadísticas avanzadas
+
+                </div>
+
+
+                <div class="feature-enabled">
+
+                  <span>✓</span>
+
+                  Gestión de interesados
+
+                </div>
+
+              </div>
+
+
+              <button
+                type="button"
+                class="plan-button"
+                [class.current-button]="
+                  esPlanActual(plan)
+                "
+                [disabled]="
+                  esPlanActual(plan) ||
+                  idPlanProcesando !== null
+                "
+                (click)="
+                  solicitarCambioPlan(plan)
+                "
+              >
+
+                @if (
+                  idPlanProcesando === plan.idPlan
+                ) {
+
+                  Actualizando...
+
+                } @else {
+
+                  {{ obtenerTextoBoton(plan) }}
+
+                }
+
+              </button>
+
+            </article>
+
+          }
+
+        </div>
+
+
+        <div class="demo-notice">
+
+          <span>
+            ℹ
+          </span>
+
+          <p>
+            Esta versión académica de RoomMatch utiliza
+            cambio de plan en modo demostración.
+            El cobro con tarjeta se integrará mediante
+            una pasarela de pagos antes de operar comercialmente.
+          </p>
+
+        </div>
+
+      </section>
+
+    }
+
+  </main>
+
+
+  @if (planSeleccionado) {
+
+    <div
+      class="confirm-overlay"
+      (click)="cancelarCambioPlan()"
+    >
+
+      <section
+        class="confirm-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="confirm-icon">
+          ✨
+        </div>
+
+
+        <h3>
+          {{ obtenerTituloConfirmacion() }}
+        </h3>
+
+
+        <p>
+          {{ obtenerTextoConfirmacion() }}
+        </p>
+
+
+        <div class="confirm-plan">
+
+          <span>
+            Nuevo plan
+          </span>
+
+          <strong>
+            {{ planSeleccionado.nombrePlan }}
+          </strong>
+
+          <p>
+
+            S/
+
+            {{
+              formatearPrecio(
+                planSeleccionado.precioMensual
+              )
+            }}
+
+            / mes
+
+          </p>
+
+        </div>
+
+
+        <div class="confirm-actions">
+
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="cancelarCambioPlan()"
+          >
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="confirm-button"
+            (click)="confirmarCambioPlan()"
+          >
+            Confirmar cambio
+          </button>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  }
+
+</div>

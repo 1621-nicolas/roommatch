@@ -1,0 +1,514 @@
+@if (
+  abierta &&
+  habitacion
+) {
+
+  <div
+    class="image-modal-overlay"
+    (click)="cerrarModal()"
+  >
+
+    <section
+      class="image-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+
+      <!-- =====================================================
+           HEADER
+      ====================================================== -->
+
+      <header class="image-modal-header">
+
+        <div>
+
+          <span class="image-modal-label">
+            Galería de habitación
+          </span>
+
+
+          <h2>
+            Gestionar imágenes
+          </h2>
+
+
+          <p>
+            {{ habitacion.titulo }}
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="image-modal-close"
+          (click)="cerrarModal()"
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
+
+      </header>
+
+
+      <!-- =====================================================
+           MENSAJES
+      ====================================================== -->
+
+      @if (mensajeError) {
+
+        <div class="image-alert image-alert-error">
+
+          <span>
+            !
+          </span>
+
+          <p>
+            {{ mensajeError }}
+          </p>
+
+        </div>
+      }
+
+
+      @if (mensajeExito) {
+
+        <div class="image-alert image-alert-success">
+
+          <span>
+            ✓
+          </span>
+
+          <p>
+            {{ mensajeExito }}
+          </p>
+
+        </div>
+      }
+
+
+      <!-- =====================================================
+           FORMULARIO
+      ====================================================== -->
+
+      <div class="image-add-section">
+
+        <div class="image-section-title">
+
+          <div>
+
+            <h3>
+              Agregar imagen
+            </h3>
+
+            <p>
+              Puedes registrar hasta 5 imágenes por habitación.
+            </p>
+
+          </div>
+
+
+          <span class="image-counter">
+
+            {{ imagenes.length }}/5
+
+          </span>
+
+        </div>
+
+
+        <div class="image-url-group">
+
+          <label for="urlImagen">
+            URL de la imagen
+          </label>
+
+
+          <div class="image-url-row">
+
+            <input
+              id="urlImagen"
+              type="url"
+              name="urlImagen"
+              [(ngModel)]="urlImagen"
+              placeholder="https://images.unsplash.com/..."
+              maxlength="255"
+              [disabled]="
+                agregando ||
+                imagenes.length >= 5
+              "
+              (keyup.enter)="agregarImagen()"
+            >
+
+
+            <button
+              type="button"
+              class="image-add-button"
+              [disabled]="
+                agregando ||
+                imagenes.length >= 5
+              "
+              (click)="agregarImagen()"
+            >
+
+              @if (agregando) {
+
+                Agregando...
+
+              } @else {
+
+                + Agregar
+
+              }
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        @if (
+          imagenes.length > 0
+        ) {
+
+          <label class="image-principal-option">
+
+            <input
+              type="checkbox"
+              name="principal"
+              [(ngModel)]="marcarPrincipalAlAgregar"
+            >
+
+            <span>
+
+              Usar como imagen principal
+
+              <small>
+                Se mostrará primero en las tarjetas de RoomMatch.
+              </small>
+
+            </span>
+
+          </label>
+
+        }
+
+      </div>
+
+
+      <!-- =====================================================
+           GALERÍA
+      ====================================================== -->
+
+      <div class="image-gallery-section">
+
+        <div class="image-section-title">
+
+          <div>
+
+            <h3>
+              Imágenes registradas
+            </h3>
+
+            <p>
+              La imagen principal será la portada de la habitación.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        @if (cargando) {
+
+          <div class="image-loading">
+
+            <div class="image-spinner"></div>
+
+            <p>
+              Cargando imágenes...
+            </p>
+
+          </div>
+
+        } @else if (
+          imagenes.length === 0
+        ) {
+
+          <div class="image-empty">
+
+            <div class="image-empty-icon">
+              🖼️
+            </div>
+
+            <h4>
+              Aún no agregaste imágenes
+            </h4>
+
+            <p>
+              Agrega la primera fotografía para mostrar tu habitación.
+            </p>
+
+          </div>
+
+        } @else {
+
+          <div class="image-grid">
+
+            @for (
+              imagen of imagenes;
+              track imagen.idImagen
+            ) {
+
+              <article
+                class="image-card"
+                [class.image-card-principal]="
+                  imagen.principal
+                "
+              >
+
+                <div class="image-preview">
+
+                  <img
+                    [src]="imagen.urlImagen"
+                    [alt]="
+                      'Imagen de ' +
+                      habitacion.titulo
+                    "
+                    (error)="imagenConError($event)"
+                  >
+
+
+                  <div class="image-fallback">
+                    🏠
+                  </div>
+
+
+                  @if (
+                    imagen.principal
+                  ) {
+
+                    <span class="image-principal-badge">
+                      ★ Principal
+                    </span>
+
+                  }
+
+
+                  <span class="image-order-badge">
+
+                    {{ imagen.orden }}
+
+                  </span>
+
+                </div>
+
+
+                <div class="image-card-body">
+
+                  <div class="image-card-url">
+
+                    <span>
+                      URL
+                    </span>
+
+                    <p>
+                      {{ imagen.urlImagen }}
+                    </p>
+
+                  </div>
+
+
+                  <div class="image-card-actions">
+
+                    @if (
+                      !imagen.principal
+                    ) {
+
+                      <button
+                        type="button"
+                        class="image-secondary-button"
+                        [disabled]="
+                          idImagenProcesando !== null
+                        "
+                        (click)="
+                          marcarPrincipal(imagen)
+                        "
+                      >
+
+                        @if (
+                          idImagenProcesando ===
+                          imagen.idImagen
+                        ) {
+
+                          Procesando...
+
+                        } @else {
+
+                          ★ Hacer principal
+
+                        }
+
+                      </button>
+
+                    } @else {
+
+                      <span class="image-current-principal">
+                        ✓ Portada actual
+                      </span>
+
+                    }
+
+
+                    <button
+                      type="button"
+                      class="image-delete-button"
+                      [disabled]="
+                        idImagenProcesando !== null
+                      "
+                      (click)="
+                        solicitarEliminar(imagen)
+                      "
+                    >
+                      Eliminar
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </article>
+
+            }
+
+          </div>
+
+        }
+
+      </div>
+
+
+      <!-- =====================================================
+           FOOTER
+      ====================================================== -->
+
+      <footer class="image-modal-footer">
+
+        <p>
+
+          La primera imagen registrada se asigna automáticamente
+          como principal.
+
+        </p>
+
+
+        <button
+          type="button"
+          class="image-done-button"
+          (click)="cerrarModal()"
+        >
+          Listo
+        </button>
+
+      </footer>
+
+    </section>
+
+
+    <!-- =====================================================
+         CONFIRMACIÓN ELIMINACIÓN
+    ====================================================== -->
+
+    @if (imagenEliminar) {
+
+      <div
+        class="image-confirm-overlay"
+        (click)="cancelarEliminar()"
+      >
+
+        <div
+          class="image-confirm-modal"
+          (click)="$event.stopPropagation()"
+        >
+
+          <div class="image-confirm-icon">
+            !
+          </div>
+
+
+          <h3>
+            ¿Eliminar imagen?
+          </h3>
+
+
+          <p>
+
+            Esta imagen será eliminada de la galería de
+
+            <strong>
+              "{{ habitacion.titulo }}"
+            </strong>.
+
+          </p>
+
+
+          @if (
+            imagenEliminar.principal
+          ) {
+
+            <div class="image-confirm-warning">
+
+              Era la imagen principal.
+              RoomMatch seleccionará automáticamente otra portada.
+
+            </div>
+
+          }
+
+
+          <div class="image-confirm-actions">
+
+            <button
+              type="button"
+              class="image-cancel-button"
+              (click)="cancelarEliminar()"
+            >
+              Cancelar
+            </button>
+
+
+            <button
+              type="button"
+              class="image-confirm-delete"
+              [disabled]="
+                idImagenProcesando !== null
+              "
+              (click)="confirmarEliminar()"
+            >
+
+              @if (
+                idImagenProcesando !== null
+              ) {
+
+                Eliminando...
+
+              } @else {
+
+                Sí, eliminar
+
+              }
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+}

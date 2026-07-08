@@ -1,0 +1,702 @@
+<div class="owner-page">
+
+  <main class="owner-container">
+
+
+    @if (cargando) {
+
+      <section class="owner-loading">
+
+        <div class="loading-spinner"></div>
+
+        <strong>
+          Preparando tu panel...
+        </strong>
+
+        <span>
+          Estamos cargando la actividad de tus habitaciones.
+        </span>
+
+      </section>
+
+    } @else {
+
+
+      @if (mensajeError) {
+
+        <div class="owner-alert owner-alert-error">
+
+          {{ mensajeError }}
+
+        </div>
+
+      }
+
+
+      <!-- =====================================================
+           USUARIO NO PROPIETARIO
+      ====================================================== -->
+
+      @if (!propietario) {
+
+        <section class="owner-onboarding">
+
+
+          <div class="owner-onboarding-content">
+
+            <span class="owner-eyebrow">
+              Para propietarios
+            </span>
+
+
+            <h1>
+
+              Convierte tus espacios en
+
+              <span>
+                nuevas oportunidades
+              </span>
+
+            </h1>
+
+
+            <p>
+
+              Publica habitaciones, conecta con personas
+              interesadas y administra tus consultas desde
+              RoomMatch.
+
+            </p>
+
+
+            <a
+              routerLink="/propietario/registro"
+              class="primary-button"
+            >
+
+              Convertirme en propietario
+
+              <span>
+                →
+              </span>
+
+            </a>
+
+          </div>
+
+
+          <div class="owner-benefits">
+
+            <article>
+
+              <span class="benefit-icon">
+                🏠
+              </span>
+
+              <div>
+
+                <strong>
+                  Publica habitaciones
+                </strong>
+
+                <p>
+                  Gestiona tus espacios desde un solo lugar.
+                </p>
+
+              </div>
+
+            </article>
+
+
+            <article>
+
+              <span class="benefit-icon">
+                👥
+              </span>
+
+              <div>
+
+                <strong>
+                  Recibe interesados
+                </strong>
+
+                <p>
+                  Conecta con usuarios que realmente buscan mudarse.
+                </p>
+
+              </div>
+
+            </article>
+
+
+            <article>
+
+              <span class="benefit-icon">
+                📊
+              </span>
+
+              <div>
+
+                <strong>
+                  Gestiona tus leads
+                </strong>
+
+                <p>
+                  Organiza consultas y realiza seguimiento.
+                </p>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+      } @else {
+
+
+        <!-- =====================================================
+             HERO
+        ====================================================== -->
+
+        <section class="owner-hero">
+
+
+          <div>
+
+            <span class="owner-eyebrow">
+              Panel de propietario
+            </span>
+
+
+            <h1>
+
+              Hola,
+
+              <span>
+                {{ obtenerPrimerNombre() }}
+              </span>
+
+              👋
+
+            </h1>
+
+
+            <p>
+
+              Gestiona tus habitaciones, revisa interesados
+              y controla el crecimiento de tus publicaciones.
+
+            </p>
+
+          </div>
+
+
+          <div class="hero-actions">
+
+            <a
+              routerLink="/propietario/habitaciones"
+              class="primary-button"
+            >
+
+              + Publicar habitación
+
+            </a>
+
+
+            <a
+              routerLink="/propietario/leads"
+              class="secondary-button"
+            >
+
+              Ver interesados
+
+            </a>
+
+          </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MÉTRICAS
+        ====================================================== -->
+
+        <section class="metrics-grid">
+
+
+          <article class="metric-card">
+
+            <span class="metric-icon metric-purple">
+              🏠
+            </span>
+
+
+            <div>
+
+              <small>
+                Habitaciones activas
+              </small>
+
+              <strong>
+                {{ contarHabitacionesActivas() }}
+              </strong>
+
+              <a routerLink="/propietario/habitaciones">
+                Administrar
+              </a>
+
+            </div>
+
+          </article>
+
+
+          <article class="metric-card">
+
+            <span class="metric-icon metric-blue">
+              👥
+            </span>
+
+
+            <div>
+
+              <small>
+                Interesados pendientes
+              </small>
+
+              <strong>
+                {{ contarLeadsPendientes() }}
+              </strong>
+
+              <a routerLink="/propietario/leads">
+                Revisar
+              </a>
+
+            </div>
+
+          </article>
+
+
+          <article class="metric-card">
+
+            <span class="metric-icon metric-green">
+              ✓
+            </span>
+
+
+            <div>
+
+              <small>
+                Contactados
+              </small>
+
+              <strong>
+                {{ contarLeadsContactados() }}
+              </strong>
+
+              <a routerLink="/propietario/leads">
+                Ver seguimiento
+              </a>
+
+            </div>
+
+          </article>
+
+
+          <article class="metric-card">
+
+            <span class="metric-icon metric-yellow">
+              ✨
+            </span>
+
+
+            <div>
+
+              <small>
+                Habitaciones destacadas
+              </small>
+
+              <strong>
+                {{ contarDestacadas() }}
+              </strong>
+
+              <a routerLink="/propietario/planes">
+                Ver beneficios
+              </a>
+
+            </div>
+
+          </article>
+
+
+        </section>
+
+
+        <!-- =====================================================
+             PLAN
+        ====================================================== -->
+
+        <section class="owner-plan-card">
+
+
+          <div class="plan-header">
+
+            <div>
+
+              <span class="owner-eyebrow">
+                Tu plan
+              </span>
+
+
+              <h2>
+                {{ propietario.nombrePlan }}
+              </h2>
+
+            </div>
+
+
+            <a
+              routerLink="/propietario/planes"
+              class="secondary-button"
+            >
+
+              Ver planes
+
+            </a>
+
+          </div>
+
+
+          <div class="plan-usage">
+
+
+            <div class="plan-usage-header">
+
+              <span>
+                Habitaciones utilizadas
+              </span>
+
+
+              <strong>
+
+                {{ contarHabitacionesActivas() }}
+
+                /
+
+                {{ propietario.limiteHabitaciones }}
+
+              </strong>
+
+            </div>
+
+
+            <div class="plan-progress">
+
+              <div
+                class="plan-progress-value"
+                [style.width.%]="obtenerPorcentajeUsoPlan()"
+              >
+              </div>
+
+            </div>
+
+
+            @if (alcanzoLimitePlan()) {
+
+              <div class="plan-limit-message">
+
+                <span>
+                  ⚡
+                </span>
+
+
+                <div>
+
+                  <strong>
+                    Alcanzaste el límite de tu plan
+                  </strong>
+
+                  <p>
+                    Mejora tu plan para publicar más habitaciones
+                    y acceder a herramientas comerciales.
+                  </p>
+
+                </div>
+
+
+                <a routerLink="/propietario/planes">
+
+                  Mejorar plan
+
+                  →
+
+                </a>
+
+              </div>
+
+            } @else {
+
+              <p class="plan-available">
+
+                Todavía puedes publicar
+
+                <strong>
+
+                  {{
+                    (propietario?.limiteHabitaciones ?? 0) -
+                    contarHabitacionesActivas()
+                  }}
+
+                </strong>
+
+                habitación(es).
+
+              </p>
+
+            }
+
+
+          </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             ACTIVIDAD / LEADS
+        ====================================================== -->
+
+        <section class="owner-activity">
+
+
+          <div class="section-heading">
+
+            <div>
+
+              <span class="owner-eyebrow">
+                Actividad reciente
+              </span>
+
+
+              <h2>
+                Últimos interesados
+              </h2>
+
+
+              <p>
+                Usuarios que enviaron consultas sobre tus habitaciones.
+              </p>
+
+            </div>
+
+
+            <a routerLink="/propietario/leads">
+
+              Ver todos
+
+              →
+
+            </a>
+
+          </div>
+
+
+          @if (leads.length === 0) {
+
+            <div class="empty-activity">
+
+              <span>
+                👥
+              </span>
+
+
+              <strong>
+                Aún no tienes interesados
+              </strong>
+
+
+              <p>
+                Las nuevas consultas aparecerán aquí.
+              </p>
+
+            </div>
+
+          } @else {
+
+            <div class="activity-list">
+
+
+              @for (
+                lead of leads.slice(0, 4);
+                track lead.idLead
+              ) {
+
+                <article class="activity-item">
+
+
+                  <span class="activity-avatar">
+
+                    {{
+                      lead.nombreInteresado
+                        .charAt(0)
+                        .toUpperCase()
+                    }}
+
+                  </span>
+
+
+                  <div class="activity-content">
+
+                    <strong>
+
+                      {{ lead.nombreInteresado }}
+
+                    </strong>
+
+
+                    <p>
+
+                      Está interesado en
+
+                      <b>
+                        {{ lead.tituloHabitacion }}
+                      </b>
+
+                    </p>
+
+
+                    <small>
+
+                      {{ formatearFecha(lead.fechaLead) }}
+
+                    </small>
+
+                  </div>
+
+
+                  <span
+                    class="activity-status"
+                    [class.status-pending]="
+                      lead.estado === 'pendiente'
+                    "
+                    [class.status-contacted]="
+                      lead.estado === 'contactado'
+                    "
+                  >
+
+                    {{ lead.estado }}
+
+                  </span>
+
+
+                </article>
+
+              }
+
+
+            </div>
+
+          }
+
+
+        </section>
+
+
+        <!-- =====================================================
+             ACCESOS
+        ====================================================== -->
+
+        <section class="owner-shortcuts">
+
+
+          <a routerLink="/propietario/habitaciones">
+
+            <span>
+              🏠
+            </span>
+
+
+            <div>
+
+              <strong>
+                Mis habitaciones
+              </strong>
+
+              <small>
+                Publica y administra tus espacios
+              </small>
+
+            </div>
+
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+          <a routerLink="/propietario/leads">
+
+            <span>
+              👥
+            </span>
+
+
+            <div>
+
+              <strong>
+                Interesados
+              </strong>
+
+              <small>
+                Gestiona consultas y seguimiento
+              </small>
+
+            </div>
+
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+          <a routerLink="/propietario/planes">
+
+            <span>
+              ✨
+            </span>
+
+
+            <div>
+
+              <strong>
+                Plan y facturación
+              </strong>
+
+              <small>
+                Mejora las herramientas de tu cuenta
+              </small>
+
+            </div>
+
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+        </section>
+
+
+      }
+
+    }
+
+  </main>
+
+</div>

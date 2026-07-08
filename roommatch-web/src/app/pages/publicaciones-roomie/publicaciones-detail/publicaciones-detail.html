@@ -1,0 +1,708 @@
+<section class="publication-detail-page">
+
+  <div class="publication-detail-container">
+
+
+    @if (cargando) {
+
+      <section class="publication-loading">
+
+        <div>
+          👥
+        </div>
+
+        <h2>
+          Cargando publicación...
+        </h2>
+
+        <p>
+          Estamos consultando la publicación Roomie.
+        </p>
+
+      </section>
+
+    } @else if (mensajeError && !publicacion) {
+
+      <section class="publication-error-page">
+
+        <div>
+          !
+        </div>
+
+        <h2>
+          No pudimos abrir esta publicación
+        </h2>
+
+        <p>
+          {{ mensajeError }}
+        </p>
+
+        <a routerLink="/publicaciones-roomie">
+          Volver a publicaciones
+        </a>
+
+      </section>
+
+    } @else if (publicacion) {
+
+
+      <!-- ===================================================
+           VOLVER
+      ==================================================== -->
+
+      <a
+        routerLink="/publicaciones-roomie"
+        class="publication-back"
+      >
+
+        ← Volver a publicaciones
+
+      </a>
+
+
+      <!-- ===================================================
+           HEADER
+      ==================================================== -->
+
+      <header class="publication-header">
+
+        <div>
+
+          <span class="publication-type">
+
+            {{
+              obtenerTextoTipo(
+                publicacion.tipoPublicacion
+              )
+            }}
+
+          </span>
+
+
+          <h1>
+            {{ publicacion.titulo }}
+          </h1>
+
+
+          <div class="publication-location">
+
+            📍 {{ publicacion.distrito }}
+
+            <span>
+              ·
+            </span>
+
+            Publicado
+
+            {{
+              formatearFecha(
+                publicacion.fechaPublicacion
+              )
+            }}
+
+          </div>
+
+        </div>
+
+
+        @if (
+          publicacion.porcentajeCompatibilidad !== null
+        ) {
+
+          <div class="publication-match-main">
+
+            <strong>
+
+              {{
+                publicacion.porcentajeCompatibilidad
+              }}%
+
+            </strong>
+
+            <span>
+              compatible contigo
+            </span>
+
+          </div>
+
+        }
+
+      </header>
+
+
+      <!-- ===================================================
+           GRID
+      ==================================================== -->
+
+      <div class="publication-grid">
+
+
+        <!-- =================================================
+             CONTENIDO PRINCIPAL
+        ================================================== -->
+
+        <main>
+
+
+          <!-- ===============================================
+               AUTOR
+          ================================================ -->
+
+          <section class="publication-author-card">
+
+            <div class="publication-avatar">
+
+              @if (publicacion.foto) {
+
+                <img
+                  [src]="publicacion.foto"
+                  [alt]="publicacion.nombreUsuario"
+                >
+
+              } @else {
+
+                {{
+                  obtenerIniciales(
+                    publicacion.nombreUsuario
+                  )
+                }}
+
+              }
+
+            </div>
+
+
+            <div class="publication-author-info">
+
+              <span>
+                Publicado por
+              </span>
+
+              <h2>
+
+                {{ publicacion.nombreUsuario }}
+
+                @if (publicacion.edad) {
+
+                  <small>
+                    , {{ publicacion.edad }}
+                  </small>
+
+                }
+
+              </h2>
+
+              <p>
+
+                {{
+                  publicacion.ocupacion ||
+                  'Usuario RoomMatch'
+                }}
+
+              </p>
+
+            </div>
+
+
+            @if (
+              publicacion.esMiPublicacion
+            ) {
+
+              <span class="publication-own-badge">
+
+                Tu publicación
+
+              </span>
+
+            }
+
+          </section>
+
+
+          <!-- ===============================================
+               DESCRIPCIÓN
+          ================================================ -->
+
+          <section class="publication-section">
+
+            <span class="publication-section-label">
+              Sobre la publicación
+            </span>
+
+            <h2>
+              ¿Qué está buscando?
+            </h2>
+
+            <p class="publication-description">
+
+              {{ publicacion.descripcion }}
+
+            </p>
+
+          </section>
+
+
+          <!-- ===============================================
+               DATOS
+          ================================================ -->
+
+          <section class="publication-data-grid">
+
+            <article>
+
+              <div>
+                📍
+              </div>
+
+              <section>
+
+                <span>
+                  Distrito
+                </span>
+
+                <strong>
+                  {{ publicacion.distrito }}
+                </strong>
+
+              </section>
+
+            </article>
+
+
+            <article>
+
+              <div>
+                S/
+              </div>
+
+              <section>
+
+                <span>
+                  Presupuesto
+                </span>
+
+                <strong>
+                  {{ obtenerPresupuesto() }}
+                </strong>
+
+              </section>
+
+            </article>
+
+
+            <article>
+
+              <div>
+                👥
+              </div>
+
+              <section>
+
+                <span>
+                  Tipo de búsqueda
+                </span>
+
+                <strong>
+
+                  {{
+                    obtenerTextoTipo(
+                      publicacion.tipoPublicacion
+                    )
+                  }}
+
+                </strong>
+
+              </section>
+
+            </article>
+
+
+            <article>
+
+              <div>
+                ♡
+              </div>
+
+              <section>
+
+                <span>
+                  Compatibilidad
+                </span>
+
+                <strong>
+
+                  @if (
+                    publicacion.porcentajeCompatibilidad !== null
+                  ) {
+
+                    {{
+                      publicacion.porcentajeCompatibilidad
+                    }}%
+
+                  } @else {
+
+                    Sin calcular
+
+                  }
+
+                </strong>
+
+              </section>
+
+            </article>
+
+          </section>
+
+
+          <!-- ===============================================
+               COMPATIBILIDAD
+          ================================================ -->
+
+          @if (
+            !publicacion.esMiPublicacion
+          ) {
+
+            <section class="publication-section compatibility-section">
+
+              <span class="publication-section-label">
+                Compatibilidad RoomMatch
+              </span>
+
+
+              <h2>
+                ¿Qué tan compatibles son?
+              </h2>
+
+
+              @if (
+                publicacion.porcentajeCompatibilidad !== null
+              ) {
+
+                <div class="compatibility-score">
+
+                  <div>
+
+                    <strong>
+
+                      {{
+                        publicacion.porcentajeCompatibilidad
+                      }}%
+
+                    </strong>
+
+                    <span>
+                      Compatibilidad
+                    </span>
+
+                  </div>
+
+
+                  <section>
+
+                    <div class="compatibility-progress">
+
+                      <div
+                        [style.width.%]="
+                          publicacion.porcentajeCompatibilidad
+                        "
+                      >
+                      </div>
+
+                    </div>
+
+
+                    <p>
+
+                      Este porcentaje se calcula usando
+                      las preferencias de convivencia
+                      registradas por ambos usuarios.
+
+                    </p>
+
+                  </section>
+
+                </div>
+
+
+                <div class="compatibility-columns">
+
+
+                  <!-- COINCIDENCIAS -->
+
+                  <article class="compatibility-positive">
+
+                    <h3>
+                      ✓ Coincidencias
+                    </h3>
+
+
+                    @for (
+                      coincidencia of obtenerCoincidencias();
+                      track coincidencia
+                    ) {
+
+                      <div>
+
+                        <span>
+                          ✓
+                        </span>
+
+                        {{ coincidencia }}
+
+                      </div>
+
+                    } @empty {
+
+                      <p>
+                        No hay coincidencias registradas.
+                      </p>
+
+                    }
+
+                  </article>
+
+
+                  <!-- DIFERENCIAS -->
+
+                  <article class="compatibility-differences">
+
+                    <h3>
+                      Diferencias
+                    </h3>
+
+
+                    @for (
+                      diferencia of obtenerDiferencias();
+                      track diferencia
+                    ) {
+
+                      <div>
+
+                        <span>
+                          !
+                        </span>
+
+                        {{ diferencia }}
+
+                      </div>
+
+                    } @empty {
+
+                      <p>
+                        No se encontraron diferencias importantes.
+                      </p>
+
+                    }
+
+                  </article>
+
+                </div>
+
+              } @else {
+
+                <div class="compatibility-unavailable">
+
+                  <div>
+                    ♡
+                  </div>
+
+                  <section>
+
+                    <h3>
+                      Compatibilidad todavía no calculada
+                    </h3>
+
+                    <p>
+
+                      Completa tu perfil de convivencia y
+                      calcula tus matches para conocer tu
+                      nivel de compatibilidad con
+                      {{ publicacion.nombreUsuario }}.
+
+                    </p>
+
+
+                    <a routerLink="/matches">
+
+                      Ir a mis matches →
+
+                    </a>
+
+                  </section>
+
+                </div>
+
+              }
+
+            </section>
+
+          }
+
+        </main>
+
+
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
+
+        <aside>
+
+
+          @if (
+            publicacion.esMiPublicacion
+          ) {
+
+            <section class="publication-sidebar-card">
+
+              <span class="sidebar-label">
+                Tu publicación
+              </span>
+
+              <h2>
+                Administra esta publicación
+              </h2>
+
+              <p>
+
+                Puedes editar, pausar o cerrar tu
+                publicación desde Mis publicaciones.
+
+              </p>
+
+
+              <a
+                routerLink="/mis-publicaciones"
+                class="publication-primary-link"
+              >
+
+                Administrar publicación
+
+              </a>
+
+            </section>
+
+          } @else {
+
+            <section class="publication-sidebar-card sticky-card">
+
+              <span class="sidebar-label">
+                Conecta de forma segura
+              </span>
+
+
+              <h2>
+
+                ¿Te gustaría conversar con
+
+                {{
+                  obtenerPrimerNombre(
+                    publicacion.nombreUsuario
+                  )
+                }}?
+
+              </h2>
+
+
+              <p>
+
+                Envía una solicitud de contacto.
+                Tus datos privados no se compartirán
+                hasta que la otra persona acepte.
+
+              </p>
+
+
+              @if (mensajeError) {
+
+                <div class="publication-message error">
+
+                  {{ mensajeError }}
+
+                </div>
+
+              }
+
+
+              @if (mensajeExito) {
+
+                <div class="publication-message success">
+
+                  {{ mensajeExito }}
+
+                </div>
+
+              }
+
+
+              @if (!mensajeExito) {
+
+                <label class="publication-message-label">
+
+                  Mensaje
+
+                  <textarea
+                    [(ngModel)]="mensajeSolicitud"
+                    maxlength="500"
+                    rows="6"
+                  >
+                  </textarea>
+
+                  <span>
+
+                    {{ mensajeSolicitud.length }}
+
+                    / 500
+
+                  </span>
+
+                </label>
+
+
+                <button
+                  type="button"
+                  class="publication-request-button"
+                  [disabled]="enviandoSolicitud"
+                  (click)="enviarSolicitud()"
+                >
+
+                  @if (enviandoSolicitud) {
+
+                    Enviando...
+
+                  } @else {
+
+                    Enviar solicitud de contacto
+
+                  }
+
+                </button>
+
+              }
+
+
+              <div class="publication-privacy">
+
+                🔒
+
+                <span>
+
+                  Tu privacidad está protegida por
+                  RoomMatch.
+
+                </span>
+
+              </div>
+
+            </section>
+
+          }
+
+        </aside>
+
+      </div>
+
+    }
+
+  </div>
+
+</section>

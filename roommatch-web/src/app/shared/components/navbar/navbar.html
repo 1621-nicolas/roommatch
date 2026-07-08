@@ -1,0 +1,586 @@
+<nav class="navbar">
+
+  <!-- =====================================================
+       LOGO
+       ===================================================== -->
+
+  <a
+    routerLink="/"
+    class="brand"
+    (click)="cerrarMenuUsuario()"
+  >
+
+    <span class="brand-icon">
+      ⌂
+    </span>
+
+    <span>
+      RoomMatch
+    </span>
+
+  </a>
+
+
+  <!-- =====================================================
+       NAVEGACIÓN CENTRAL
+       ===================================================== -->
+
+  <div class="nav-center">
+
+    <a
+      routerLink="/"
+      routerLinkActive="active-link"
+      [routerLinkActiveOptions]="{
+        exact: true
+      }"
+      (click)="cerrarMenuUsuario()"
+    >
+      Inicio
+    </a>
+
+
+    <a
+      routerLink="/habitaciones"
+      routerLinkActive="active-link"
+      (click)="cerrarMenuUsuario()"
+    >
+      Habitaciones
+    </a>
+
+
+    <a
+      routerLink="/publicaciones-roomie"
+      routerLinkActive="active-link"
+      (click)="cerrarMenuUsuario()"
+    >
+      Publicaciones Roomie
+    </a>
+
+
+    @if (
+      authService.estaAutenticado()
+    ) {
+
+      <a
+        routerLink="/matches"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Matches
+      </a>
+
+
+      <a
+        routerLink="/contactos"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Contactos
+      </a>
+
+
+      <a
+        routerLink="/favoritos"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Favoritos
+      </a>
+
+
+      <a
+        routerLink="/solicitudes"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Solicitudes
+      </a>
+
+
+      <a
+        routerLink="/notificaciones"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Notificaciones
+      </a>
+
+    }
+
+
+    <!-- =================================================
+         ADMINISTRADOR
+         ================================================= -->
+
+    @if (
+      authService.getRol() === 'ADMIN'
+    ) {
+
+      <a
+        routerLink="/admin/dashboard"
+        routerLinkActive="active-link"
+        (click)="cerrarMenuUsuario()"
+      >
+        Admin
+      </a>
+
+    }
+
+  </div>
+
+
+  <!-- =====================================================
+       ACCIONES DEL USUARIO
+       ===================================================== -->
+
+  <div class="nav-actions">
+
+    @if (
+      !authService.estaAutenticado()
+    ) {
+
+      <!-- =================================================
+           SIN SESIÓN
+           ================================================= -->
+
+      <a
+        routerLink="/login"
+        class="login-link"
+      >
+        Iniciar sesión
+      </a>
+
+
+      <a
+        routerLink="/register"
+        class="nav-button"
+      >
+        Crear cuenta
+      </a>
+
+    } @else {
+
+      <!-- =================================================
+           USUARIO AUTENTICADO
+           ================================================= -->
+
+      <div class="user-menu-wrapper">
+
+        <!-- BOTÓN DEL PERFIL -->
+
+        <button
+          type="button"
+          class="user-menu-trigger"
+          (click)="toggleMenuUsuario()"
+        >
+
+          <span class="nav-profile-avatar">
+
+            {{ obtenerIniciales() }}
+
+          </span>
+
+
+          <span class="nav-profile-info">
+
+            <strong>
+
+              {{
+                authService
+                  .getNombreUsuario()
+              }}
+
+            </strong>
+
+            <small>
+
+              @if (
+                esPropietario()
+              ) {
+
+                Perfil propietario
+
+              } @else {
+
+                Mi cuenta
+
+              }
+
+            </small>
+
+          </span>
+
+
+          <span
+            class="user-chevron"
+            [class.open]="
+              menuUsuarioAbierto
+            "
+          >
+            ▾
+          </span>
+
+        </button>
+
+
+        <!-- =================================================
+             MENÚ DESPLEGABLE
+             ================================================= -->
+
+        @if (
+          menuUsuarioAbierto
+        ) {
+
+          <div class="user-dropdown">
+
+
+            <!-- =============================================
+                 INFORMACIÓN DEL USUARIO
+                 ============================================= -->
+
+            <div class="dropdown-profile">
+
+              <div class="dropdown-avatar">
+
+                {{ obtenerIniciales() }}
+
+              </div>
+
+
+              <div class="dropdown-profile-info">
+
+                <strong>
+
+                  {{
+                    obtenerNombreCompleto()
+                  }}
+
+                </strong>
+
+                <span>
+
+                  {{ obtenerEmail() }}
+
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="dropdown-divider"></div>
+
+
+            <!-- =============================================
+                 MI CUENTA
+                 ============================================= -->
+
+            <a
+              routerLink="/mi-cuenta"
+              class="dropdown-option"
+              (click)="cerrarMenuUsuario()"
+            >
+
+              <span class="dropdown-icon">
+                👤
+              </span>
+
+
+              <div>
+
+                <strong>
+                  Mi cuenta
+                </strong>
+
+                <small>
+                  Perfil, contacto y privacidad
+                </small>
+
+              </div>
+
+            </a>
+
+
+            <!-- =============================================
+                 MIS PUBLICACIONES ROOMIE
+                 ============================================= -->
+
+            <a
+              routerLink="/mis-publicaciones"
+              class="dropdown-option"
+              (click)="cerrarMenuUsuario()"
+            >
+
+              <span class="dropdown-icon">
+                🔎
+              </span>
+
+
+              <div>
+
+                <strong>
+                  Mis publicaciones Roomie
+                </strong>
+
+                <small>
+                  Administra tus búsquedas
+                </small>
+
+              </div>
+
+            </a>
+
+
+            <!-- =============================================
+                 ESTADO DEL PROPIETARIO
+                 ============================================= -->
+
+            @if (
+              !estadoPropietarioVerificado
+            ) {
+
+              <div
+                class="
+                  dropdown-option
+                  owner-loading
+                "
+              >
+
+                <span class="dropdown-icon">
+                  ⏳
+                </span>
+
+
+                <div>
+
+                  <strong>
+                    Verificando perfil
+                  </strong>
+
+                  <small>
+                    Consultando RoomMatch...
+                  </small>
+
+                </div>
+
+              </div>
+
+            } @else {
+
+
+              <!-- ===========================================
+                   YA ES PROPIETARIO
+                   =========================================== -->
+
+              @if (
+                esPropietario()
+              ) {
+
+                <a
+                  routerLink="/propietario"
+                  class="
+                    dropdown-option
+                    owner-option
+                  "
+                  (click)="
+                    cerrarMenuUsuario()
+                  "
+                >
+
+                  <span class="dropdown-icon">
+                    💼
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      Panel de propietario
+                    </strong>
+
+                    <small>
+
+                      {{
+                        propietario
+                          ?.nombreComercial ||
+                        'Gestionar habitaciones'
+                      }}
+
+                    </small>
+
+                  </div>
+
+                </a>
+
+
+                <a
+                  routerLink="/propietario/habitaciones"
+                  class="dropdown-option"
+                  (click)="
+                    cerrarMenuUsuario()
+                  "
+                >
+
+                  <span class="dropdown-icon">
+                    🏠
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      Mis habitaciones
+                    </strong>
+
+                    <small>
+                      Publicaciones de vivienda
+                    </small>
+
+                  </div>
+
+                </a>
+
+
+                <a
+                  routerLink="/propietario/leads"
+                  class="dropdown-option"
+                  (click)="
+                    cerrarMenuUsuario()
+                  "
+                >
+
+                  <span class="dropdown-icon">
+                    👥
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      Interesados
+                    </strong>
+
+                    <small>
+                      Gestiona consultas recibidas
+                    </small>
+
+                  </div>
+
+                </a>
+
+
+                <a
+                  routerLink="/propietario/planes"
+                  class="dropdown-option"
+                  (click)="
+                    cerrarMenuUsuario()
+                  "
+                >
+
+                  <span class="dropdown-icon">
+                    ✨
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      Mi plan
+                    </strong>
+
+                    <small>
+                      Planes y herramientas
+                    </small>
+
+                  </div>
+
+                </a>
+
+              } @else {
+
+
+                <!-- =========================================
+                     USUARIO NORMAL
+                     ========================================= -->
+
+                <a
+                  routerLink="/propietario/registro"
+                  class="
+                    dropdown-option
+                    owner-option
+                  "
+                  (click)="
+                    cerrarMenuUsuario()
+                  "
+                >
+
+                  <span class="dropdown-icon">
+                    🏠
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      Convertirme en propietario
+                    </strong>
+
+                    <small>
+                      Publica tu primera habitación gratis
+                    </small>
+
+                  </div>
+
+                </a>
+
+              }
+
+            }
+
+
+            <div class="dropdown-divider"></div>
+
+
+            <!-- =============================================
+                 CERRAR SESIÓN
+                 ============================================= -->
+
+            <button
+              type="button"
+              class="
+                dropdown-option
+                logout-option
+              "
+              (click)="cerrarSesion()"
+            >
+
+              <span class="dropdown-icon">
+                ↪
+              </span>
+
+
+              <div>
+
+                <strong>
+                  Cerrar sesión
+                </strong>
+
+                <small>
+                  Salir de RoomMatch
+                </small>
+
+              </div>
+
+            </button>
+
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+  </div>
+
+</nav>

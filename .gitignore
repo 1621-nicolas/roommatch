@@ -1,0 +1,63 @@
+# ============================================================
+# ROOMMATCH
+# ============================================================
+
+
+# JAVA / MAVEN
+**/target/
+*.jar
+*.war
+*.class
+
+
+# ANGULAR / NODE
+**/node_modules/
+**/dist/
+**/.angular/
+**/.cache/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# VARIABLES Y SECRETOS
+.env
+.env.*
+!.env.example
+
+**/application-local.properties
+**/application-secret.properties
+
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+
+# SISTEMA
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+
+# LOGS
+*.log
+logs/
+
+
+# TEMPORALES
+*.tmp
+*.temp
+
+
+# DOCUMENTACIÓN ACADÉMICA LOCAL
+DECLARACIÓN DE USO DE INTELIGENCIA ARTIFICIAL.pdf
+Informe_Proyecto_Final_RoomMatch.pdf

@@ -1,0 +1,446 @@
+<section class="contacts-page">
+
+  <div class="contacts-container">
+
+
+    <header class="contacts-header">
+
+      <div>
+
+        <p class="contacts-pill">
+          Conexiones RoomMatch
+        </p>
+
+
+        <h1>
+
+          Mis contactos
+
+          <span>
+            desbloqueados
+          </span>
+
+        </h1>
+
+
+        <p>
+          Aquí aparecen las personas con las que
+          estableciste una conexión mediante una
+          solicitud de contacto aceptada.
+        </p>
+
+      </div>
+
+
+      <a
+        routerLink="/solicitudes"
+        class="contacts-requests-button"
+      >
+        Ver solicitudes
+      </a>
+
+    </header>
+
+
+    @if (mensajeError) {
+
+      <div class="auth-error">
+        {{ mensajeError }}
+      </div>
+
+    }
+
+
+    <section class="contacts-privacy-banner">
+
+      <div>
+        🔒
+      </div>
+
+
+      <section>
+
+        <h2>
+          Contactos protegidos
+        </h2>
+
+
+        <p>
+          Solo puedes ver los datos que cada usuario
+          decidió compartir desde su configuración
+          de privacidad.
+        </p>
+
+      </section>
+
+    </section>
+
+
+    @if (cargando) {
+
+      <section class="contacts-loading">
+
+        <h2>
+          Cargando tus contactos...
+        </h2>
+
+
+        <p>
+          Estamos consultando tus conexiones
+          desbloqueadas.
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <section class="contacts-grid">
+
+
+        @for (
+          contacto of contactos;
+          track contacto.idUsuario
+        ) {
+
+          <article class="contact-user-card">
+
+
+            <header class="contact-user-header">
+
+              <div class="contact-user-avatar">
+                {{ obtenerIniciales(contacto.nombreCompleto) }}
+              </div>
+
+
+              <div>
+
+                <h2>
+                  {{ contacto.nombreCompleto }}
+                </h2>
+
+
+                <p>
+                  Contacto desbloqueado
+                </p>
+
+
+                <small>
+
+                  Conexión aceptada el
+
+                  {{ formatearFecha(contacto.fechaConexion) }}
+
+                </small>
+
+              </div>
+
+
+              <span class="contact-unlocked-badge">
+                Desbloqueado
+              </span>
+
+            </header>
+
+
+            @if (
+              contacto.contacto &&
+              tieneDatosVisibles(contacto)
+            ) {
+
+              <section class="contact-data-list">
+
+
+                @if (
+                  contacto.contacto.telefono
+                ) {
+
+                  <article>
+
+                    <div class="contact-data-icon">
+                      ☎
+                    </div>
+
+
+                    <section>
+
+                      <span>
+                        Teléfono
+                      </span>
+
+
+                      <strong>
+                        {{ contacto.contacto.telefono }}
+                      </strong>
+
+                    </section>
+
+
+                    <a
+                      [href]="'tel:' + contacto.contacto.telefono"
+                    >
+                      Llamar
+                    </a>
+
+                  </article>
+
+                }
+
+
+                @if (
+                  contacto.contacto.whatsapp
+                ) {
+
+                  <article>
+
+                    <div class="contact-data-icon whatsapp">
+                      W
+                    </div>
+
+
+                    <section>
+
+                      <span>
+                        WhatsApp
+                      </span>
+
+
+                      <strong>
+                        {{ contacto.contacto.whatsapp }}
+                      </strong>
+
+                    </section>
+
+
+                    <a
+                      [href]="
+                        obtenerWhatsappUrl(
+                          contacto.contacto.whatsapp
+                        )
+                      "
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Abrir
+                    </a>
+
+                  </article>
+
+                }
+
+
+                @if (
+                  contacto.contacto.instagram
+                ) {
+
+                  <article>
+
+                    <div class="contact-data-icon instagram">
+                      IG
+                    </div>
+
+
+                    <section>
+
+                      <span>
+                        Instagram
+                      </span>
+
+
+                      <strong>
+                        {{ contacto.contacto.instagram }}
+                      </strong>
+
+                    </section>
+
+
+                    <a
+                      [href]="
+                        obtenerInstagramUrl(
+                          contacto.contacto.instagram
+                        )
+                      "
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ver perfil
+                    </a>
+
+                  </article>
+
+                }
+
+
+                @if (
+                  contacto.contacto.facebook
+                ) {
+
+                  <article>
+
+                    <div class="contact-data-icon facebook">
+                      F
+                    </div>
+
+
+                    <section>
+
+                      <span>
+                        Facebook
+                      </span>
+
+
+                      <strong>
+                        {{ contacto.contacto.facebook }}
+                      </strong>
+
+                    </section>
+
+
+                    <a
+                      [href]="
+                        obtenerFacebookUrl(
+                          contacto.contacto.facebook
+                        )
+                      "
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ver perfil
+                    </a>
+
+                  </article>
+
+                }
+
+
+                @if (
+                  contacto.contacto.emailContacto
+                ) {
+
+                  <article>
+
+                    <div class="contact-data-icon email">
+                      ✉
+                    </div>
+
+
+                    <section>
+
+                      <span>
+                        Email de contacto
+                      </span>
+
+
+                      <strong>
+                        {{ contacto.contacto.emailContacto }}
+                      </strong>
+
+                    </section>
+
+
+                    <a
+                      [href]="
+                        'mailto:' +
+                        contacto.contacto.emailContacto
+                      "
+                    >
+                      Escribir
+                    </a>
+
+                  </article>
+
+                }
+
+              </section>
+
+            } @else {
+
+              <section class="contact-no-public-data">
+
+                <div>
+                  🔐
+                </div>
+
+
+                <h3>
+                  Sin datos visibles
+                </h3>
+
+
+                <p>
+                  {{ contacto.nombreCompleto }}
+                  todavía no habilitó ningún
+                  dato de contacto en su privacidad.
+                </p>
+
+              </section>
+
+            }
+
+
+            <footer class="contact-user-footer">
+
+              <a routerLink="/solicitudes">
+                Ver solicitud
+              </a>
+
+
+              <span>
+                Solo se muestran datos autorizados
+              </span>
+
+            </footer>
+
+          </article>
+
+        } @empty {
+
+          <section class="contacts-empty">
+
+            <div>
+              🔒
+            </div>
+
+
+            <h2>
+              Todavía no tienes contactos desbloqueados
+            </h2>
+
+
+            <p>
+              Envía solicitudes a tus matches.
+              Cuando una persona acepte,
+              aparecerá aquí.
+            </p>
+
+
+            <div class="contacts-empty-actions">
+
+              <a
+                routerLink="/matches"
+                class="contacts-empty-primary"
+              >
+                Explorar matches
+              </a>
+
+
+              <a
+                routerLink="/solicitudes"
+                class="contacts-empty-secondary"
+              >
+                Ver solicitudes
+              </a>
+
+            </div>
+
+          </section>
+
+        }
+
+      </section>
+
+    }
+
+  </div>
+
+</section>

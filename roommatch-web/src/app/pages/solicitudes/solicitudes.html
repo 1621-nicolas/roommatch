@@ -1,0 +1,1246 @@
+<section class="requests-page">
+
+  <div class="requests-container">
+
+    <!-- =====================================================
+         CABECERA
+    ====================================================== -->
+
+    <header class="requests-header">
+
+      <div>
+
+        <p class="requests-pill">
+          Tu actividad en RoomMatch
+        </p>
+
+        <h1>
+          Solicitudes y
+          <span>actividad</span>
+        </h1>
+
+        <p>
+
+          Consulta tus conexiones con otros usuarios
+          y las habitaciones por las que mostraste interés.
+
+        </p>
+
+      </div>
+
+
+      @if (seccionActiva === 'contactos') {
+
+        <a
+          routerLink="/matches"
+          class="requests-explore-button"
+        >
+          Explorar matches
+        </a>
+
+      } @else {
+
+        <a
+          routerLink="/habitaciones"
+          class="requests-explore-button"
+        >
+          Explorar habitaciones
+        </a>
+
+      }
+
+    </header>
+
+
+    <!-- =====================================================
+         MENSAJES
+    ====================================================== -->
+
+    @if (mensajeError) {
+
+      <div class="auth-error">
+        {{ mensajeError }}
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="profile-success">
+        {{ mensajeExito }}
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         NAVEGACIÓN PRINCIPAL
+    ====================================================== -->
+
+    <nav class="requests-main-tabs">
+
+      <button
+        type="button"
+        [class.active]="seccionActiva === 'contactos'"
+        (click)="cambiarSeccion('contactos')"
+      >
+
+        <span class="requests-main-tab-icon">
+          ♡
+        </span>
+
+        <span class="requests-main-tab-content">
+
+          <strong>
+            Contactos
+          </strong>
+
+          <small>
+            Solicitudes entre usuarios
+          </small>
+
+        </span>
+
+
+        @if (
+          contarPendientesRecibidas() +
+          contarPendientesEnviadas() > 0
+        ) {
+
+          <span class="requests-main-tab-count">
+
+            {{
+              contarPendientesRecibidas() +
+              contarPendientesEnviadas()
+            }}
+
+          </span>
+
+        }
+
+      </button>
+
+
+      <button
+        type="button"
+        [class.active]="seccionActiva === 'habitaciones'"
+        (click)="cambiarSeccion('habitaciones')"
+      >
+
+        <span class="requests-main-tab-icon rooms">
+          ⌂
+        </span>
+
+        <span class="requests-main-tab-content">
+
+          <strong>
+            Habitaciones
+          </strong>
+
+          <small>
+            Intereses y consultas enviadas
+          </small>
+
+        </span>
+
+
+        @if (interesesHabitaciones.length > 0) {
+
+          <span class="requests-main-tab-count">
+
+            {{ interesesHabitaciones.length }}
+
+          </span>
+
+        }
+
+      </button>
+
+    </nav>
+
+
+    <!-- =====================================================
+         SECCIÓN CONTACTOS
+    ====================================================== -->
+
+    @if (seccionActiva === 'contactos') {
+
+      <section class="requests-section">
+
+
+        <!-- =================================================
+             RESUMEN CONTACTOS
+        ================================================== -->
+
+        <section class="requests-summary">
+
+          <article>
+
+            <div class="requests-summary-icon">
+              ↓
+            </div>
+
+            <div>
+
+              <span>
+                Recibidas pendientes
+              </span>
+
+              <strong>
+                {{ contarPendientesRecibidas() }}
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <article>
+
+            <div class="requests-summary-icon sent">
+              ↑
+            </div>
+
+            <div>
+
+              <span>
+                Enviadas pendientes
+              </span>
+
+              <strong>
+                {{ contarPendientesEnviadas() }}
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <article>
+
+            <div class="requests-summary-icon privacy">
+              🔒
+            </div>
+
+            <div>
+
+              <span>
+                Privacidad
+              </span>
+
+              <strong>
+                Contacto protegido
+              </strong>
+
+            </div>
+
+          </article>
+
+        </section>
+
+
+        <!-- =================================================
+             PESTAÑAS CONTACTOS
+        ================================================== -->
+
+        <nav class="requests-tabs">
+
+          <button
+            type="button"
+            [class.active]="pestanaActiva === 'recibidas'"
+            (click)="cambiarPestana('recibidas')"
+          >
+
+            Solicitudes recibidas
+
+
+            @if (
+              contarPendientesRecibidas() > 0
+            ) {
+
+              <span>
+                {{ contarPendientesRecibidas() }}
+              </span>
+
+            }
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pestanaActiva === 'enviadas'"
+            (click)="cambiarPestana('enviadas')"
+          >
+
+            Solicitudes enviadas
+
+
+            @if (
+              contarPendientesEnviadas() > 0
+            ) {
+
+              <span>
+                {{ contarPendientesEnviadas() }}
+              </span>
+
+            }
+
+          </button>
+
+        </nav>
+
+
+        <!-- =================================================
+             CARGANDO CONTACTOS
+        ================================================== -->
+
+        @if (cargando) {
+
+          <section class="requests-loading">
+
+            <h2>
+              Cargando solicitudes...
+            </h2>
+
+            <p>
+
+              Estamos consultando tus conexiones
+              de RoomMatch.
+
+            </p>
+
+          </section>
+
+        } @else {
+
+
+          <!-- ===============================================
+               RECIBIDAS
+          ================================================ -->
+
+          @if (
+            pestanaActiva === 'recibidas'
+          ) {
+
+            <section class="requests-list">
+
+              @for (
+                solicitud of solicitudesRecibidas;
+                track solicitud.idSolicitud
+              ) {
+
+                <article class="request-card">
+
+
+                  <header class="request-card-header">
+
+                    <div class="request-avatar">
+
+                      {{
+                        obtenerIniciales(
+                          solicitud.nombreEmisor
+                        )
+                      }}
+
+                    </div>
+
+
+                    <div class="request-user-info">
+
+                      <h2>
+                        {{ solicitud.nombreEmisor }}
+                      </h2>
+
+                      <p>
+                        Quiere conectar contigo
+                      </p>
+
+                      <small>
+
+                        Solicitud recibida
+
+                        {{
+                          formatearFecha(
+                            solicitud.fechaSolicitud
+                          )
+                        }}
+
+                      </small>
+
+                    </div>
+
+
+                    <span
+                      class="request-status"
+                      [class.request-status-pending]="solicitud.estado === 'pendiente'"
+                      [class.request-status-accepted]="solicitud.estado === 'aceptada'"
+                      [class.request-status-rejected]="solicitud.estado === 'rechazada'"
+                    >
+
+                      {{
+                        obtenerTextoEstado(
+                          solicitud.estado
+                        )
+                      }}
+
+                    </span>
+
+                  </header>
+
+
+                  <section class="request-message">
+
+                    <span>
+                      “
+                    </span>
+
+                    <p>
+                      {{ solicitud.mensaje }}
+                    </p>
+
+                  </section>
+
+
+                  @if (
+                    solicitud.estado === 'pendiente'
+                  ) {
+
+                    <footer class="request-actions">
+
+                      <button
+                        type="button"
+                        class="request-accept-button"
+                        [disabled]="accionandoId === solicitud.idSolicitud"
+                        (click)="aceptarSolicitud(solicitud)"
+                      >
+
+                        @if (
+                          accionandoId ===
+                          solicitud.idSolicitud
+                        ) {
+
+                          Procesando...
+
+                        } @else {
+
+                          Aceptar solicitud
+
+                        }
+
+                      </button>
+
+
+                      <button
+                        type="button"
+                        class="request-reject-button"
+                        [disabled]="accionandoId === solicitud.idSolicitud"
+                        (click)="abrirRechazar(solicitud)"
+                      >
+
+                        Rechazar
+
+                      </button>
+
+                    </footer>
+
+                  }
+
+
+                  @if (
+                    solicitud.estado === 'aceptada'
+                  ) {
+
+                    <footer class="request-resolved-action">
+
+                      <div>
+                        ✓
+                      </div>
+
+                      <p>
+                        El contacto fue desbloqueado.
+                      </p>
+
+                      <a routerLink="/contactos">
+                        Ver contacto
+                      </a>
+
+                    </footer>
+
+                  }
+
+
+                  @if (
+                    solicitud.estado === 'rechazada'
+                  ) {
+
+                    <footer class="request-rejected-note">
+
+                      <p>
+                        Esta solicitud fue rechazada.
+                      </p>
+
+
+                      @if (
+                        solicitud.fechaRespuesta
+                      ) {
+
+                        <small>
+
+                          Respondida
+
+                          {{
+                            formatearFecha(
+                              solicitud.fechaRespuesta
+                            )
+                          }}
+
+                        </small>
+
+                      }
+
+                    </footer>
+
+                  }
+
+                </article>
+
+              } @empty {
+
+                <section class="requests-empty">
+
+                  <div>
+                    ↓
+                  </div>
+
+                  <h2>
+                    No tienes solicitudes recibidas
+                  </h2>
+
+                  <p>
+
+                    Cuando otra persona quiera contactar
+                    contigo, su solicitud aparecerá aquí.
+
+                  </p>
+
+                  <a routerLink="/matches">
+                    Explorar matches
+                  </a>
+
+                </section>
+
+              }
+
+            </section>
+
+          }
+
+
+          <!-- ===============================================
+               ENVIADAS
+          ================================================ -->
+
+          @if (
+            pestanaActiva === 'enviadas'
+          ) {
+
+            <section class="requests-list">
+
+              @for (
+                solicitud of solicitudesEnviadas;
+                track solicitud.idSolicitud
+              ) {
+
+                <article class="request-card">
+
+
+                  <header class="request-card-header">
+
+                    <div class="request-avatar sent-avatar">
+
+                      {{
+                        obtenerIniciales(
+                          solicitud.nombreReceptor
+                        )
+                      }}
+
+                    </div>
+
+
+                    <div class="request-user-info">
+
+                      <h2>
+                        {{ solicitud.nombreReceptor }}
+                      </h2>
+
+                      <p>
+                        Solicitud de contacto enviada
+                      </p>
+
+                      <small>
+
+                        Enviada
+
+                        {{
+                          formatearFecha(
+                            solicitud.fechaSolicitud
+                          )
+                        }}
+
+                      </small>
+
+                    </div>
+
+
+                    <span
+                      class="request-status"
+                      [class.request-status-pending]="solicitud.estado === 'pendiente'"
+                      [class.request-status-accepted]="solicitud.estado === 'aceptada'"
+                      [class.request-status-rejected]="solicitud.estado === 'rechazada'"
+                    >
+
+                      {{
+                        obtenerTextoEstado(
+                          solicitud.estado
+                        )
+                      }}
+
+                    </span>
+
+                  </header>
+
+
+                  <section class="request-message">
+
+                    <span>
+                      “
+                    </span>
+
+                    <p>
+                      {{ solicitud.mensaje }}
+                    </p>
+
+                  </section>
+
+
+                  @if (
+                    solicitud.estado === 'pendiente'
+                  ) {
+
+                    <footer class="request-waiting-note">
+
+                      <div>
+                        ◷
+                      </div>
+
+                      <section>
+
+                        <strong>
+                          Esperando respuesta
+                        </strong>
+
+                        <p>
+
+                          {{ solicitud.nombreReceptor }}
+                          todavía no ha respondido.
+
+                        </p>
+
+                      </section>
+
+                    </footer>
+
+                  }
+
+
+                  @if (
+                    solicitud.estado === 'aceptada'
+                  ) {
+
+                    <footer class="request-resolved-action">
+
+                      <div>
+                        ✓
+                      </div>
+
+                      <p>
+
+                        {{ solicitud.nombreReceptor }}
+                        aceptó tu solicitud.
+
+                      </p>
+
+                      <a routerLink="/contactos">
+                        Ver contacto
+                      </a>
+
+                    </footer>
+
+                  }
+
+
+                  @if (
+                    solicitud.estado === 'rechazada'
+                  ) {
+
+                    <footer class="request-rejected-note">
+
+                      <p>
+                        La solicitud no fue aceptada.
+                      </p>
+
+
+                      @if (
+                        solicitud.fechaRespuesta
+                      ) {
+
+                        <small>
+
+                          Respondida
+
+                          {{
+                            formatearFecha(
+                              solicitud.fechaRespuesta
+                            )
+                          }}
+
+                        </small>
+
+                      }
+
+                    </footer>
+
+                  }
+
+                </article>
+
+              } @empty {
+
+                <section class="requests-empty">
+
+                  <div>
+                    ↑
+                  </div>
+
+                  <h2>
+                    Todavía no enviaste solicitudes
+                  </h2>
+
+                  <p>
+
+                    Explora tus matches y solicita
+                    contacto con las personas que más
+                    te interesen.
+
+                  </p>
+
+                  <a routerLink="/matches">
+                    Explorar matches
+                  </a>
+
+                </section>
+
+              }
+
+            </section>
+
+          }
+
+        }
+
+      </section>
+
+    }
+
+
+    <!-- =====================================================
+         SECCIÓN HABITACIONES
+    ====================================================== -->
+
+    @if (
+      seccionActiva === 'habitaciones'
+    ) {
+
+      <section class="requests-section">
+
+
+        <!-- =================================================
+             RESUMEN HABITACIONES
+        ================================================== -->
+
+        <section class="room-interest-summary">
+
+          <article>
+
+            <div class="room-interest-summary-icon">
+              ⌂
+            </div>
+
+            <div>
+
+              <span>
+                Habitaciones consultadas
+              </span>
+
+              <strong>
+                {{ interesesHabitaciones.length }}
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <article>
+
+            <div class="room-interest-summary-icon pending">
+              ◷
+            </div>
+
+            <div>
+
+              <span>
+                Esperando respuesta
+              </span>
+
+              <strong>
+                {{ contarInteresesPendientes() }}
+              </strong>
+
+            </div>
+
+          </article>
+
+
+          <article class="room-interest-summary-help">
+
+            <div class="room-interest-summary-icon privacy">
+              🔒
+            </div>
+
+            <div>
+
+              <span>
+                Información protegida
+              </span>
+
+              <strong>
+                Tu privacidad primero
+              </strong>
+
+            </div>
+
+          </article>
+
+        </section>
+
+
+        <!-- =================================================
+             CABECERA DE INTERESES
+        ================================================== -->
+
+        <header class="room-interests-header">
+
+          <div>
+
+            <span class="room-interests-pill">
+              Consultas enviadas
+            </span>
+
+            <h2>
+              Mis intereses en habitaciones
+            </h2>
+
+            <p>
+
+              Aquí puedes seguir el estado de las
+              habitaciones por las que enviaste una consulta.
+
+            </p>
+
+          </div>
+
+        </header>
+
+
+        <!-- =================================================
+             CARGANDO INTERESES
+        ================================================== -->
+
+        @if (cargandoIntereses) {
+
+          <section class="requests-loading">
+
+            <h2>
+              Cargando tus intereses...
+            </h2>
+
+            <p>
+
+              Estamos consultando las habitaciones
+              por las que mostraste interés.
+
+            </p>
+
+          </section>
+
+        } @else {
+
+
+          <!-- ===============================================
+               LISTA DE INTERESES
+          ================================================ -->
+
+          <section class="room-interests-list">
+
+            @for (
+              interes of interesesHabitaciones;
+              track interes.idLead
+            ) {
+
+              <article class="room-interest-card">
+
+
+                <!-- =========================================
+                     CABECERA
+                ========================================== -->
+
+                <header class="room-interest-card-header">
+
+                  <div class="room-interest-image">
+
+                    <span>
+                      ⌂
+                    </span>
+
+                    <small>
+                      {{ interes.distrito }}
+                    </small>
+
+                  </div>
+
+
+                  <div class="room-interest-info">
+
+                    <div class="room-interest-owner">
+
+                      <span>
+                        {{ interes.nombrePropietario }}
+                      </span>
+
+                    </div>
+
+
+                    <h2>
+                      {{ interes.tituloHabitacion }}
+                    </h2>
+
+
+                    <p class="room-interest-location">
+
+                      ⌖
+
+                      {{ interes.distrito }}
+
+                    </p>
+
+
+                    <div class="room-interest-price">
+
+                      {{
+                        formatearPrecio(
+                          interes.precio
+                        )
+                      }}
+
+                      <span>
+                        / mes
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="room-interest-state">
+
+                    <span
+                      class="room-interest-status"
+                      [class.pending]="interes.estado === 'pendiente'"
+                      [class.contacted]="interes.estado === 'contactado'"
+                      [class.closed]="interes.estado === 'cerrado'"
+                      [class.rejected]="interes.estado === 'rechazado'"
+                    >
+
+                      {{
+                        obtenerTextoEstadoInteres(
+                          interes.estado
+                        )
+                      }}
+
+                    </span>
+
+
+                    <small>
+
+                      Enviado
+
+                      {{
+                        formatearFecha(
+                          interes.fechaLead
+                        )
+                      }}
+
+                    </small>
+
+                  </div>
+
+                </header>
+
+
+                <!-- =========================================
+                     MENSAJE ENVIADO
+                ========================================== -->
+
+                <section class="room-interest-message">
+
+                  <span>
+                    Tu mensaje
+                  </span>
+
+
+                  <blockquote>
+
+                    “{{ interes.mensaje }}”
+
+                  </blockquote>
+
+                </section>
+
+
+                <!-- =========================================
+                     ESTADO
+                ========================================== -->
+
+                <section
+                  class="room-interest-state-detail"
+                  [class.pending]="interes.estado === 'pendiente'"
+                  [class.contacted]="interes.estado === 'contactado'"
+                  [class.closed]="interes.estado === 'cerrado'"
+                  [class.rejected]="interes.estado === 'rechazado'"
+                >
+
+                  <div class="room-interest-state-icon">
+
+                    @if (
+                      interes.estado === 'pendiente'
+                    ) {
+
+                      ◷
+
+                    } @else if (
+                      interes.estado === 'contactado'
+                    ) {
+
+                      ✓
+
+                    } @else if (
+                      interes.estado === 'cerrado'
+                    ) {
+
+                      ●
+
+                    } @else {
+
+                      ×
+
+                    }
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+
+                      {{
+                        obtenerTextoEstadoInteres(
+                          interes.estado
+                        )
+                      }}
+
+                    </strong>
+
+
+                    <p>
+
+                      {{
+                        obtenerDescripcionEstadoInteres(
+                          interes.estado
+                        )
+                      }}
+
+                    </p>
+
+                  </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     ACCIONES
+                ========================================== -->
+
+                <footer class="room-interest-actions">
+
+                  <a
+                    [routerLink]="[
+                      '/habitaciones',
+                      interes.idHabitacion
+                    ]"
+                    class="room-interest-detail-button"
+                  >
+
+                    Ver habitación
+
+                    <span>
+                      →
+                    </span>
+
+                  </a>
+
+                </footer>
+
+              </article>
+
+            } @empty {
+
+              <section class="requests-empty room-interests-empty">
+
+                <div>
+                  ⌂
+                </div>
+
+                <h2>
+                  Todavía no consultaste habitaciones
+                </h2>
+
+                <p>
+
+                  Explora las habitaciones disponibles
+                  y envía un mensaje al propietario
+                  cuando encuentres un espacio que
+                  te interese.
+
+                </p>
+
+                <a routerLink="/habitaciones">
+                  Explorar habitaciones
+                </a>
+
+              </section>
+
+            }
+
+          </section>
+
+        }
+
+      </section>
+
+    }
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL RECHAZAR SOLICITUD DE CONTACTO
+  ====================================================== -->
+
+  @if (solicitudRechazar) {
+
+    <div
+      class="request-modal-overlay"
+      (click)="cerrarRechazar()"
+    >
+
+      <section
+        class="request-reject-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="request-reject-modal-icon">
+          ×
+        </div>
+
+
+        <h2>
+          ¿Rechazar solicitud?
+        </h2>
+
+
+        <p>
+
+          La solicitud de
+
+          <strong>
+            {{ solicitudRechazar.nombreEmisor }}
+          </strong>
+
+          será marcada como rechazada.
+
+        </p>
+
+
+        <p class="request-reject-help">
+
+          La otra persona recibirá una
+          notificación del cambio de estado.
+
+        </p>
+
+
+        <div class="request-reject-modal-actions">
+
+          <button
+            type="button"
+            class="request-cancel-button"
+            (click)="cerrarRechazar()"
+          >
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="request-confirm-reject"
+            [disabled]="accionandoId === solicitudRechazar.idSolicitud"
+            (click)="confirmarRechazo()"
+          >
+
+            @if (
+              accionandoId ===
+              solicitudRechazar.idSolicitud
+            ) {
+
+              Rechazando...
+
+            } @else {
+
+              Rechazar solicitud
+
+            }
+
+          </button>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  }
+
+</section>

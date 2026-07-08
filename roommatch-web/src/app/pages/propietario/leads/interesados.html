@@ -1,0 +1,744 @@
+<div class="interesados-page">
+
+  <main class="interesados-container">
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <section class="interesados-hero">
+
+      <div>
+
+        <span class="section-pill">
+          Gestión de consultas
+        </span>
+
+
+        <h1>
+          Personas
+          <span>
+            interesadas
+          </span>
+        </h1>
+
+
+        <p>
+          Revisa quién está interesado en tus habitaciones
+          y organiza el seguimiento de cada consulta.
+        </p>
+
+      </div>
+
+
+      <a
+        routerLink="/propietario/habitaciones"
+        class="secondary-button"
+      >
+        Ver mis habitaciones
+      </a>
+
+    </section>
+
+
+    <!-- =====================================================
+         MENSAJES
+    ====================================================== -->
+
+    @if (mensajeError) {
+
+      <div class="alert alert-error">
+
+        <span>
+          !
+        </span>
+
+        <div>
+
+          <strong>
+            No se pudo completar la operación
+          </strong>
+
+          <p>
+            {{ mensajeError }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="alert alert-success">
+
+        <span>
+          ✓
+        </span>
+
+        <div>
+
+          <strong>
+            Estado actualizado
+          </strong>
+
+          <p>
+            {{ mensajeExito }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         CARGANDO
+    ====================================================== -->
+
+    @if (cargando) {
+
+      <section class="loading-card">
+
+        <span class="loader"></span>
+
+        <p>
+          Cargando personas interesadas...
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <!-- ===================================================
+           ESTADÍSTICAS
+      ==================================================== -->
+
+      <section class="stats-grid">
+
+
+        <button
+          type="button"
+          class="stat-card"
+          [class.stat-selected]="
+            estadoSeleccionado === 'todos'
+          "
+          (click)="cambiarFiltro('todos')"
+        >
+
+          <span class="stat-icon purple">
+            👥
+          </span>
+
+
+          <div>
+
+            <small>
+              Total
+            </small>
+
+            <strong>
+              {{ leads.length }}
+            </strong>
+
+          </div>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="stat-card"
+          [class.stat-selected]="
+            estadoSeleccionado === 'pendiente'
+          "
+          (click)="cambiarFiltro('pendiente')"
+        >
+
+          <span class="stat-icon yellow">
+            ⏳
+          </span>
+
+
+          <div>
+
+            <small>
+              Pendientes
+            </small>
+
+            <strong>
+              {{ contarPorEstado('pendiente') }}
+            </strong>
+
+          </div>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="stat-card"
+          [class.stat-selected]="
+            estadoSeleccionado === 'contactado'
+          "
+          (click)="cambiarFiltro('contactado')"
+        >
+
+          <span class="stat-icon blue">
+            💬
+          </span>
+
+
+          <div>
+
+            <small>
+              Contactados
+            </small>
+
+            <strong>
+              {{ contarPorEstado('contactado') }}
+            </strong>
+
+          </div>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="stat-card"
+          [class.stat-selected]="
+            estadoSeleccionado === 'cerrado'
+          "
+          (click)="cambiarFiltro('cerrado')"
+        >
+
+          <span class="stat-icon green">
+            ✓
+          </span>
+
+
+          <div>
+
+            <small>
+              Cerrados
+            </small>
+
+            <strong>
+              {{ contarPorEstado('cerrado') }}
+            </strong>
+
+          </div>
+
+        </button>
+
+      </section>
+
+
+      <!-- ===================================================
+           CABECERA LISTADO
+      ==================================================== -->
+
+      <section class="leads-section">
+
+        <div class="leads-header">
+
+          <div>
+
+            <span class="section-pill">
+              Bandeja de interesados
+            </span>
+
+
+            <h2>
+              Consultas recibidas
+            </h2>
+
+
+            <p>
+
+              Mostrando
+
+              <strong>
+                {{ obtenerLeadsFiltrados().length }}
+              </strong>
+
+              resultado(s).
+
+            </p>
+
+          </div>
+
+
+          <div class="filter-group">
+
+            <label for="estadoLead">
+              Filtrar por estado
+            </label>
+
+
+            <select
+              id="estadoLead"
+              name="estadoLead"
+              [(ngModel)]="estadoSeleccionado"
+            >
+
+              <option value="todos">
+                Todos
+              </option>
+
+              <option value="pendiente">
+                Pendientes
+              </option>
+
+              <option value="contactado">
+                Contactados
+              </option>
+
+              <option value="cerrado">
+                Cerrados
+              </option>
+
+              <option value="rechazado">
+                Rechazados
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SIN INTERESADOS
+        ================================================== -->
+
+        @if (
+          obtenerLeadsFiltrados().length === 0
+        ) {
+
+          <div class="empty-state">
+
+            <span>
+              👥
+            </span>
+
+
+            @if (
+              leads.length === 0
+            ) {
+
+              <h3>
+                Aún no recibiste interesados
+              </h3>
+
+              <p>
+                Cuando un usuario muestre interés en una
+                de tus habitaciones aparecerá aquí.
+              </p>
+
+            } @else {
+
+              <h3>
+                No hay interesados con este estado
+              </h3>
+
+              <p>
+                Cambia el filtro para revisar otras consultas.
+              </p>
+
+            }
+
+
+            <a
+              routerLink="/propietario/habitaciones"
+              class="primary-button"
+            >
+              Gestionar habitaciones
+            </a>
+
+          </div>
+
+        } @else {
+
+
+          <!-- ===============================================
+               LISTADO
+          ================================================ -->
+
+          <div class="leads-list">
+
+            @for (
+              lead of obtenerLeadsFiltrados();
+              track lead.idLead
+            ) {
+
+              <article class="lead-card">
+
+
+                <!-- =========================================
+                     INTERESADO
+                ========================================== -->
+
+                <header class="lead-card-header">
+
+                  <div class="lead-user">
+
+                    <div class="lead-avatar">
+
+                      {{
+                        obtenerIniciales(
+                          lead.nombreInteresado
+                        )
+                      }}
+
+                    </div>
+
+
+                    <div>
+
+                      <h3>
+                        {{ lead.nombreInteresado }}
+                      </h3>
+
+                      <p>
+                        {{ lead.emailInteresado }}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="lead-header-meta">
+
+                    <span
+                      class="status-badge"
+                      [class.status-pending]="
+                        lead.estado.toLowerCase() === 'pendiente'
+                      "
+                      [class.status-contacted]="
+                        lead.estado.toLowerCase() === 'contactado'
+                      "
+                      [class.status-closed]="
+                        lead.estado.toLowerCase() === 'cerrado'
+                      "
+                      [class.status-rejected]="
+                        lead.estado.toLowerCase() === 'rechazado'
+                      "
+                    >
+
+                      {{
+                        obtenerEtiquetaEstado(
+                          lead.estado
+                        )
+                      }}
+
+                    </span>
+
+
+                    <small>
+
+                      {{
+                        formatearFechaRelativa(
+                          lead.fechaLead
+                        )
+                      }}
+
+                    </small>
+
+                  </div>
+
+                </header>
+
+
+                <!-- =========================================
+                     HABITACIÓN
+                ========================================== -->
+
+                <div class="room-summary">
+
+                  <div class="room-summary-icon">
+                    🏠
+                  </div>
+
+
+                  <div class="room-summary-data">
+
+                    <span>
+                      Interesado en
+                    </span>
+
+
+                    <a
+                      [routerLink]="[
+                        '/habitaciones',
+                        lead.idHabitacion
+                      ]"
+                    >
+                      {{ lead.tituloHabitacion }}
+                    </a>
+
+
+                    <p>
+                      📍 {{ lead.distrito }}
+                    </p>
+
+                  </div>
+
+
+                  <strong class="room-price">
+
+                    S/
+
+                    {{
+                      formatearPrecio(
+                        lead.precio
+                      )
+                    }}
+
+                    <small>
+                      / mes
+                    </small>
+
+                  </strong>
+
+                </div>
+
+
+                <!-- =========================================
+                     MENSAJE
+                ========================================== -->
+
+                <div class="lead-message">
+
+                  <span>
+                    Mensaje del interesado
+                  </span>
+
+
+                  @if (
+                    lead.mensaje &&
+                    lead.mensaje.trim()
+                  ) {
+
+                    <p>
+                      “{{ lead.mensaje }}”
+                    </p>
+
+                  } @else {
+
+                    <p class="no-message">
+                      El usuario no agregó un mensaje.
+                    </p>
+
+                  }
+
+                </div>
+
+
+                <!-- =========================================
+                     ACCIONES
+                ========================================== -->
+
+                <footer class="lead-actions">
+
+
+                  @if (
+                    lead.estado.toLowerCase() === 'pendiente'
+                  ) {
+
+                    <button
+                      type="button"
+                      class="action-button primary-action"
+                      [disabled]="
+                        idLeadProcesando !== null
+                      "
+                      (click)="
+                        solicitarCambioEstado(
+                          lead,
+                          'contactado'
+                        )
+                      "
+                    >
+
+                      @if (
+                        idLeadProcesando === lead.idLead
+                      ) {
+
+                        Procesando...
+
+                      } @else {
+
+                        💬 Marcar contactado
+
+                      }
+
+                    </button>
+
+                  }
+
+
+                  @if (
+                    lead.estado.toLowerCase() === 'contactado'
+                  ) {
+
+                    <button
+                      type="button"
+                      class="action-button success-action"
+                      [disabled]="
+                        idLeadProcesando !== null
+                      "
+                      (click)="
+                        solicitarCambioEstado(
+                          lead,
+                          'cerrado'
+                        )
+                      "
+                    >
+                      ✓ Cerrar interesado
+                    </button>
+
+                  }
+
+
+                  @if (
+                    lead.estado.toLowerCase() !== 'cerrado' &&
+                    lead.estado.toLowerCase() !== 'rechazado'
+                  ) {
+
+                    <button
+                      type="button"
+                      class="action-button danger-action"
+                      [disabled]="
+                        idLeadProcesando !== null
+                      "
+                      (click)="
+                        solicitarCambioEstado(
+                          lead,
+                          'rechazado'
+                        )
+                      "
+                    >
+                      Rechazar
+                    </button>
+
+                  }
+
+
+                  <a
+                    [routerLink]="[
+                      '/habitaciones',
+                      lead.idHabitacion
+                    ]"
+                    class="detail-link"
+                  >
+                    Ver habitación →
+                  </a>
+
+                </footer>
+
+              </article>
+
+            }
+
+          </div>
+
+        }
+
+      </section>
+
+    }
+
+  </main>
+
+
+  <!-- =====================================================
+       CONFIRMACIÓN
+  ====================================================== -->
+
+  @if (
+    leadConfirmacion &&
+    estadoConfirmacion
+  ) {
+
+    <div
+      class="confirm-overlay"
+      (click)="cancelarConfirmacion()"
+    >
+
+      <section
+        class="confirm-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div
+          class="confirm-icon"
+          [class.confirm-icon-danger]="
+            estadoConfirmacion === 'rechazado'
+          "
+        >
+          !
+        </div>
+
+
+        <h3>
+          {{ obtenerTituloConfirmacion() }}
+        </h3>
+
+
+        <p>
+          {{ obtenerTextoConfirmacion() }}
+        </p>
+
+
+        <div class="confirm-user">
+
+          <strong>
+            {{ leadConfirmacion.nombreInteresado }}
+          </strong>
+
+          <span>
+            {{ leadConfirmacion.tituloHabitacion }}
+          </span>
+
+        </div>
+
+
+        <div class="confirm-actions">
+
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="cancelarConfirmacion()"
+          >
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="confirm-button"
+            [class.confirm-danger]="
+              estadoConfirmacion === 'rechazado'
+            "
+            (click)="confirmarCambioEstado()"
+          >
+            {{ obtenerTextoBotonConfirmacion() }}
+          </button>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  }
+
+</div>

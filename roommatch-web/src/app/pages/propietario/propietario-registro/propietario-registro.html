@@ -1,0 +1,392 @@
+<div class="owner-page">
+
+  <main class="owner-container">
+
+    <a
+      routerLink="/"
+      class="back-link"
+    >
+      ← Volver a RoomMatch
+    </a>
+
+
+    <section class="owner-header">
+
+      <div class="owner-badge">
+        Para propietarios
+      </div>
+
+      <h1>
+        Convierte tus espacios en
+        <span>
+          nuevas oportunidades
+        </span>
+      </h1>
+
+      <p>
+        Publica habitaciones y conecta
+        con personas que realmente están
+        buscando vivienda en RoomMatch.
+      </p>
+
+    </section>
+
+
+    <section class="benefits">
+
+      <article class="benefit">
+
+        <div class="benefit-icon">
+          🏠
+        </div>
+
+        <div>
+
+          <strong>
+            Publica habitaciones
+          </strong>
+
+          <p>
+            Gestiona tus espacios desde
+            un solo lugar.
+          </p>
+
+        </div>
+
+      </article>
+
+
+      <article class="benefit">
+
+        <div class="benefit-icon">
+          👥
+        </div>
+
+        <div>
+
+          <strong>
+            Recibe interesados
+          </strong>
+
+          <p>
+            Conecta con usuarios que
+            realmente buscan mudarse.
+          </p>
+
+        </div>
+
+      </article>
+
+
+      <article class="benefit">
+
+        <div class="benefit-icon">
+          📊
+        </div>
+
+        <div>
+
+          <strong>
+            Gestiona tus leads
+          </strong>
+
+          <p>
+            Organiza consultas y realiza
+            seguimiento a interesados.
+          </p>
+
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <section class="owner-form-card">
+
+      <div class="form-heading">
+
+        <span>
+          Comencemos
+        </span>
+
+        <h2>
+          Crea tu perfil de propietario
+        </h2>
+
+        <p>
+          Cuéntanos cómo publicarás tus
+          habitaciones dentro de RoomMatch.
+        </p>
+
+      </div>
+
+
+      @if (mensajeError) {
+
+        <div class="alert alert-error">
+
+          {{ mensajeError }}
+
+        </div>
+
+      }
+
+
+      @if (mensajeExito) {
+
+        <div class="alert alert-success">
+
+          {{ mensajeExito }}
+
+        </div>
+
+      }
+
+
+      <div class="form-section">
+
+        <label class="section-label">
+
+          ¿Cómo publicarás?
+
+        </label>
+
+
+        <div class="owner-types">
+
+          <button
+            type="button"
+            class="owner-type"
+            [class.active]="
+              formulario.tipoPropietario ===
+              'persona'
+            "
+            (click)="
+              seleccionarTipo('persona')
+            "
+          >
+
+            <div class="type-icon">
+              👤
+            </div>
+
+            <div>
+
+              <strong>
+                Como persona
+              </strong>
+
+              <p>
+                Tengo una o varias
+                habitaciones disponibles.
+              </p>
+
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="owner-type"
+            [class.active]="
+              formulario.tipoPropietario ===
+              'empresa'
+            "
+            (click)="
+              seleccionarTipo('empresa')
+            "
+          >
+
+            <div class="type-icon">
+              🏢
+            </div>
+
+            <div>
+
+              <strong>
+                Como empresa
+              </strong>
+
+              <p>
+                Represento una inmobiliaria
+                o negocio de alquiler.
+              </p>
+
+            </div>
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <form
+        (ngSubmit)="guardar()"
+      >
+
+        <div class="form-group">
+
+          <label
+            for="nombreComercial"
+          >
+
+            Nombre comercial
+
+          </label>
+
+          <input
+            id="nombreComercial"
+            name="nombreComercial"
+            type="text"
+            maxlength="150"
+            [(ngModel)]="
+              formulario.nombreComercial
+            "
+            [placeholder]="
+              formulario.tipoPropietario ===
+              'empresa'
+              ? 'Ej. Residencias Lima'
+              : 'Ej. Habitaciones Fabrizio'
+            "
+          >
+
+          <small>
+            Este nombre será visible en
+            tus publicaciones.
+          </small>
+
+        </div>
+
+
+        @if (
+          formulario.tipoPropietario ===
+          'empresa'
+        ) {
+
+          <div class="form-group">
+
+            <label
+              for="ruc"
+            >
+              RUC
+            </label>
+
+            <input
+              id="ruc"
+              name="ruc"
+              type="text"
+              maxlength="11"
+              inputmode="numeric"
+              [(ngModel)]="
+                formulario.ruc
+              "
+              placeholder="Ej. 20123456789"
+            >
+
+            <small>
+              Ingresa los 11 números
+              correspondientes al RUC.
+            </small>
+
+          </div>
+
+        }
+
+
+        <div class="form-group">
+
+          <div class="label-row">
+
+            <label
+              for="descripcion"
+            >
+              Descripción
+            </label>
+
+            <span>
+              {{
+                obtenerLongitudDescripcion()
+              }}/500
+            </span>
+
+          </div>
+
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            maxlength="500"
+            rows="6"
+            [(ngModel)]="
+              formulario.descripcion
+            "
+            placeholder="Describe brevemente los espacios que publicas, el tipo de inquilinos que buscas o las zonas donde tienes habitaciones..."
+          ></textarea>
+
+        </div>
+
+
+        <div class="free-plan">
+
+          <div class="free-icon">
+            ✨
+          </div>
+
+          <div>
+
+            <strong>
+              Comenzarás con el plan Gratis
+            </strong>
+
+            <p>
+              Podrás publicar una habitación.
+              Más adelante podrás mejorar tu
+              plan para ampliar tus herramientas.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="privacy-box">
+
+          🔒
+
+          <span>
+            Crear tu perfil de propietario
+            no modifica tus funciones de
+            usuario en RoomMatch.
+          </span>
+
+        </div>
+
+
+        <button
+          type="submit"
+          class="submit-button"
+          [disabled]="guardando"
+        >
+
+          @if (guardando) {
+
+            Creando perfil...
+
+          } @else {
+
+            Crear perfil de propietario
+            →
+
+          }
+
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+</div>

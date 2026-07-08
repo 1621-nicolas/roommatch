@@ -1,0 +1,1271 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.publicaciones-page {
+  min-height: calc(100vh - 92px);
+  background: #f8faff;
+  color: #10182b;
+  padding: 54px 24px 90px;
+}
+
+.publicaciones-container {
+  width: min(1050px, 100%);
+  margin: 0 auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.publicaciones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+  margin-bottom: 30px;
+}
+
+.header-tag,
+.form-tag,
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: #ede9ff;
+  color: #4936ce;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.publicaciones-header h1 {
+  margin: 9px 0 10px;
+  font-size: clamp(38px, 4vw, 58px);
+  line-height: 0.98;
+  letter-spacing: -2px;
+}
+
+.publicaciones-header h1 span {
+  color: #5945ec;
+}
+
+.publicaciones-header p {
+  margin: 0;
+  max-width: 670px;
+  color: #5e6d88;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary {
+  min-height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(
+    135deg,
+    #5145e7,
+    #7224e8
+  );
+  color: white;
+  font-weight: 800;
+  box-shadow:
+    0 12px 28px rgba(91, 64, 230, 0.24);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button-plus {
+  margin-right: 7px;
+  font-size: 20px;
+}
+
+.btn-secondary {
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid #d5dcf0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #38445c;
+  font-weight: 700;
+}
+
+.btn-delete {
+  min-height: 46px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-weight: 800;
+}
+
+/* =========================================================
+   MENSAJES
+========================================================= */
+
+.message {
+  padding: 14px 17px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.message-error {
+  background: #ffe2e2;
+  border: 1px solid #ffb7b7;
+  color: #a91717;
+}
+
+.message-success {
+  background: #e8fff0;
+  border: 1px solid #a8ebbd;
+  color: #08752e;
+}
+
+/* =========================================================
+   RESUMEN
+========================================================= */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 94px;
+  padding: 17px;
+  background: #ffffff;
+  border: 1px solid #dde4f1;
+  border-radius: 15px;
+  box-shadow:
+    0 8px 22px rgba(47, 62, 105, 0.045);
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+
+.summary-icon-purple {
+  background: #ebe7ff;
+  color: #5845e8;
+}
+
+.summary-icon-green {
+  background: #ddfae9;
+  color: #079447;
+}
+
+.summary-icon-yellow {
+  background: #fff3cf;
+  color: #bf7600;
+}
+
+.summary-icon-gray {
+  background: #eef1f7;
+  color: #68748a;
+}
+
+.summary-card > div:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  color: #687690;
+  font-size: 13px;
+}
+
+.summary-card strong {
+  font-size: 25px;
+}
+
+/* =========================================================
+   FORMULARIO
+========================================================= */
+
+.publication-form-card {
+  scroll-margin-top: 120px;
+  margin-bottom: 38px;
+  background: #ffffff;
+  border: 1px solid #dfe5f2;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 18px 44px rgba(39, 51, 91, 0.08);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+  padding: 28px 32px;
+  border-bottom: 1px solid #e3e8f3;
+}
+
+.form-header h2 {
+  margin: 9px 0 6px;
+  font-size: 31px;
+  letter-spacing: -1px;
+}
+
+.form-header p {
+  margin: 0;
+  color: #687690;
+}
+
+.close-form {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f4f9;
+  color: #536078;
+  font-size: 25px;
+}
+
+.form-section {
+  padding: 28px 32px;
+  border-bottom: 1px solid #e5eaf4;
+}
+
+.main-label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.type-option {
+  min-height: 105px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 17px;
+  border: 1px solid #dce3ef;
+  border-radius: 13px;
+  background: #fbfcff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.type-option input {
+  display: none;
+}
+
+.type-option:hover {
+  border-color: #a79af8;
+}
+
+.type-selected {
+  border-color: #705cf3;
+  background: #f4f1ff;
+  box-shadow:
+    0 0 0 2px rgba(109, 88, 244, 0.09);
+}
+
+.type-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #ebe7ff;
+  color: #5845e8;
+  font-weight: 900;
+}
+
+.type-option > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.type-option strong {
+  font-size: 14px;
+}
+
+.type-option small {
+  color: #71809a;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 19px;
+}
+
+.form-full {
+  grid-column: 1 / -1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  border: 1px solid #ced7e8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #162036;
+  outline: none;
+  font: inherit;
+}
+
+.form-group input {
+  height: 49px;
+  padding: 0 15px;
+}
+
+.form-group textarea {
+  min-height: 130px;
+  padding: 15px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #6c55f0;
+  box-shadow:
+    0 0 0 3px rgba(108, 85, 240, 0.11);
+}
+
+.counter {
+  align-self: flex-end;
+  color: #7c88a0;
+}
+
+.money-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced7e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.money-input:focus-within {
+  border-color: #6c55f0;
+  box-shadow:
+    0 0 0 3px rgba(108, 85, 240, 0.11);
+}
+
+.money-input span {
+  padding-left: 15px;
+  color: #394761;
+  font-weight: 800;
+}
+
+.money-input input {
+  border: none;
+  box-shadow: none !important;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 22px 32px;
+  background: #fafbfe;
+}
+
+/* =========================================================
+   LISTADO
+========================================================= */
+
+.publication-list-section {
+  margin-top: 15px;
+}
+
+.section-title {
+  margin-bottom: 20px;
+}
+
+.section-title h2 {
+  margin: 9px 0 5px;
+  font-size: 30px;
+}
+
+.section-title p {
+  margin: 0;
+  color: #687690;
+}
+
+.publication-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.publication-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #dce3ef;
+  border-radius: 17px;
+  overflow: hidden;
+  box-shadow:
+    0 10px 28px rgba(42, 55, 94, 0.055);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 20px 0;
+}
+
+.publication-type,
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.publication-type {
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.type-roomie {
+  color: #533ada;
+  background: #ece8ff;
+}
+
+.type-room {
+  color: #166cbf;
+  background: #e1f1ff;
+}
+
+.type-share {
+  color: #087c3f;
+  background: #ddf8e8;
+}
+
+.status {
+  padding: 7px 11px;
+  text-transform: capitalize;
+}
+
+.status-active {
+  color: #087b36;
+  background: #ddf9e8;
+}
+
+.status-paused {
+  color: #ad6800;
+  background: #fff1c7;
+}
+
+.status-closed {
+  color: #596477;
+  background: #e9edf3;
+}
+
+.card-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.card-content h3 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+.publication-description {
+  min-height: 48px;
+  margin: 0 0 20px;
+  color: #63718a;
+  line-height: 1.55;
+}
+
+.publication-data {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.data-card {
+  min-height: 67px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border-radius: 11px;
+  background: #f7f8fc;
+}
+
+.data-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #ebe7ff;
+  color: #5c48eb;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.data-card > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.data-card small {
+  color: #77849a;
+  font-size: 10px;
+}
+
+.data-card strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.publication-date {
+  padding-top: 17px;
+  color: #7b879c;
+  font-size: 12px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 15px 20px 20px;
+  border-top: 1px solid #e8ecf4;
+}
+
+.action {
+  min-height: 37px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid #d7deeb;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #4c5870;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.action:hover:not(:disabled) {
+  border-color: #7661f1;
+  color: #5a45e8;
+}
+
+.action-edit {
+  background: #5c46ea;
+  border-color: #5c46ea;
+  color: #ffffff;
+}
+
+.action-edit:hover {
+  color: #ffffff;
+}
+
+.action-activate {
+  color: #087b36;
+}
+
+.action-delete {
+  margin-left: auto;
+  border-color: #ffd2d2;
+  color: #d63131;
+}
+
+/* =========================================================
+   VACÍO / CARGA
+========================================================= */
+
+.empty-state {
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dce3ef;
+  border-radius: 18px;
+}
+
+.empty-icon {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 15px;
+  border-radius: 50%;
+  background: #eeeaff;
+  color: #5c48eb;
+  font-size: 27px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.empty-state p {
+  max-width: 470px;
+  margin: 0 0 22px;
+  color: #71809a;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.delete-modal {
+  width: min(430px, 100%);
+  padding: 32px;
+  border-radius: 18px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow:
+    0 28px 80px rgba(13, 22, 48, 0.28);
+}
+
+.delete-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #ffe3e3;
+  color: #dc2e2e;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.delete-modal h2 {
+  margin: 0 0 10px;
+}
+
+.delete-modal p {
+  margin: 0;
+  color: #66748c;
+  line-height: 1.55;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 11px;
+  margin-top: 25px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .publicaciones-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .publication-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .type-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 620px) {
+
+  .publicaciones-page {
+    padding:
+      35px
+      14px
+      70px;
+  }
+
+  .publicaciones-header h1 {
+    font-size: 40px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-header,
+  .form-section {
+    padding:
+      22px
+      19px;
+  }
+
+  .form-actions {
+    padding:
+      18px
+      19px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-full {
+    grid-column: auto;
+  }
+
+  .publication-data {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .action {
+    width: 100%;
+  }
+
+  .action-delete {
+    margin-left: 0;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+}
+/* =========================================================
+   VINCULACIÓN DE VIVIENDA
+========================================================= */
+
+.housing-section {
+  background: #fcfcff;
+}
+
+.housing-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 21px;
+}
+
+.housing-icon {
+  width: 47px;
+  height: 47px;
+  flex: 0 0 47px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #ebe7ff;
+  font-size: 21px;
+}
+
+.housing-heading h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.housing-heading p {
+  max-width: 720px;
+  margin: 0;
+  color: #687690;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   OPCIONES DE VIVIENDA
+========================================================= */
+
+.housing-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.housing-option {
+  min-height: 118px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px;
+  border: 1px solid #dce3ef;
+  border-radius: 13px;
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.housing-option:hover {
+  border-color: #a99cf9;
+  transform: translateY(-1px);
+}
+
+.housing-option input {
+  display: none;
+}
+
+.housing-selected {
+  border-color: #705cf3;
+  background: #f4f1ff;
+  box-shadow:
+    0 0 0 2px rgba(109, 88, 244, 0.09);
+}
+
+.housing-option-icon {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #ebe7ff;
+  color: #5945e9;
+  font-weight: 900;
+}
+
+.housing-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.housing-option-content strong {
+  font-size: 14px;
+}
+
+.housing-option-content small {
+  color: #71809a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   PANELES
+========================================================= */
+
+.roommatch-housing-panel,
+.external-housing-panel {
+  margin-top: 20px;
+  padding: 21px;
+  border: 1px solid #ddd8ff;
+  border-radius: 15px;
+  background: #faf9ff;
+}
+
+.external-housing-panel {
+  border-color: #d9e3f1;
+  background: #fbfcff;
+}
+
+.housing-panel-header {
+  margin-bottom: 18px;
+}
+
+.housing-panel-header h3 {
+  margin: 8px 0 5px;
+  font-size: 20px;
+}
+
+.housing-panel-header p {
+  margin: 0;
+  color: #6d7a92;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.housing-panel-tag {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e9e4ff;
+  color: #5440dc;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.external-tag {
+  background: #e9f2ff;
+  color: #1f67bd;
+}
+
+
+/* =========================================================
+   LISTADO DE HABITACIONES
+========================================================= */
+
+.housing-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.housing-room-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto
+    auto;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid #dce3ef;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #172036;
+  text-align: left;
+  transition: 0.2s ease;
+}
+
+.housing-room-card:hover {
+  border-color: #8b79f5;
+  transform: translateY(-1px);
+}
+
+.housing-room-selected {
+  border-color: #6852ee;
+  background: #f3f0ff;
+  box-shadow:
+    0 0 0 2px rgba(104, 82, 238, 0.08);
+}
+
+.room-card-icon {
+  width: 47px;
+  height: 47px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #ebe7ff;
+  color: #5944e9;
+  font-size: 20px;
+}
+
+.room-card-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.room-card-content strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-card-content small {
+  color: #687690;
+  font-size: 11px;
+}
+
+.room-owner {
+  color: #71809a;
+  font-size: 11px;
+}
+
+.verified-small {
+  display: inline-flex;
+  margin-left: 5px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #dff9e9;
+  color: #087d3a;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.room-card-price {
+  color: #5642e4;
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.room-card-price small {
+  color: #7b879c;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.room-card-check {
+  min-width: 87px;
+  color: #5b46e8;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.housing-loading,
+.housing-empty {
+  padding: 30px;
+  border: 1px dashed #cfd7e8;
+  border-radius: 12px;
+  color: #71809a;
+  text-align: center;
+}
+
+.housing-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.housing-empty > span {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: #ebe7ff;
+  color: #5945e8;
+  font-size: 21px;
+}
+
+.housing-empty strong {
+  color: #1c263b;
+}
+
+.housing-empty p {
+  margin: 7px 0 0;
+  font-size: 12px;
+}
+
+.privacy-hint {
+  color: #76839a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   VIVIENDA VINCULADA EN TARJETAS
+========================================================= */
+
+.linked-housing {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid #dcd6ff;
+  border-radius: 12px;
+  background: #f8f6ff;
+}
+
+.linked-external {
+  border-color: #d7e4f3;
+  background: #f8fbff;
+}
+
+.linked-housing-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #e9e4ff;
+  color: #5944e8;
+}
+
+.linked-external .linked-housing-icon {
+  background: #e5f1ff;
+  color: #1768bc;
+}
+
+.linked-housing-content {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.linked-housing-content small {
+  color: #604ce6;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.linked-external .linked-housing-content small {
+  color: #1768bc;
+}
+
+.linked-housing-content strong {
+  font-size: 13px;
+}
+
+.linked-housing-content span {
+  color: #65738c;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.linked-owner {
+  margin-top: 3px;
+}
+
+.linked-owner strong {
+  color: #344158;
+  font-size: 11px;
+}
+
+.linked-housing-action {
+  align-self: center;
+  color: #5844e7;
+  font-size: 11px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.external-price {
+  color: #1768bc !important;
+  font-weight: 900;
+}
+
+.external-reference {
+  margin-top: 3px;
+  color: #8792a5 !important;
+  font-size: 9px !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE VIVIENDA
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .housing-options {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 620px) {
+
+  .housing-room-card {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+  }
+
+  .room-card-price,
+  .room-card-check {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .linked-housing {
+    flex-wrap: wrap;
+  }
+
+  .linked-housing-action {
+    width: 100%;
+    margin-left: 52px;
+  }
+
+}

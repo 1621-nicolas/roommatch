@@ -1,0 +1,507 @@
+<section class="matches-page">
+
+  <div class="matches-container">
+
+    <header class="matches-header">
+
+      <div>
+
+        <p class="matches-pill">
+          Compatibilidad RoomMatch
+        </p>
+
+        <h1>
+          Encuentra tu
+          <span>match ideal</span>
+        </h1>
+
+        <p>
+          Analizamos tus hábitos y preferencias
+          para mostrarte personas con estilos
+          de convivencia compatibles.
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="matches-calculate-button"
+        [disabled]="calculando"
+        (click)="calcularCompatibilidad()"
+      >
+
+        @if (calculando) {
+
+          Calculando...
+
+        } @else {
+
+          Calcular compatibilidad
+
+        }
+
+      </button>
+
+    </header>
+
+
+    @if (mensajeError) {
+
+      <div class="auth-error">
+        {{ mensajeError }}
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="profile-success">
+        {{ mensajeExito }}
+      </div>
+
+    }
+
+
+    <section class="matches-toolbar">
+
+      <div>
+
+        <strong>
+          {{ totalElements }}
+        </strong>
+
+        <span>
+          personas compatibles encontradas
+        </span>
+
+      </div>
+
+
+      <form
+        class="matches-filter"
+        (ngSubmit)="aplicarFiltro()"
+      >
+
+        <label for="porcentajeMinimo">
+          Compatibilidad mínima
+        </label>
+
+        <select
+          id="porcentajeMinimo"
+          name="porcentajeMinimo"
+          [(ngModel)]="porcentajeMinimo"
+        >
+
+          <option [ngValue]="null">
+            Todas
+          </option>
+
+          <option [ngValue]="90">
+            90% o más
+          </option>
+
+          <option [ngValue]="80">
+            80% o más
+          </option>
+
+          <option [ngValue]="70">
+            70% o más
+          </option>
+
+          <option [ngValue]="50">
+            50% o más
+          </option>
+
+        </select>
+
+
+        <button
+          type="submit"
+        >
+          Filtrar
+        </button>
+
+
+        @if (porcentajeMinimo !== null) {
+
+          <button
+            type="button"
+            class="matches-clear-filter"
+            (click)="limpiarFiltro()"
+          >
+            Limpiar
+          </button>
+
+        }
+
+      </form>
+
+    </section>
+
+
+    @if (cargando) {
+
+      <section class="matches-loading">
+
+        <h2>
+          Buscando personas compatibles...
+        </h2>
+
+        <p>
+          Estamos consultando tus matches.
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <section class="matches-grid">
+
+        @for (
+          match of matches;
+          track match.idMatch
+        ) {
+
+          <article class="match-profile-card">
+
+
+            <div class="match-card-top">
+
+              @if (match.foto) {
+
+                <img
+                  [src]="match.foto"
+                  [alt]="obtenerNombreCompleto(match)"
+                  class="match-profile-photo"
+                >
+
+              } @else {
+
+                <div class="match-profile-avatar">
+                  {{ obtenerIniciales(match) }}
+                </div>
+
+              }
+
+
+              <div class="match-person-info">
+
+                <h2>
+                  {{ obtenerNombreCompleto(match) }}
+                </h2>
+
+                <p>
+
+                  @if (match.edad) {
+
+                    {{ match.edad }} años
+
+                  }
+
+                  @if (
+                    match.edad &&
+                    match.ocupacion
+                  ) {
+
+                    ·
+
+                  }
+
+                  @if (match.ocupacion) {
+
+                    {{ match.ocupacion }}
+
+                  }
+
+                </p>
+
+
+                @if (match.universidad) {
+
+                  <small>
+                    {{ match.universidad }}
+                  </small>
+
+                }
+
+              </div>
+
+
+              <button
+                type="button"
+                class="match-favorite-button"
+                title="Agregar a favoritos"
+                (click)="agregarFavorito(match)"
+              >
+                ♡
+              </button>
+
+            </div>
+
+
+            <section
+              class="match-percentage"
+              [class]="obtenerClaseCompatibilidad(match.porcentaje)"
+            >
+
+              <div>
+
+                <strong>
+                  {{ match.porcentaje }}%
+                </strong>
+
+                <span>
+                  {{ obtenerNivelCompatibilidad(match.porcentaje) }}
+                </span>
+
+              </div>
+
+
+              <div class="match-progress">
+
+                <div
+                  class="match-progress-value"
+                  [style.width.%]="match.porcentaje"
+                >
+                </div>
+
+              </div>
+
+            </section>
+
+
+            <section class="match-criteria">
+
+              <div class="match-coincidences">
+
+                <h3>
+                  Coincidencias
+                </h3>
+
+                <ul>
+
+                  @for (
+                    criterio of separarCriterios(match.coincidencias);
+                    track criterio
+                  ) {
+
+                    <li>
+                      <span>✓</span>
+                      {{ criterio }}
+                    </li>
+
+                  }
+
+                </ul>
+
+              </div>
+
+
+              <div class="match-differences">
+
+                <h3>
+                  Diferencias
+                </h3>
+
+                <ul>
+
+                  @for (
+                    diferencia of separarCriterios(match.diferencias);
+                    track diferencia
+                  ) {
+
+                    <li>
+                      <span>•</span>
+                      {{ diferencia }}
+                    </li>
+
+                  }
+
+                </ul>
+
+              </div>
+
+            </section>
+
+
+            <footer class="match-card-actions">
+
+              <button
+                type="button"
+                class="match-contact-button"
+                (click)="abrirSolicitud(match)"
+              >
+                Enviar solicitud
+              </button>
+
+
+              <a
+                routerLink="/favoritos"
+                class="match-secondary-button"
+              >
+                Ver favoritos
+              </a>
+
+            </footer>
+
+          </article>
+
+        } @empty {
+
+          <section class="matches-empty">
+
+            <div>
+              ♡
+            </div>
+
+            <h2>
+              Todavía no tienes matches
+            </h2>
+
+            <p>
+              Calcula tu compatibilidad para encontrar
+              personas con hábitos similares.
+            </p>
+
+            <button
+              type="button"
+              (click)="calcularCompatibilidad()"
+            >
+              Calcular compatibilidad
+            </button>
+
+          </section>
+
+        }
+
+      </section>
+
+
+      @if (totalPages > 1) {
+
+        <nav class="matches-pagination">
+
+          <button
+            type="button"
+            [disabled]="page === 0"
+            (click)="paginaAnterior()"
+          >
+            Anterior
+          </button>
+
+          <span>
+            Página
+            {{ page + 1 }}
+            de
+            {{ totalPages }}
+          </span>
+
+          <button
+            type="button"
+            [disabled]="page >= totalPages - 1"
+            (click)="paginaSiguiente()"
+          >
+            Siguiente
+          </button>
+
+        </nav>
+
+      }
+
+    }
+
+  </div>
+
+
+  @if (usuarioSolicitud) {
+
+    <div
+      class="match-modal-overlay"
+      (click)="cerrarSolicitud()"
+    >
+
+      <section
+        class="match-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <button
+          type="button"
+          class="match-modal-close"
+          (click)="cerrarSolicitud()"
+        >
+          ×
+        </button>
+
+
+        <div class="match-modal-avatar">
+          {{ obtenerIniciales(usuarioSolicitud) }}
+        </div>
+
+
+        <h2>
+          Contactar a
+          {{ usuarioSolicitud.nombres }}
+        </h2>
+
+
+        <p>
+          Envía una solicitud. Si la acepta,
+          podrán desbloquear los datos de contacto
+          permitidos.
+        </p>
+
+
+        <form
+          (ngSubmit)="enviarSolicitud()"
+        >
+
+          <label for="mensajeSolicitud">
+            Mensaje
+          </label>
+
+          <textarea
+            id="mensajeSolicitud"
+            name="mensajeSolicitud"
+            rows="5"
+            maxlength="500"
+            [(ngModel)]="mensajeSolicitud"
+          >
+          </textarea>
+
+
+          <small>
+            {{ mensajeSolicitud.length }}
+            / 500 caracteres
+          </small>
+
+
+          <button
+            type="submit"
+            [disabled]="enviandoSolicitud"
+          >
+
+            @if (enviandoSolicitud) {
+
+              Enviando...
+
+            } @else {
+
+              Enviar solicitud
+
+            }
+
+          </button>
+
+        </form>
+
+      </section>
+
+    </div>
+
+  }
+
+</section>

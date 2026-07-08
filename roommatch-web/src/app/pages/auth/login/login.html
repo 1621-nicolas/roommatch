@@ -1,0 +1,189 @@
+<section class="login-page">
+
+  <div class="route-search">
+    <span class="search-icon">⌕</span>
+    <span class="search-placeholder">Buscar ruta o pantalla...</span>
+
+    <a routerLink="/login">/login</a>
+    <a routerLink="/register">/register</a>
+    <a routerLink="/perfil">/perfil</a>
+    <a routerLink="/matches">/matches</a>
+    <a routerLink="/habitaciones">/habitaciones</a>
+
+    <strong>Ruta actual: /login</strong>
+  </div>
+
+  <section class="login-card">
+
+    <div class="login-left">
+
+      <h1>
+        Inicia sesión en
+        <span>RoomMatch</span>
+      </h1>
+
+      <p class="login-subtitle">
+        Entra para encontrar roomies compatibles y habitaciones que se ajusten a tu estilo de vida.
+      </p>
+
+      @if (mensajeError) {
+        <div class="auth-error">
+          {{ mensajeError }}
+        </div>
+      }
+
+      <form (ngSubmit)="iniciarSesion()" class="login-form">
+
+        <div class="login-field">
+          <label for="email">Email</label>
+
+          <div class="login-input">
+            <span>✉</span>
+
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="tu@email.com"
+              [(ngModel)]="loginData.email"
+            >
+          </div>
+        </div>
+
+        <div class="login-field">
+          <div class="login-label-row">
+            <label for="password">Contraseña</label>
+            <a routerLink="/login">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <div class="login-input">
+            <span>🔒</span>
+
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              [(ngModel)]="loginData.password"
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="login-main-button" [disabled]="cargando">
+          @if (cargando) {
+            Ingresando...
+          } @else {
+            Ingresar
+          }
+        </button>
+
+        <div class="login-separator">
+          <span></span>
+          <small>o</small>
+          <span></span>
+        </div>
+
+        <a routerLink="/" class="login-secondary-button">
+          Continuar explorando
+        </a>
+
+      </form>
+
+      <p class="login-register-text">
+        ¿No tienes cuenta?
+        <a routerLink="/register">Regístrate</a>
+      </p>
+
+    </div>
+
+    <div class="login-right">
+
+      <article class="preview-user preview-user-one">
+        <div class="preview-avatar">C</div>
+
+        <div>
+          <h3>Camila, 22</h3>
+          <p>Estudiante</p>
+          <strong>95% Compatible</strong>
+        </div>
+
+        <span class="preview-heart">♡</span>
+      </article>
+
+      <article class="preview-user preview-user-two">
+        <div class="preview-avatar">D</div>
+
+        <div>
+          <h3>Diego, 24</h3>
+          <p>Diseñador</p>
+          <strong class="warning">85% Compatible</strong>
+        </div>
+
+        <span class="preview-heart">♡</span>
+      </article>
+
+      <div class="preview-center-heart">
+        ♥
+      </div>
+
+      <article class="preview-room">
+        <div class="preview-room-image"></div>
+
+        <div class="preview-room-info">
+          <h3>Habitación en Miraflores</h3>
+          <p>Miraflores, Lima</p>
+
+          <strong>S/ 1,250 / mes</strong>
+
+          <div class="preview-room-tags">
+            <span>Amoblado</span>
+            <span>Baño privado</span>
+            <span>Wi-Fi</span>
+          </div>
+
+          <a routerLink="/habitaciones/1">
+            Ver detalle
+          </a>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="login-benefits">
+
+      <article>
+        <div>1</div>
+        <section>
+          <h3>Compatibilidad real</h3>
+          <p>Algoritmo basado en tu estilo de vida, hábitos y preferencias.</p>
+        </section>
+      </article>
+
+      <article>
+        <div>2</div>
+        <section>
+          <h3>Privacidad protegida</h3>
+          <p>Tu información está segura. Solo compartimos lo que tú decides.</p>
+        </section>
+      </article>
+
+      <article>
+        <div>3</div>
+        <section>
+          <h3>Habitaciones verificables</h3>
+          <p>Publicaciones revisadas para tu seguridad y confianza.</p>
+        </section>
+      </article>
+
+    </div>
+
+  </section>
+
+  <p class="login-legal">
+    Al iniciar sesión, aceptas nuestros
+    <a routerLink="/login">Términos y Condiciones</a>
+    y nuestra
+    <a routerLink="/login">Política de Privacidad</a>.
+  </p>
+
+</section>

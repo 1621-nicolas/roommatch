@@ -1,0 +1,1200 @@
+<div class="rooms-page">
+
+  <main class="rooms-container">
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <section class="rooms-hero">
+
+      <div>
+
+        <span class="section-pill">
+          Tus espacios
+        </span>
+
+        <h1>
+          Mis
+          <span>
+            habitaciones
+          </span>
+        </h1>
+
+        <p>
+          Publica, administra y controla la disponibilidad
+          de tus espacios en RoomMatch.
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="abrirNuevaHabitacion()"
+      >
+        + Nueva habitación
+      </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         MENSAJES
+    ====================================================== -->
+
+    @if (mensajeError) {
+
+      <div class="alert alert-error">
+
+        <span>
+          !
+        </span>
+
+        <div>
+
+          <strong>
+            No se pudo completar la operación
+          </strong>
+
+          <p>
+            {{ mensajeError }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    @if (mensajeExito) {
+
+      <div class="alert alert-success">
+
+        <span>
+          ✓
+        </span>
+
+        <div>
+
+          <strong>
+            Operación completada
+          </strong>
+
+          <p>
+            {{ mensajeExito }}
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         CARGANDO
+    ====================================================== -->
+
+    @if (cargando) {
+
+      <section class="loading-card">
+
+        <span class="loader"></span>
+
+        <p>
+          Cargando tus habitaciones...
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <!-- ===================================================
+           ESTADÍSTICAS
+      ==================================================== -->
+
+      <section class="stats-grid">
+
+        <article class="stat-card">
+
+          <span class="stat-icon purple">
+            ◇
+          </span>
+
+          <div>
+
+            <small>
+              Total
+            </small>
+
+            <strong>
+              {{ habitaciones.length }}
+            </strong>
+
+          </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+          <span class="stat-icon green">
+            ✓
+          </span>
+
+          <div>
+
+            <small>
+              Activas
+            </small>
+
+            <strong>
+              {{ contarActivas() }}
+            </strong>
+
+          </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+          <span class="stat-icon yellow">
+            Ⅱ
+          </span>
+
+          <div>
+
+            <small>
+              Pausadas
+            </small>
+
+            <strong>
+              {{ contarPausadas() }}
+            </strong>
+
+          </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+          <span class="stat-icon gold">
+            ✨
+          </span>
+
+          <div>
+
+            <small>
+              Destacadas
+            </small>
+
+            <strong>
+              {{ contarDestacadas() }}
+            </strong>
+
+          </div>
+
+        </article>
+
+      </section>
+
+
+      <!-- ===================================================
+           PLAN
+      ==================================================== -->
+
+      <section class="plan-card">
+
+        <div class="plan-header">
+
+          <div>
+
+            <span class="section-pill">
+              Plan {{ obtenerNombrePlan() }}
+            </span>
+
+            <h2>
+              Uso de tu plan
+            </h2>
+
+          </div>
+
+
+          <a
+            routerLink="/propietario/planes"
+            class="secondary-button"
+          >
+            Ver planes
+          </a>
+
+        </div>
+
+
+        <div class="plan-progress-header">
+
+          <span>
+            Habitaciones activas
+          </span>
+
+          <strong>
+
+            {{ contarActivas() }}
+
+            /
+
+            {{
+              propietario?.limiteHabitaciones ?? 0
+            }}
+
+          </strong>
+
+        </div>
+
+
+        <div class="plan-progress">
+
+          <span
+            [style.width.%]="obtenerPorcentajePlan()"
+          >
+          </span>
+
+        </div>
+
+
+        @if (alcanzoLimitePlan()) {
+
+          <div class="plan-limit">
+
+            <div>
+
+              <strong>
+                Alcanzaste el límite de tu plan
+              </strong>
+
+              <p>
+                Mejora tu plan para publicar más habitaciones.
+              </p>
+
+            </div>
+
+
+            <a
+              routerLink="/propietario/planes"
+            >
+              Mejorar plan →
+            </a>
+
+          </div>
+
+        } @else {
+
+          <p class="plan-available">
+
+            Todavía puedes publicar
+
+            <strong>
+              {{ obtenerHabitacionesDisponibles() }}
+            </strong>
+
+            habitación(es).
+
+          </p>
+
+        }
+
+      </section>
+
+
+      <!-- ===================================================
+           FORMULARIO
+      ==================================================== -->
+
+      @if (mostrarFormulario) {
+
+        <section
+          id="formulario-habitacion"
+          class="room-form-card"
+        >
+
+          <div class="form-header">
+
+            <div>
+
+              <span class="section-pill">
+
+                {{
+                  idHabitacionEditando === null
+                    ? 'Nuevo espacio'
+                    : 'Editar espacio'
+                }}
+
+              </span>
+
+
+              <h2>
+
+                {{
+                  idHabitacionEditando === null
+                    ? 'Publica una habitación'
+                    : 'Actualiza tu habitación'
+                }}
+
+              </h2>
+
+
+              <p>
+                Completa la información que verán
+                los usuarios de RoomMatch.
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="close-button"
+              (click)="cancelarFormulario()"
+            >
+              ×
+            </button>
+
+          </div>
+
+
+          <form
+            class="room-form"
+            (ngSubmit)="guardarHabitacion()"
+          >
+
+
+            <!-- ===============================================
+                 TÍTULO
+            ================================================ -->
+
+            <div class="form-group full">
+
+              <label>
+                Título de la habitación
+              </label>
+
+              <input
+                type="text"
+                name="titulo"
+                [(ngModel)]="formulario.titulo"
+                placeholder="Ej. Habitación amoblada cerca a UPN"
+                maxlength="150"
+              >
+
+            </div>
+
+
+            <!-- ===============================================
+                 DESCRIPCIÓN
+            ================================================ -->
+
+            <div class="form-group full">
+
+              <label>
+                Descripción
+              </label>
+
+              <textarea
+                name="descripcion"
+                [(ngModel)]="formulario.descripcion"
+                placeholder="Describe la habitación, la zona y el tipo de espacio..."
+                maxlength="800"
+                rows="5"
+              ></textarea>
+
+              <small class="character-counter">
+
+                {{ formulario.descripcion.length }}
+
+                / 800
+
+              </small>
+
+            </div>
+
+
+            <!-- ===============================================
+                 DATOS
+            ================================================ -->
+
+            <div class="form-grid">
+
+
+              <div class="form-group">
+
+                <label>
+                  Distrito
+                </label>
+
+                <input
+                  type="text"
+                  name="distrito"
+                  [(ngModel)]="formulario.distrito"
+                  placeholder="Ej. Los Olivos"
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label>
+                  Dirección referencial
+                </label>
+
+                <input
+                  type="text"
+                  name="direccionReferencial"
+                  [(ngModel)]="formulario.direccionReferencial"
+                  placeholder="Ej. Cerca a Av. Universitaria"
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label>
+                  Precio mensual
+                </label>
+
+                <div class="input-prefix">
+
+                  <span>
+                    S/
+                  </span>
+
+                  <input
+                    type="number"
+                    name="precio"
+                    [(ngModel)]="formulario.precio"
+                    min="1"
+                    step="0.01"
+                    placeholder="850"
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label>
+                  Área aproximada
+                </label>
+
+                <div class="input-prefix">
+
+                  <input
+                    type="number"
+                    name="areaM2"
+                    [(ngModel)]="formulario.areaM2"
+                    min="1"
+                    step="0.01"
+                    placeholder="14.5"
+                  >
+
+                  <span>
+                    m²
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group full">
+
+                <label>
+                  Disponible desde
+                </label>
+
+                <input
+                  type="date"
+                  name="disponibleDesde"
+                  [(ngModel)]="formulario.disponibleDesde"
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- ===============================================
+                 CARACTERÍSTICAS
+            ================================================ -->
+
+            <div class="features-section">
+
+              <h3>
+                ¿Qué incluye la habitación?
+              </h3>
+
+
+              <div class="features-grid">
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="amoblado"
+                    [(ngModel)]="formulario.amoblado"
+                  >
+
+                  <span class="feature-icon">
+                    🛏️
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Amoblado
+                    </strong>
+
+                    <small>
+                      Incluye muebles
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="banoPrivado"
+                    [(ngModel)]="formulario.banoPrivado"
+                  >
+
+                  <span class="feature-icon">
+                    🚿
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Baño privado
+                    </strong>
+
+                    <small>
+                      Uso exclusivo
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="internetIncluido"
+                    [(ngModel)]="formulario.internetIncluido"
+                  >
+
+                  <span class="feature-icon">
+                    📶
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Internet
+                    </strong>
+
+                    <small>
+                      Wi-Fi incluido
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="aguaIncluida"
+                    [(ngModel)]="formulario.aguaIncluida"
+                  >
+
+                  <span class="feature-icon">
+                    💧
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Agua
+                    </strong>
+
+                    <small>
+                      Servicio incluido
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="luzIncluida"
+                    [(ngModel)]="formulario.luzIncluida"
+                  >
+
+                  <span class="feature-icon">
+                    💡
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Luz
+                    </strong>
+
+                    <small>
+                      Servicio incluido
+                    </small>
+
+                  </span>
+
+                </label>
+
+
+                <label class="feature-option">
+
+                  <input
+                    type="checkbox"
+                    name="permiteMascotas"
+                    [(ngModel)]="formulario.permiteMascotas"
+                  >
+
+                  <span class="feature-icon">
+                    🐾
+                  </span>
+
+                  <span>
+
+                    <strong>
+                      Mascotas
+                    </strong>
+
+                    <small>
+                      Se permiten mascotas
+                    </small>
+
+                  </span>
+
+                </label>
+
+              </div>
+
+            </div>
+
+
+            <!-- ===============================================
+                 DESTACADA
+            ================================================ -->
+
+            @if (
+              propietario?.permiteDestacar === true
+            ) {
+
+              <label class="featured-option">
+
+                <input
+                  type="checkbox"
+                  name="destacada"
+                  [(ngModel)]="formulario.destacada"
+                >
+
+                <span>
+                  ✨
+                </span>
+
+                <div>
+
+                  <strong>
+                    Destacar habitación
+                  </strong>
+
+                  <p>
+                    Obtén mayor visibilidad en los resultados.
+                  </p>
+
+                </div>
+
+              </label>
+
+            } @else {
+
+              <div class="premium-feature">
+
+                <span>
+                  ✨
+                </span>
+
+                <div>
+
+                  <strong>
+                    Destaca tus habitaciones con Pro
+                  </strong>
+
+                  <p>
+                    Tu plan actual no incluye publicaciones destacadas.
+                  </p>
+
+                </div>
+
+
+                <a
+                  routerLink="/propietario/planes"
+                >
+                  Ver Pro
+                </a>
+
+              </div>
+
+            }
+
+
+            <!-- ===============================================
+                 ACCIONES FORMULARIO
+            ================================================ -->
+
+            <div class="form-actions">
+
+              <button
+                type="button"
+                class="cancel-button"
+                (click)="cancelarFormulario()"
+              >
+                Cancelar
+              </button>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="guardando"
+              >
+
+                @if (guardando) {
+
+                  Guardando...
+
+                } @else {
+
+                  {{
+
+                    idHabitacionEditando === null
+
+                      ? 'Publicar habitación'
+
+                      : 'Guardar cambios'
+
+                  }}
+
+                }
+
+              </button>
+
+            </div>
+
+          </form>
+
+        </section>
+
+      }
+
+
+      <!-- ===================================================
+           HABITACIONES
+      ==================================================== -->
+
+      <section class="rooms-section">
+
+        <div class="section-header">
+
+          <div>
+
+            <span class="section-pill">
+              Tus publicaciones
+            </span>
+
+            <h2>
+              Habitaciones publicadas
+            </h2>
+
+            <p>
+              Controla el estado y la información
+              de tus espacios.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SIN HABITACIONES
+        ================================================== -->
+
+        @if (
+          habitaciones.length === 0
+        ) {
+
+          <div class="empty-state">
+
+            <span>
+              🏠
+            </span>
+
+            <h3>
+              Aún no publicaste habitaciones
+            </h3>
+
+            <p>
+              Publica tu primer espacio y empieza
+              a recibir interesados.
+            </p>
+
+            <button
+              type="button"
+              class="primary-button"
+              (click)="abrirNuevaHabitacion()"
+            >
+              Publicar mi primera habitación
+            </button>
+
+          </div>
+
+        } @else {
+
+
+          <!-- ===============================================
+               LISTA HABITACIONES
+          ================================================ -->
+
+          <div class="rooms-grid">
+
+            @for (
+              habitacion of habitaciones;
+              track habitacion.idHabitacion
+            ) {
+
+              <article class="room-card">
+
+
+                <!-- =========================================
+                     IMAGEN PRINCIPAL
+                ========================================== -->
+
+                <div class="room-image">
+
+                  @if (
+                    obtenerImagenPrincipal(
+                      habitacion.idHabitacion
+                    );
+                    as imagenPrincipal
+                  ) {
+
+                    <img
+                      class="room-photo"
+                      [src]="imagenPrincipal"
+                      [alt]="habitacion.titulo"
+                      loading="lazy"
+                    >
+
+                  } @else {
+
+                    <span class="room-placeholder">
+                      🏠
+                    </span>
+
+                  }
+
+
+                  <!-- =======================================
+                       DESTACADA
+                  ======================================== -->
+
+                  @if (
+                    habitacion.destacada
+                  ) {
+
+                    <span class="featured-badge">
+                      ✨ Destacada
+                    </span>
+
+                  }
+
+
+                  <!-- =======================================
+                       ESTADO
+                  ======================================== -->
+
+                  <span
+                    class="status-badge"
+                    [class.status-active]="
+                      habitacion.estado.toLowerCase() === 'activa'
+                    "
+                    [class.status-paused]="
+                      habitacion.estado.toLowerCase() === 'pausada'
+                    "
+                  >
+
+                    {{ habitacion.estado }}
+
+                  </span>
+
+                </div>
+
+
+                <!-- =========================================
+                     CONTENIDO
+                ========================================== -->
+
+                <div class="room-content">
+
+                  <div class="room-title-row">
+
+                    <div>
+
+                      <h3>
+                        {{ habitacion.titulo }}
+                      </h3>
+
+                      <p class="room-location">
+                        📍 {{ habitacion.distrito }}
+                      </p>
+
+                    </div>
+
+
+                    <strong class="room-price">
+
+                      S/
+
+                      {{
+                        formatearPrecio(
+                          habitacion.precio
+                        )
+                      }}
+
+                      <small>
+                        / mes
+                      </small>
+
+                    </strong>
+
+                  </div>
+
+
+                  <p class="room-description">
+                    {{ habitacion.descripcion }}
+                  </p>
+
+
+                  <!-- =======================================
+                       CARACTERÍSTICAS
+                  ======================================== -->
+
+                  <div class="room-features">
+
+                    @if (habitacion.amoblado) {
+
+                      <span>
+                        🛏️ Amoblado
+                      </span>
+
+                    }
+
+
+                    @if (habitacion.banoPrivado) {
+
+                      <span>
+                        🚿 Baño privado
+                      </span>
+
+                    }
+
+
+                    @if (habitacion.internetIncluido) {
+
+                      <span>
+                        📶 Wi-Fi
+                      </span>
+
+                    }
+
+
+                    @if (habitacion.aguaIncluida) {
+
+                      <span>
+                        💧 Agua
+                      </span>
+
+                    }
+
+
+                    @if (habitacion.luzIncluida) {
+
+                      <span>
+                        💡 Luz
+                      </span>
+
+                    }
+
+
+                    @if (habitacion.permiteMascotas) {
+
+                      <span>
+                        🐾 Mascotas
+                      </span>
+
+                    }
+
+                  </div>
+
+
+                  <!-- =======================================
+                       DISPONIBILIDAD
+                  ======================================== -->
+
+                  <div class="availability">
+
+                    <span>
+                      Disponible desde
+                    </span>
+
+                    <strong>
+
+                      {{
+                        formatearFecha(
+                          habitacion.disponibleDesde
+                        )
+                      }}
+
+                    </strong>
+
+                  </div>
+
+
+                  <!-- =======================================
+                       ACCIONES
+                  ======================================== -->
+
+                  <div class="room-actions">
+
+                    <button
+                      type="button"
+                      class="action-button primary-action"
+                      (click)="editarHabitacion(habitacion)"
+                    >
+                      Editar
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="action-button image-action"
+                      (click)="abrirGestorImagenes(habitacion)"
+                    >
+                      🖼️ Imágenes
+                    </button>
+
+
+                    @if (
+                      habitacion.estado.toLowerCase() === 'activa'
+                    ) {
+
+                      <button
+                        type="button"
+                        class="action-button"
+                        (click)="pausarHabitacion(habitacion)"
+                      >
+                        Pausar
+                      </button>
+
+                    } @else {
+
+                      <button
+                        type="button"
+                        class="action-button"
+                        (click)="activarHabitacion(habitacion)"
+                      >
+                        Activar
+                      </button>
+
+                    }
+
+
+                    <a
+                      [routerLink]="[
+                        '/habitaciones',
+                        habitacion.idHabitacion
+                      ]"
+                      class="detail-link"
+                    >
+                      Ver detalle →
+                    </a>
+
+                  </div>
+
+                </div>
+
+              </article>
+
+            }
+
+          </div>
+
+        }
+
+      </section>
+
+    }
+
+  </main>
+
+
+  <!-- =====================================================
+       MODAL GESTOR DE IMÁGENES
+  ====================================================== -->
+
+  <app-image-manager-modal
+
+    [abierta]="modalImagenesAbierto"
+
+    [habitacion]="habitacionGestionImagenes"
+
+    (cerrar)="cerrarGestorImagenes()"
+
+    (imagenesActualizadas)="
+      actualizarImagenesHabitacion($event)
+    "
+
+  ></app-image-manager-modal>
+
+</div>

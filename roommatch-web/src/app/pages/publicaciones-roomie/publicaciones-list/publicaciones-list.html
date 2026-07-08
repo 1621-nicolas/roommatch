@@ -1,0 +1,777 @@
+<section class="roomie-page">
+
+  <div class="roomie-container">
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <header class="roomie-header">
+
+      <div>
+
+        <span class="roomie-pill">
+          Comunidad RoomMatch
+        </span>
+
+        <h1>
+
+          Encuentra personas
+          <span>compatibles</span>
+
+          para compartir vivienda
+
+        </h1>
+
+        <p>
+
+          Explora publicaciones de personas que buscan
+          roomie, habitación o compartir un nuevo espacio.
+
+        </p>
+
+      </div>
+
+
+      <a
+        routerLink="/mis-publicaciones"
+        class="roomie-create-button"
+      >
+
+        <span>
+          +
+        </span>
+
+        Crear publicación
+
+      </a>
+
+    </header>
+
+
+    <!-- =====================================================
+         TIPO DE PUBLICACIÓN
+    ====================================================== -->
+
+    <nav class="roomie-type-tabs">
+
+      <button
+        type="button"
+        [class.active]="tipoSeleccionado === ''"
+        (click)="cambiarTipo('')"
+      >
+        Todas
+      </button>
+
+
+      <button
+        type="button"
+        [class.active]="tipoSeleccionado === 'busco_roomie'"
+        (click)="cambiarTipo('busco_roomie')"
+      >
+        👥 Busco roomie
+      </button>
+
+
+      <button
+        type="button"
+        [class.active]="tipoSeleccionado === 'busco_cuarto'"
+        (click)="cambiarTipo('busco_cuarto')"
+      >
+        🏠 Busco habitación
+      </button>
+
+
+      <button
+        type="button"
+        [class.active]="tipoSeleccionado === 'busco_compartir'"
+        (click)="cambiarTipo('busco_compartir')"
+      >
+        🔑 Busco compartir
+      </button>
+
+    </nav>
+
+
+    <!-- =====================================================
+         FILTROS
+    ====================================================== -->
+
+    <section class="roomie-filters">
+
+      <div class="roomie-filter-field district">
+
+        <label>
+          Distrito
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="distrito"
+          placeholder="Ej. Los Olivos"
+        >
+
+      </div>
+
+
+      <div class="roomie-filter-field">
+
+        <label>
+          Presupuesto mínimo
+        </label>
+
+        <input
+          type="number"
+          [(ngModel)]="presupuestoMin"
+          placeholder="S/ 500"
+          min="0"
+        >
+
+      </div>
+
+
+      <div class="roomie-filter-field">
+
+        <label>
+          Presupuesto máximo
+        </label>
+
+        <input
+          type="number"
+          [(ngModel)]="presupuestoMax"
+          placeholder="S/ 1,200"
+          min="0"
+        >
+
+      </div>
+
+
+      <div class="roomie-filter-field">
+
+        <label>
+          Compatibilidad mínima
+        </label>
+
+        <select
+          [(ngModel)]="compatibilidadMinima"
+          (ngModelChange)="aplicarFiltrosLocales()"
+        >
+
+          <option [ngValue]="0">
+            Todas
+          </option>
+
+          <option [ngValue]="50">
+            50% o más
+          </option>
+
+          <option [ngValue]="75">
+            75% o más
+          </option>
+
+          <option [ngValue]="90">
+            90% o más
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="roomie-search-button"
+        (click)="buscar()"
+      >
+
+        Buscar
+
+      </button>
+
+
+      <button
+        type="button"
+        class="roomie-clear-button"
+        (click)="limpiarFiltros()"
+      >
+
+        Limpiar
+
+      </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    @if (mensajeError) {
+
+      <div class="roomie-error">
+
+        {{ mensajeError }}
+
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         RESUMEN Y ORDENAMIENTO
+    ====================================================== -->
+
+    <section class="roomie-results-bar">
+
+      <div>
+
+        <strong>
+          {{ publicacionesVisibles.length }}
+        </strong>
+
+        publicaciones mostradas
+
+      </div>
+
+
+      <div class="roomie-order">
+
+        <label>
+          Ordenar por
+        </label>
+
+        <select
+          [(ngModel)]="ordenSeleccionado"
+          (ngModelChange)="aplicarFiltrosLocales()"
+        >
+
+          <option value="compatibilidad">
+            Mayor compatibilidad
+          </option>
+
+          <option value="recientes">
+            Más recientes
+          </option>
+
+          <option value="presupuesto">
+            Menor presupuesto
+          </option>
+
+        </select>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         CARGANDO
+    ====================================================== -->
+
+    @if (cargando) {
+
+      <section class="roomie-loading">
+
+        <div class="roomie-loading-icon">
+          ♡
+        </div>
+
+        <h2>
+          Buscando publicaciones...
+        </h2>
+
+        <p>
+
+          Estamos consultando la comunidad
+          de RoomMatch.
+
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <!-- ===================================================
+           LISTADO
+      ==================================================== -->
+
+      <section class="roomie-grid">
+
+        @for (
+          publicacion of publicacionesVisibles;
+          track publicacion.idPublicacion
+        ) {
+
+          <article class="roomie-card">
+
+
+            <!-- =============================================
+                 AUTOR
+            ============================================== -->
+
+            <header class="roomie-card-user">
+
+              <div class="roomie-avatar">
+
+                @if (publicacion.foto) {
+
+                  <img
+                    [src]="publicacion.foto"
+                    [alt]="publicacion.nombreUsuario"
+                  >
+
+                } @else {
+
+                  {{
+                    obtenerIniciales(
+                      publicacion.nombreUsuario
+                    )
+                  }}
+
+                }
+
+              </div>
+
+
+              <div class="roomie-user-info">
+
+                <h2>
+
+                  {{ publicacion.nombreUsuario }}
+
+                  @if (publicacion.edad) {
+
+                    <span>
+                      , {{ publicacion.edad }}
+                    </span>
+
+                  }
+
+                </h2>
+
+
+                <p>
+
+                  {{
+                    publicacion.ocupacion ||
+                    'Usuario RoomMatch'
+                  }}
+
+                </p>
+
+              </div>
+
+
+              @if (
+                publicacion.esMiPublicacion
+              ) {
+
+                <span class="roomie-own-badge">
+
+                  Tu publicación
+
+                </span>
+
+              } @else if (
+                publicacion.porcentajeCompatibilidad !== null
+              ) {
+
+                <div
+                  class="roomie-match-badge"
+                  [class]="
+                    'roomie-match-badge ' +
+                    obtenerClaseCompatibilidad(
+                      publicacion.porcentajeCompatibilidad
+                    )
+                  "
+                >
+
+                  <strong>
+
+                    {{
+                      publicacion.porcentajeCompatibilidad
+                    }}%
+
+                  </strong>
+
+                  <span>
+                    compatible
+                  </span>
+
+                </div>
+
+              } @else {
+
+                <div class="roomie-match-badge unknown">
+
+                  <strong>
+                    ?
+                  </strong>
+
+                  <span>
+                    sin calcular
+                  </span>
+
+                </div>
+
+              }
+
+            </header>
+
+
+            <!-- =============================================
+                 TIPO
+            ============================================== -->
+
+            <div
+              class="roomie-publication-type"
+              [class.type-roomie]="publicacion.tipoPublicacion === 'busco_roomie'"
+              [class.type-room]="publicacion.tipoPublicacion === 'busco_cuarto'"
+              [class.type-share]="publicacion.tipoPublicacion === 'busco_compartir'"
+            >
+
+              {{
+                obtenerTextoTipo(
+                  publicacion.tipoPublicacion
+                )
+              }}
+
+            </div>
+
+
+            <!-- =============================================
+                 CONTENIDO
+            ============================================== -->
+
+            <section class="roomie-card-content">
+
+              <h3>
+                {{ publicacion.titulo }}
+              </h3>
+
+
+              <p class="roomie-description">
+
+                {{ publicacion.descripcion }}
+
+              </p>
+
+
+              <div class="roomie-publication-data">
+
+                <div>
+
+                  <span>
+                    📍
+                  </span>
+
+                  <section>
+
+                    <small>
+                      Distrito
+                    </small>
+
+                    <strong>
+                      {{ publicacion.distrito }}
+                    </strong>
+
+                  </section>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    S/
+                  </span>
+
+                  <section>
+
+                    <small>
+                      Presupuesto
+                    </small>
+
+                    <strong>
+
+                      {{
+                        obtenerPresupuesto(
+                          publicacion
+                        )
+                      }}
+
+                    </strong>
+
+                  </section>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+            <!-- =============================================
+                 COMPATIBILIDAD
+            ============================================== -->
+
+            @if (
+              !publicacion.esMiPublicacion
+            ) {
+
+              <section class="roomie-compatibility">
+
+
+                @if (
+                  publicacion.porcentajeCompatibilidad !== null
+                ) {
+
+                  <div class="roomie-compatibility-title">
+
+                    <span>
+                      Compatibilidad contigo
+                    </span>
+
+                    <strong>
+
+                      {{
+                        publicacion.porcentajeCompatibilidad
+                      }}%
+
+                    </strong>
+
+                  </div>
+
+
+                  <div class="roomie-progress">
+
+                    <div
+                      [style.width.%]="
+                        publicacion.porcentajeCompatibilidad
+                      "
+                    >
+                    </div>
+
+                  </div>
+
+
+                  @if (
+                    obtenerCoincidencias(
+                      publicacion
+                    ).length > 0
+                  ) {
+
+                    <div class="roomie-coincidences">
+
+                      @for (
+                        coincidencia of obtenerCoincidencias(publicacion);
+                        track coincidencia
+                      ) {
+
+                        <span>
+
+                          ✓ {{ coincidencia }}
+
+                        </span>
+
+                      }
+
+                    </div>
+
+                  }
+
+                } @else {
+
+                  <div class="roomie-no-compatibility">
+
+                    <div>
+                      ♡
+                    </div>
+
+                    <section>
+
+                      <strong>
+                        Compatibilidad sin calcular
+                      </strong>
+
+                      <p>
+
+                        Calcula tus matches para conocer
+                        qué tan compatible eres con esta persona.
+
+                      </p>
+
+                    </section>
+
+                  </div>
+
+                }
+
+              </section>
+
+            }
+
+
+            <!-- =============================================
+                 FECHA
+            ============================================== -->
+
+            <div class="roomie-publication-date">
+
+              Publicado
+
+              {{
+                formatearFecha(
+                  publicacion.fechaPublicacion
+                )
+              }}
+
+            </div>
+
+
+            <!-- =============================================
+                 ACCIONES
+            ============================================== -->
+
+            <footer class="roomie-card-actions">
+
+
+              @if (
+                publicacion.esMiPublicacion
+              ) {
+
+                <a
+                  routerLink="/mis-publicaciones"
+                  class="roomie-manage-button"
+                >
+
+                  Administrar publicación
+
+                  <span>
+                    →
+                  </span>
+
+                </a>
+
+              } @else {
+
+                <a
+                  [routerLink]="[
+                    '/publicaciones-roomie',
+                    publicacion.idPublicacion
+                  ]"
+                  class="roomie-detail-button"
+                >
+
+                  Ver publicación
+
+                  <span>
+                    →
+                  </span>
+
+                </a>
+
+              }
+
+            </footer>
+
+          </article>
+
+        } @empty {
+
+          <section class="roomie-empty">
+
+            <div>
+              👥
+            </div>
+
+            <h2>
+              No encontramos publicaciones
+            </h2>
+
+            <p>
+
+              Prueba modificando los filtros
+              o explora todas las publicaciones
+              disponibles.
+
+            </p>
+
+            <button
+              type="button"
+              (click)="limpiarFiltros()"
+            >
+
+              Limpiar filtros
+
+            </button>
+
+          </section>
+
+        }
+
+      </section>
+
+    }
+
+
+    <!-- =====================================================
+         PAGINACIÓN
+    ====================================================== -->
+
+    @if (
+      !cargando &&
+      totalPaginas > 1
+    ) {
+
+      <nav class="roomie-pagination">
+
+        <button
+          type="button"
+          [disabled]="paginaActual === 0"
+          (click)="paginaAnterior()"
+        >
+
+          ← Anterior
+
+        </button>
+
+
+        <span>
+
+          Página
+
+          <strong>
+            {{ paginaActual + 1 }}
+          </strong>
+
+          de
+
+          <strong>
+            {{ totalPaginas }}
+          </strong>
+
+        </span>
+
+
+        <button
+          type="button"
+          [disabled]="
+            paginaActual >= totalPaginas - 1
+          "
+          (click)="paginaSiguiente()"
+        >
+
+          Siguiente →
+
+        </button>
+
+      </nav>
+
+    }
+
+  </div>
+
+</section>

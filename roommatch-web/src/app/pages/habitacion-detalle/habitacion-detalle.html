@@ -1,0 +1,633 @@
+<section class="room-detail-page">
+
+  <div class="room-detail-container">
+
+    <!-- =====================================================
+         VOLVER
+    ====================================================== -->
+    <a
+      routerLink="/habitaciones"
+      class="back-link"
+    >
+      ← Volver a habitaciones
+    </a>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+    <div
+      *ngIf="mensajeError"
+      class="detail-message error"
+    >
+      {{ mensajeError }}
+    </div>
+
+
+    <!-- =====================================================
+         ÉXITO
+    ====================================================== -->
+    <div
+      *ngIf="mensajeExito"
+      class="detail-message success"
+    >
+      {{ mensajeExito }}
+    </div>
+
+
+    <!-- =====================================================
+         CARGANDO
+    ====================================================== -->
+    <section
+      *ngIf="cargando"
+      class="detail-state"
+    >
+
+      <div class="state-icon">
+        ⌂
+      </div>
+
+      <h2>
+        Cargando habitación...
+      </h2>
+
+      <p>
+        Estamos consultando la información del espacio.
+      </p>
+
+    </section>
+
+
+    <!-- =====================================================
+         DETALLE
+    ====================================================== -->
+    <ng-container
+      *ngIf="
+        !cargando &&
+        habitacion
+      "
+    >
+
+      <!-- CABECERA -->
+      <header class="detail-header">
+
+        <div>
+
+          <div class="detail-badges">
+
+            <span
+              *ngIf="habitacion.destacada"
+              class="featured-badge"
+            >
+              ★ Destacada
+            </span>
+
+
+            <span
+              *ngIf="habitacion.propietarioVerificado"
+              class="verified-badge"
+            >
+              ✓ Propietario verificado
+            </span>
+
+          </div>
+
+
+          <h1>
+            {{ habitacion.titulo }}
+          </h1>
+
+
+          <p class="detail-location">
+
+            ⌖
+
+            {{ habitacion.distrito }}
+
+            <span
+              *ngIf="habitacion.direccionReferencial"
+            >
+
+              ·
+
+              {{ habitacion.direccionReferencial }}
+
+            </span>
+
+          </p>
+
+        </div>
+
+
+        <div class="detail-price">
+
+          <strong>
+
+            {{
+              formatearPrecio(
+                habitacion.precio
+              )
+            }}
+
+          </strong>
+
+          <span>
+            / mes
+          </span>
+
+        </div>
+
+      </header>
+
+
+      <!-- CUERPO -->
+      <section class="detail-layout">
+
+        <!-- =================================================
+             INFORMACIÓN
+        ================================================== -->
+        <main class="detail-main">
+
+          <!-- IMAGEN -->
+          <section class="detail-image">
+
+            <div class="detail-image-placeholder">
+
+              <span>
+                ⌂
+              </span>
+
+              <strong>
+                {{ habitacion.distrito }}
+              </strong>
+
+              <small>
+                Imágenes próximamente
+              </small>
+
+            </div>
+
+          </section>
+
+
+          <!-- DESCRIPCIÓN -->
+          <section class="detail-card">
+
+            <h2>
+              Sobre la habitación
+            </h2>
+
+
+            <p class="detail-description">
+
+              {{ habitacion.descripcion }}
+
+            </p>
+
+          </section>
+
+
+          <!-- CARACTERÍSTICAS -->
+          <section class="detail-card">
+
+            <h2>
+              Características
+            </h2>
+
+
+            <div class="features-grid">
+
+              <div class="feature-item">
+
+                <span class="feature-icon">
+                  ▣
+                </span>
+
+                <div>
+
+                  <small>
+                    Área
+                  </small>
+
+                  <strong>
+
+                    {{
+                      habitacion.areaM2
+                        ? habitacion.areaM2 + ' m²'
+                        : 'No especificada'
+                    }}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div class="feature-item">
+
+                <span class="feature-icon">
+                  🛏
+                </span>
+
+                <div>
+
+                  <small>
+                    Amoblado
+                  </small>
+
+                  <strong>
+
+                    {{
+                      habitacion.amoblado
+                        ? 'Sí'
+                        : 'No'
+                    }}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div class="feature-item">
+
+                <span class="feature-icon">
+                  ◫
+                </span>
+
+                <div>
+
+                  <small>
+                    Baño privado
+                  </small>
+
+                  <strong>
+
+                    {{
+                      habitacion.banoPrivado
+                        ? 'Sí'
+                        : 'No'
+                    }}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div class="feature-item">
+
+                <span class="feature-icon">
+                  🐾
+                </span>
+
+                <div>
+
+                  <small>
+                    Mascotas
+                  </small>
+
+                  <strong>
+
+                    {{
+                      habitacion.permiteMascotas
+                        ? 'Permitidas'
+                        : 'No permitidas'
+                    }}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- SERVICIOS -->
+          <section class="detail-card">
+
+            <h2>
+              Servicios incluidos
+            </h2>
+
+
+            <div class="services-grid">
+
+              <div
+                class="service-item"
+                [class.included]="habitacion.internetIncluido"
+              >
+
+                <span>
+                  Wi-Fi
+                </span>
+
+                <strong>
+
+                  {{
+                    habitacion.internetIncluido
+                      ? 'Incluido'
+                      : 'No incluido'
+                  }}
+
+                </strong>
+
+              </div>
+
+
+              <div
+                class="service-item"
+                [class.included]="habitacion.aguaIncluida"
+              >
+
+                <span>
+                  Agua
+                </span>
+
+                <strong>
+
+                  {{
+                    habitacion.aguaIncluida
+                      ? 'Incluida'
+                      : 'No incluida'
+                  }}
+
+                </strong>
+
+              </div>
+
+
+              <div
+                class="service-item"
+                [class.included]="habitacion.luzIncluida"
+              >
+
+                <span>
+                  Luz
+                </span>
+
+                <strong>
+
+                  {{
+                    habitacion.luzIncluida
+                      ? 'Incluida'
+                      : 'No incluida'
+                  }}
+
+                </strong>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- DISPONIBILIDAD -->
+          <section class="detail-card availability-card">
+
+            <div>
+
+              <small>
+                Disponible desde
+              </small>
+
+              <strong>
+
+                {{
+                  formatearFecha(
+                    habitacion.disponibleDesde
+                  )
+                }}
+
+              </strong>
+
+            </div>
+
+
+            <span class="availability-status">
+              Disponible
+            </span>
+
+          </section>
+
+        </main>
+
+
+        <!-- =================================================
+             SIDEBAR PROPIETARIO / LEAD
+        ================================================== -->
+        <aside class="detail-sidebar">
+
+          <section class="owner-card">
+
+            <span class="owner-label">
+              Publicado por
+            </span>
+
+
+            <div class="owner-header">
+
+              <div class="owner-avatar">
+
+                {{
+                  habitacion
+                    .nombrePropietario
+                    .charAt(0)
+                    .toUpperCase()
+                }}
+
+              </div>
+
+
+              <div>
+
+                <h2>
+                  {{ habitacion.nombrePropietario }}
+                </h2>
+
+
+                <span
+                  *ngIf="habitacion.propietarioVerificado"
+                  class="owner-verified"
+                >
+                  ✓ Propietario verificado
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <p>
+
+              Envía una consulta al propietario.
+              Tus datos personales no se mostrarán
+              automáticamente.
+
+            </p>
+
+          </section>
+
+
+          <!-- INTERÉS -->
+          <section class="interest-card">
+
+            <ng-container
+              *ngIf="!interesEnviado"
+            >
+
+              <h2>
+                ¿Te interesa esta habitación?
+              </h2>
+
+
+              <p>
+                Escribe un mensaje al propietario
+                para solicitar más información.
+              </p>
+
+
+              <label for="mensajeInteres">
+
+                Mensaje
+
+              </label>
+
+
+              <textarea
+                id="mensajeInteres"
+                name="mensajeInteres"
+                [(ngModel)]="mensajeInteres"
+                maxlength="500"
+                rows="6"
+                placeholder="Hola, me interesa la habitación. ¿Podríamos coordinar una visita?"
+              >
+              </textarea>
+
+
+              <div class="message-counter">
+
+                {{ contarCaracteres() }}
+
+                / 500
+
+              </div>
+
+
+              <button
+                type="button"
+                class="interest-button"
+                [disabled]="enviandoInteres"
+                (click)="enviarInteres()"
+              >
+
+                {{
+                  enviandoInteres
+                    ? 'Enviando...'
+                    : 'Enviar interés'
+                }}
+
+              </button>
+
+
+              <small class="privacy-note">
+
+                🔒 Tu información está protegida
+                por RoomMatch.
+
+              </small>
+
+            </ng-container>
+
+
+            <!-- INTERÉS ENVIADO -->
+            <ng-container
+              *ngIf="interesEnviado"
+            >
+
+              <div class="interest-success-icon">
+
+                ✓
+
+              </div>
+
+
+              <h2>
+                Interés enviado
+              </h2>
+
+
+              <p>
+
+                El propietario recibió tu mensaje
+                y podrá revisar tu solicitud.
+
+              </p>
+
+
+              <a
+                routerLink="/habitaciones"
+                class="back-rooms-button"
+              >
+
+                Seguir explorando
+
+              </a>
+
+            </ng-container>
+
+          </section>
+
+        </aside>
+
+      </section>
+
+    </ng-container>
+
+
+    <!-- =====================================================
+         HABITACIÓN NO DISPONIBLE
+    ====================================================== -->
+    <section
+      *ngIf="
+        !cargando &&
+        !habitacion &&
+        !mensajeError
+      "
+      class="detail-state"
+    >
+
+      <div class="state-icon">
+        !
+      </div>
+
+
+      <h2>
+        Habitación no disponible
+      </h2>
+
+
+      <p>
+        La publicación que buscas ya no está disponible.
+      </p>
+
+
+      <a
+        routerLink="/habitaciones"
+        class="back-rooms-button"
+      >
+        Ver habitaciones
+      </a>
+
+    </section>
+
+  </div>
+
+</section>

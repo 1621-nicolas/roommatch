@@ -1,0 +1,1334 @@
+<section class="home-page">
+
+
+  <!-- =====================================================
+       HOME USUARIO AUTENTICADO
+       ===================================================== -->
+
+  @if (
+    authService.estaAutenticado()
+  ) {
+
+    <section class="dashboard-home">
+
+
+      <header class="dashboard-welcome">
+
+        <div>
+
+          <p class="dashboard-pill">
+            Tu espacio RoomMatch
+          </p>
+
+          <h1>
+            Hola,
+            <span>
+              {{ obtenerPrimerNombre() }}
+            </span>
+            👋
+          </h1>
+
+          <p>
+            Revisa tus recomendaciones,
+            habitaciones disponibles y conexiones recientes.
+          </p>
+
+        </div>
+
+
+        <div class="dashboard-welcome-actions">
+
+          <a
+            routerLink="/matches"
+            class="dashboard-primary-button"
+          >
+            Explorar matches
+          </a>
+
+
+          <a
+            routerLink="/mi-cuenta"
+            class="dashboard-secondary-button"
+          >
+            Mi cuenta
+          </a>
+
+        </div>
+
+      </header>
+
+
+      @if (
+        cargandoDashboard
+      ) {
+
+        <section class="dashboard-loading">
+
+          <h2>
+            Preparando tus recomendaciones...
+          </h2>
+
+          <p>
+            Estamos consultando tu actividad
+            y preferencias de RoomMatch.
+          </p>
+
+        </section>
+
+      } @else {
+
+
+        <!-- =================================================
+             RESUMEN
+             ================================================= -->
+
+        <section class="dashboard-summary">
+
+
+          <article>
+
+            <div class="dashboard-summary-icon">
+              ♡
+            </div>
+
+            <div>
+
+              <span>
+                Matches sugeridos
+              </span>
+
+              <strong>
+                {{ mejoresMatches.length }}
+              </strong>
+
+            </div>
+
+            <a routerLink="/matches">
+              Ver matches
+            </a>
+
+          </article>
+
+
+          <article>
+
+            <div class="dashboard-summary-icon requests">
+              ↓
+            </div>
+
+            <div>
+
+              <span>
+                Solicitudes pendientes
+              </span>
+
+              <strong>
+                {{ obtenerSolicitudesPendientes() }}
+              </strong>
+
+            </div>
+
+            <a routerLink="/solicitudes">
+              Ver solicitudes
+            </a>
+
+          </article>
+
+
+          <article>
+
+            <div
+              class="dashboard-summary-icon"
+              [class.complete]="perfilCompleto"
+              [class.pending]="!perfilCompleto"
+            >
+              ✓
+            </div>
+
+            <div>
+
+              <span>
+                Perfil de convivencia
+              </span>
+
+              <strong>
+
+                @if (
+                  perfilCompleto
+                ) {
+
+                  Completado
+
+                } @else {
+
+                  Pendiente
+
+                }
+
+              </strong>
+
+            </div>
+
+            <a routerLink="/perfil">
+
+              @if (
+                perfilCompleto
+              ) {
+
+                Editar
+
+              } @else {
+
+                Completar
+
+              }
+
+            </a>
+
+          </article>
+
+
+          <article>
+
+            <div
+              class="dashboard-summary-icon"
+              [class.complete]="contactoConfigurado"
+              [class.pending]="!contactoConfigurado"
+            >
+              ☎
+            </div>
+
+            <div>
+
+              <span>
+                Datos de contacto
+              </span>
+
+              <strong>
+
+                @if (
+                  contactoConfigurado
+                ) {
+
+                  Configurado
+
+                } @else {
+
+                  Pendiente
+
+                }
+
+              </strong>
+
+            </div>
+
+            <a routerLink="/mi-cuenta">
+              Configurar
+            </a>
+
+          </article>
+
+        </section>
+
+
+        <!-- =================================================
+             MATCHES SUGERIDOS
+             ================================================= -->
+
+        <section class="dashboard-section">
+
+
+          <header class="dashboard-section-header">
+
+            <div>
+
+              <span>
+                Compatibilidad
+              </span>
+
+              <h2>
+                Tus mejores matches
+              </h2>
+
+              <p>
+                Personas recomendadas según tu
+                perfil de convivencia.
+              </p>
+
+            </div>
+
+
+            <a routerLink="/matches">
+              Ver todos
+            </a>
+
+          </header>
+
+
+          <div class="dashboard-match-grid">
+
+
+            @for (
+              match of mejoresMatches;
+              track match.idMatch
+            ) {
+
+              <article class="dashboard-match-card">
+
+
+                @if (
+                  match.foto
+                ) {
+
+                  <img
+                    [src]="match.foto"
+                    [alt]="obtenerNombreMatch(match)"
+                    class="dashboard-match-photo"
+                  >
+
+                } @else {
+
+                  <div class="dashboard-match-avatar">
+                    {{ obtenerInicialesMatch(match) }}
+                  </div>
+
+                }
+
+
+                <h3>
+                  {{ obtenerNombreMatch(match) }}
+                </h3>
+
+
+                <p>
+
+                  @if (
+                    match.edad
+                  ) {
+
+                    {{ match.edad }} años
+
+                  }
+
+
+                  @if (
+                    match.edad &&
+                    match.ocupacion
+                  ) {
+
+                    ·
+
+                  }
+
+
+                  @if (
+                    match.ocupacion
+                  ) {
+
+                    {{ match.ocupacion }}
+
+                  }
+
+                </p>
+
+
+                <section class="dashboard-match-score">
+
+                  <strong>
+                    {{ match.porcentaje }}%
+                  </strong>
+
+                  <span>
+                    {{ obtenerNivelCompatibilidad(match.porcentaje) }}
+                  </span>
+
+                </section>
+
+
+                <div class="dashboard-match-progress">
+
+                  <div
+                    [style.width.%]="match.porcentaje"
+                  >
+                  </div>
+
+                </div>
+
+
+                <a routerLink="/matches">
+                  Ver compatibilidad
+                </a>
+
+              </article>
+
+            } @empty {
+
+              <section class="dashboard-empty-card">
+
+                <div>
+                  ♡
+                </div>
+
+                <h3>
+                  Aún no tienes recomendaciones
+                </h3>
+
+                <p>
+                  Calcula tu compatibilidad para
+                  descubrir posibles roomies.
+                </p>
+
+                <a routerLink="/matches">
+                  Calcular matches
+                </a>
+
+              </section>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        <!-- =================================================
+             HABITACIONES
+             ================================================= -->
+
+        <section class="dashboard-section">
+
+
+          <header class="dashboard-section-header">
+
+            <div>
+
+              <span>
+                Explorar
+              </span>
+
+              <h2>
+                Habitaciones disponibles
+              </h2>
+
+              <p>
+                Algunas opciones publicadas recientemente
+                en RoomMatch.
+              </p>
+
+            </div>
+
+
+            <a routerLink="/habitaciones">
+              Ver todas
+            </a>
+
+          </header>
+
+
+          @if (
+            cargandoHabitaciones
+          ) {
+
+            <p>
+              Cargando habitaciones...
+            </p>
+
+          }
+
+
+          @if (
+            errorHabitaciones
+          ) {
+
+            <div class="auth-error">
+              {{ errorHabitaciones }}
+            </div>
+
+          }
+
+
+          <div class="dashboard-room-grid">
+
+
+            @for (
+              habitacion of habitaciones;
+              track habitacion.idHabitacion
+            ) {
+
+              <article class="dashboard-room-card">
+
+
+                <div class="dashboard-room-image">
+
+                  @if (
+                    habitacion.destacada
+                  ) {
+
+                    <span>
+                      Destacada
+                    </span>
+
+                  }
+
+                  Habitación
+
+                </div>
+
+
+                <section>
+
+                  <h3>
+                    {{ habitacion.titulo }}
+                  </h3>
+
+
+                  <p>
+                    {{ habitacion.distrito }}
+                  </p>
+
+
+                  <strong>
+                    S/
+                    {{ habitacion.precio }}
+                    / mes
+                  </strong>
+
+
+                  <div class="dashboard-room-tags">
+
+                    @if (
+                      habitacion.amoblado
+                    ) {
+
+                      <span>
+                        Amoblado
+                      </span>
+
+                    }
+
+
+                    @if (
+                      habitacion.banoPrivado
+                    ) {
+
+                      <span>
+                        Baño privado
+                      </span>
+
+                    }
+
+
+                    @if (
+                      habitacion.internetIncluido
+                    ) {
+
+                      <span>
+                        Wi-Fi
+                      </span>
+
+                    }
+
+
+                    @if (
+                      habitacion.permiteMascotas
+                    ) {
+
+                      <span>
+                        Mascotas
+                      </span>
+
+                    }
+
+                  </div>
+
+
+                  <a
+                    [routerLink]="[
+                      '/habitaciones',
+                      habitacion.idHabitacion
+                    ]"
+                  >
+                    Ver detalle
+                  </a>
+
+                </section>
+
+              </article>
+
+            } @empty {
+
+              <section class="dashboard-empty-card">
+
+                <div>
+                  ⌂
+                </div>
+
+                <h3>
+                  No hay habitaciones disponibles
+                </h3>
+
+                <p>
+                  Vuelve más tarde para revisar
+                  nuevas publicaciones.
+                </p>
+
+              </section>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ACCESOS RÁPIDOS
+             ================================================= -->
+
+        <section class="dashboard-quick-actions">
+
+
+          <a routerLink="/mi-cuenta">
+
+            <div>
+              FR
+            </div>
+
+            <section>
+
+              <strong>
+                Completar mi información
+              </strong>
+
+              <span>
+                Datos personales y privacidad
+              </span>
+
+            </section>
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+          <a routerLink="/favoritos">
+
+            <div>
+              ♥
+            </div>
+
+            <section>
+
+              <strong>
+                Mis favoritos
+              </strong>
+
+              <span>
+                Revisa tus perfiles guardados
+              </span>
+
+            </section>
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+          <a routerLink="/solicitudes">
+
+            <div>
+              ↓
+            </div>
+
+            <section>
+
+              <strong>
+                Solicitudes
+              </strong>
+
+              <span>
+                Gestiona tus conexiones
+              </span>
+
+            </section>
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+
+          <a routerLink="/notificaciones">
+
+            <div>
+              !
+            </div>
+
+            <section>
+
+              <strong>
+                Notificaciones
+              </strong>
+
+              <span>
+                Revisa la actividad reciente
+              </span>
+
+            </section>
+
+            <b>
+              →
+            </b>
+
+          </a>
+
+        </section>
+
+      }
+
+    </section>
+
+  } @else {
+
+
+    <!-- =====================================================
+         HOME PÚBLICO
+         ===================================================== -->
+
+    <section class="hero-section">
+
+
+      <div class="hero-content">
+
+        <p class="hero-pill">
+          Vive mejor, convive mejor
+        </p>
+
+
+        <h1>
+
+          Encuentra tu
+
+          <span>
+            roomie
+          </span>
+
+          ideal
+
+        </h1>
+
+
+        <p class="hero-description">
+
+          Conecta con personas compatibles
+          y habitaciones según tu estilo
+          de convivencia.
+
+        </p>
+
+
+        <div class="hero-actions">
+
+          <a
+            routerLink="/register"
+            class="btn-primary"
+          >
+            Crear cuenta
+          </a>
+
+
+          <a
+            routerLink="/login"
+            class="btn-outline"
+          >
+            Iniciar sesión
+          </a>
+
+        </div>
+
+
+        <div class="hero-actions secondary-actions">
+
+          <a
+            routerLink="/habitaciones"
+            class="btn-outline"
+          >
+            Buscar habitaciones
+          </a>
+
+
+          <a
+            routerLink="/publicaciones-roomie"
+            class="btn-outline-purple"
+          >
+            Ver publicaciones roomie
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <div class="hero-preview">
+
+
+        <article class="match-card">
+
+          <div class="avatar-circle">
+            C
+          </div>
+
+          <h3>
+            Camila, 22
+          </h3>
+
+          <p>
+            Estudiante
+          </p>
+
+          <strong class="badge-success">
+            95% Compatible
+          </strong>
+
+
+          <ul>
+
+            <li>
+              Limpieza: Alta
+            </li>
+
+            <li>
+              Ruido: Bajo
+            </li>
+
+            <li>
+              Horario: Madrugadora
+            </li>
+
+            <li>
+              Visitas: Ocasionales
+            </li>
+
+          </ul>
+
+
+          <a routerLink="/register">
+            Crear mi perfil
+          </a>
+
+        </article>
+
+
+        <article class="match-card">
+
+          <div class="avatar-circle">
+            D
+          </div>
+
+          <h3>
+            Diego, 24
+          </h3>
+
+          <p>
+            Diseñador
+          </p>
+
+          <strong class="badge-warning">
+            89% Compatible
+          </strong>
+
+
+          <ul>
+
+            <li>
+              Limpieza: Media
+            </li>
+
+            <li>
+              Ruido: Bajo
+            </li>
+
+            <li>
+              Horario: Nocturno
+            </li>
+
+            <li>
+              Mascotas: Le gustan
+            </li>
+
+          </ul>
+
+
+          <a routerLink="/register">
+            Crear mi perfil
+          </a>
+
+        </article>
+
+
+        <article class="hero-room-card">
+
+          <div class="room-image-placeholder">
+
+            @if (
+              habitaciones.length > 0
+            ) {
+
+              Habitación disponible
+
+            } @else {
+
+              Habitación destacada
+
+            }
+
+          </div>
+
+
+          <h3>
+
+            @if (
+              habitaciones.length > 0
+            ) {
+
+              {{ habitaciones[0].titulo }}
+
+            } @else {
+
+              Habitación en Miraflores
+
+            }
+
+          </h3>
+
+
+          <p>
+
+            @if (
+              habitaciones.length > 0
+            ) {
+
+              {{ habitaciones[0].distrito }}
+
+            } @else {
+
+              Miraflores, Lima
+
+            }
+
+          </p>
+
+
+          <strong>
+
+            @if (
+              habitaciones.length > 0
+            ) {
+
+              S/
+              {{ habitaciones[0].precio }}
+              / mes
+
+            } @else {
+
+              S/ 1,250 / mes
+
+            }
+
+          </strong>
+
+
+          <a routerLink="/habitaciones">
+            Ver detalle
+          </a>
+
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <section class="benefits-section">
+
+
+      <article>
+
+        <div class="benefit-icon">
+          1
+        </div>
+
+        <h3>
+          Compatibilidad real
+        </h3>
+
+        <p>
+          Algoritmo basado en tu estilo
+          de vida, hábitos y preferencias.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <div class="benefit-icon">
+          2
+        </div>
+
+        <h3>
+          Contactos protegidos
+        </h3>
+
+        <p>
+          El contacto se desbloquea
+          únicamente con aceptación mutua.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <div class="benefit-icon">
+          3
+        </div>
+
+        <h3>
+          Habitaciones disponibles
+        </h3>
+
+        <p>
+          Explora opciones por ubicación,
+          precio y características.
+        </p>
+
+      </article>
+
+
+      <article>
+
+        <div class="benefit-icon">
+          4
+        </div>
+
+        <h3>
+          Planes para propietarios
+        </h3>
+
+        <p>
+          Publica habitaciones y encuentra
+          interesados más rápido.
+        </p>
+
+      </article>
+
+    </section>
+
+
+    <section class="content-grid">
+
+
+      <div class="content-panel">
+
+
+        <div class="section-header">
+
+          <h2>
+            Habitaciones destacadas
+          </h2>
+
+          <a routerLink="/habitaciones">
+            Ver todas
+          </a>
+
+        </div>
+
+
+        @if (
+          cargandoHabitaciones
+        ) {
+
+          <p>
+            Cargando habitaciones...
+          </p>
+
+        }
+
+
+        @if (
+          errorHabitaciones
+        ) {
+
+          <p>
+            {{ errorHabitaciones }}
+          </p>
+
+        }
+
+
+        <div class="cards-grid">
+
+
+          @for (
+            habitacion of habitaciones;
+            track habitacion.idHabitacion
+          ) {
+
+            <article class="room-card">
+
+
+              <div class="room-image-placeholder">
+
+                @if (
+                  habitacion.destacada
+                ) {
+
+                  Destacada
+
+                } @else {
+
+                  Habitación
+
+                }
+
+              </div>
+
+
+              <h3>
+                {{ habitacion.titulo }}
+              </h3>
+
+
+              <p>
+                {{ habitacion.distrito }}
+              </p>
+
+
+              <strong>
+                S/
+                {{ habitacion.precio }}
+                / mes
+              </strong>
+
+
+              <a
+                [routerLink]="[
+                  '/habitaciones',
+                  habitacion.idHabitacion
+                ]"
+              >
+                Ver detalle
+              </a>
+
+            </article>
+
+          } @empty {
+
+            <p>
+              No hay habitaciones disponibles.
+            </p>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="content-panel">
+
+
+        <div class="section-header">
+
+          <h2>
+            Publicaciones Roomie
+          </h2>
+
+          <a routerLink="/publicaciones-roomie">
+            Ver todas
+          </a>
+
+        </div>
+
+
+        @if (
+          cargandoPublicaciones
+        ) {
+
+          <p>
+            Cargando publicaciones...
+          </p>
+
+        }
+
+
+        @if (
+          errorPublicaciones
+        ) {
+
+          <p>
+            {{ errorPublicaciones }}
+          </p>
+
+        }
+
+
+        <div class="cards-grid">
+
+
+          @for (
+            publicacion of publicaciones;
+            track publicacion.idPublicacion
+          ) {
+
+            <article class="publication-card">
+
+
+              <div class="publication-user">
+
+                <div class="avatar-circle">
+                  {{
+                    publicacion
+                      .nombreUsuario
+                      .charAt(0)
+                  }}
+                </div>
+
+
+                <div>
+
+                  <h3>
+                    {{ publicacion.nombreUsuario }}
+                  </h3>
+
+                  <p>
+                    {{
+                      obtenerTipoPublicacion(
+                        publicacion.tipoPublicacion
+                      )
+                    }}
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <h4>
+                {{ publicacion.titulo }}
+              </h4>
+
+
+              <p>
+                {{ publicacion.descripcion }}
+              </p>
+
+
+              <p>
+                {{ publicacion.distrito }}
+              </p>
+
+
+              <a
+                [routerLink]="[
+                  '/publicaciones-roomie',
+                  publicacion.idPublicacion
+                ]"
+              >
+                Ver detalle
+              </a>
+
+            </article>
+
+          } @empty {
+
+            <p>
+              No hay publicaciones Roomie.
+            </p>
+
+          }
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <footer class="home-footer">
+
+      <div>
+
+        <h2>
+          RoomMatch
+        </h2>
+
+        <p>
+          Conectamos personas,
+          creamos mejores hogares.
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <h3>
+          Explorar
+        </h3>
+
+        <a routerLink="/habitaciones">
+          Habitaciones
+        </a>
+
+        <a routerLink="/publicaciones-roomie">
+          Publicaciones Roomie
+        </a>
+
+      </div>
+
+
+      <div>
+
+        <h3>
+          Para usuarios
+        </h3>
+
+        <a routerLink="/register">
+          Crear cuenta
+        </a>
+
+        <a routerLink="/login">
+          Iniciar sesión
+        </a>
+
+      </div>
+
+
+      <div>
+
+        <h3>
+          RoomMatch
+        </h3>
+
+        <a routerLink="/register">
+          Encuentra tu roomie
+        </a>
+
+        <a routerLink="/habitaciones">
+          Explora habitaciones
+        </a>
+
+      </div>
+
+    </footer>
+
+  }
+
+</section>

@@ -1,0 +1,840 @@
+<section class="account-page">
+
+  <div class="account-container">
+
+
+    @if (cargando) {
+
+      <section class="account-loading">
+
+        <h2>
+          Cargando tu cuenta...
+        </h2>
+
+        <p>
+          Estamos consultando tu información
+          de RoomMatch.
+        </p>
+
+      </section>
+
+    } @else {
+
+
+      <header class="account-header">
+
+
+        <div class="account-identity">
+
+          @if (usuarioData.foto) {
+
+            <img
+              [src]="usuarioData.foto"
+              [alt]="obtenerNombreCompleto()"
+              class="account-avatar-image"
+            >
+
+          } @else {
+
+            <div class="account-avatar">
+              {{ obtenerIniciales() }}
+            </div>
+
+          }
+
+
+          <div>
+
+            <p class="account-pill">
+              Mi cuenta
+            </p>
+
+            <h1>
+              {{ obtenerNombreCompleto() }}
+            </h1>
+
+            <p>
+              Administra tu información,
+              perfil público y privacidad.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <a
+          routerLink="/perfil"
+          class="account-profile-button"
+        >
+          Editar convivencia
+        </a>
+
+      </header>
+
+
+      @if (mensajeError) {
+
+        <div class="auth-error">
+          {{ mensajeError }}
+        </div>
+
+      }
+
+
+      @if (mensajeExito) {
+
+        <div class="profile-success">
+          {{ mensajeExito }}
+        </div>
+
+      }
+
+
+      <section class="account-layout">
+
+
+        <aside class="account-menu">
+
+          <button
+            type="button"
+            [class.active]="pestanaActiva === 'datos'"
+            (click)="cambiarPestana('datos')"
+          >
+
+            <span>
+              1
+            </span>
+
+            <div>
+
+              <strong>
+                Datos personales
+              </strong>
+
+              <small>
+                Información básica
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pestanaActiva === 'perfil'"
+            (click)="cambiarPestana('perfil')"
+          >
+
+            <span>
+              2
+            </span>
+
+            <div>
+
+              <strong>
+                Perfil público
+              </strong>
+
+              <small>
+                Cómo te ven otros
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            type="button"
+            [class.active]="pestanaActiva === 'contacto'"
+            (click)="cambiarPestana('contacto')"
+          >
+
+            <span>
+              3
+            </span>
+
+            <div>
+
+              <strong>
+                Contacto y privacidad
+              </strong>
+
+              <small>
+                Controla tus datos
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <div class="account-security-note">
+
+            <span>
+              🔒
+            </span>
+
+            <p>
+              Tus contactos privados solo pueden
+              ser consultados por usuarios con
+              contacto desbloqueado.
+            </p>
+
+          </div>
+
+        </aside>
+
+
+        <main class="account-content">
+
+
+          @if (
+            pestanaActiva === 'datos'
+          ) {
+
+            <section class="account-section">
+
+
+              <header>
+
+                <span>
+                  Datos personales
+                </span>
+
+                <h2>
+                  Completa tu información
+                </h2>
+
+                <p>
+                  Estos datos ayudan a otros usuarios
+                  a conocerte mejor.
+                </p>
+
+              </header>
+
+
+              <form
+                (ngSubmit)="guardarDatosPersonales()"
+              >
+
+
+                <div class="account-form-grid">
+
+
+                  <div class="account-field">
+
+                    <label for="accountNombres">
+                      Nombres
+                    </label>
+
+                    <input
+                      type="text"
+                      id="accountNombres"
+                      name="accountNombres"
+                      [(ngModel)]="usuarioData.nombres"
+                    >
+
+                  </div>
+
+
+                  <div class="account-field">
+
+                    <label for="accountApellidos">
+                      Apellidos
+                    </label>
+
+                    <input
+                      type="text"
+                      id="accountApellidos"
+                      name="accountApellidos"
+                      [(ngModel)]="usuarioData.apellidos"
+                    >
+
+                  </div>
+
+
+                  <div class="account-field">
+
+                    <label for="accountEdad">
+                      Edad
+                    </label>
+
+                    <input
+                      type="number"
+                      id="accountEdad"
+                      name="accountEdad"
+                      min="18"
+                      max="100"
+                      placeholder="Ej. 22"
+                      [(ngModel)]="usuarioData.edad"
+                    >
+
+                  </div>
+
+
+                  <div class="account-field">
+
+                    <label for="accountOcupacion">
+                      Ocupación
+                    </label>
+
+                    <input
+                      type="text"
+                      id="accountOcupacion"
+                      name="accountOcupacion"
+                      placeholder="Ej. Estudiante de Ingeniería"
+                      [(ngModel)]="usuarioData.ocupacion"
+                    >
+
+                  </div>
+
+
+                  <div class="account-field account-full-field">
+
+                    <label for="accountUniversidad">
+                      Universidad o centro de estudios
+                    </label>
+
+                    <input
+                      type="text"
+                      id="accountUniversidad"
+                      name="accountUniversidad"
+                      placeholder="Opcional"
+                      [(ngModel)]="usuarioData.universidad"
+                    >
+
+                  </div>
+
+
+                  <div class="account-field account-full-field">
+
+                    <label for="accountFoto">
+                      URL de foto de perfil
+                    </label>
+
+                    <input
+                      type="text"
+                      id="accountFoto"
+                      name="accountFoto"
+                      placeholder="https://..."
+                      [(ngModel)]="usuarioData.foto"
+                    >
+
+                    <small>
+                      Por ahora usaremos una URL.
+                      Después podemos implementar carga de imágenes.
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <footer class="account-form-actions">
+
+                  <button
+                    type="submit"
+                    [disabled]="guardandoUsuario"
+                  >
+
+                    @if (guardandoUsuario) {
+
+                      Guardando...
+
+                    } @else {
+
+                      Guardar datos personales
+
+                    }
+
+                  </button>
+
+                </footer>
+
+              </form>
+
+            </section>
+
+          }
+
+
+          @if (
+            pestanaActiva === 'perfil'
+          ) {
+
+            <section class="account-section">
+
+
+              <header>
+
+                <span>
+                  Perfil público
+                </span>
+
+                <h2>
+                  Cuéntales quién eres
+                </h2>
+
+                <p>
+                  Esta descripción forma parte de tu
+                  perfil de convivencia.
+                </p>
+
+              </header>
+
+
+              @if (!perfilExiste) {
+
+                <section class="account-profile-missing">
+
+                  <div>
+                    !
+                  </div>
+
+                  <h3>
+                    Todavía no completaste tu perfil
+                  </h3>
+
+                  <p>
+                    Antes de escribir tu descripción pública
+                    debes completar el cuestionario
+                    de convivencia.
+                  </p>
+
+                  <a routerLink="/perfil">
+                    Completar perfil
+                  </a>
+
+                </section>
+
+              } @else {
+
+                <form
+                  (ngSubmit)="guardarDescripcion()"
+                >
+
+
+                  <div class="account-field">
+
+                    <label for="descripcionCuenta">
+                      Sobre mí
+                    </label>
+
+                    <textarea
+                      id="descripcionCuenta"
+                      name="descripcionCuenta"
+                      rows="9"
+                      maxlength="800"
+                      placeholder="Cuéntanos un poco sobre ti..."
+                      [(ngModel)]="descripcionPersonal"
+                    >
+                    </textarea>
+
+                    <small>
+                      {{ descripcionPersonal.length }}
+                      / 800 caracteres
+                    </small>
+
+                  </div>
+
+
+                  <section class="account-public-preview">
+
+                    <div class="account-preview-avatar">
+                      {{ obtenerIniciales() }}
+                    </div>
+
+
+                    <div>
+
+                      <h3>
+                        {{ obtenerNombreCompleto() }}
+                      </h3>
+
+
+                      <p>
+
+                        @if (usuarioData.edad) {
+
+                          {{ usuarioData.edad }}
+                          años
+
+                        }
+
+
+                        @if (
+                          usuarioData.edad &&
+                          usuarioData.ocupacion
+                        ) {
+
+                          ·
+
+                        }
+
+
+                        @if (usuarioData.ocupacion) {
+
+                          {{ usuarioData.ocupacion }}
+
+                        }
+
+                      </p>
+
+
+                      <blockquote>
+                        {{ descripcionPersonal }}
+                      </blockquote>
+
+                    </div>
+
+                  </section>
+
+
+                  <footer class="account-form-actions">
+
+                    <button
+                      type="submit"
+                      [disabled]="guardandoPerfil"
+                    >
+
+                      @if (guardandoPerfil) {
+
+                        Guardando...
+
+                      } @else {
+
+                        Guardar perfil público
+
+                      }
+
+                    </button>
+
+                  </footer>
+
+                </form>
+
+              }
+
+            </section>
+
+          }
+
+
+          @if (
+            pestanaActiva === 'contacto'
+          ) {
+
+            <section class="account-section">
+
+
+              <header>
+
+                <span>
+                  Contacto y privacidad
+                </span>
+
+                <h2>
+                  Tú decides qué compartir
+                </h2>
+
+                <p>
+                  Configura tus datos de contacto
+                  y selecciona cuáles podrán ver
+                  tus contactos desbloqueados.
+                </p>
+
+              </header>
+
+
+              <form
+                (ngSubmit)="guardarContacto()"
+              >
+
+
+                <div class="contact-settings">
+
+
+                  <article class="contact-setting-card">
+
+                    <div class="contact-setting-main">
+
+                      <div class="contact-icon">
+                        ☎
+                      </div>
+
+                      <div class="account-field">
+
+                        <label for="telefonoCuenta">
+                          Teléfono
+                        </label>
+
+                        <input
+                          type="text"
+                          id="telefonoCuenta"
+                          name="telefonoCuenta"
+                          placeholder="999 999 999"
+                          [(ngModel)]="contactoData.telefono"
+                        >
+
+                      </div>
+
+                    </div>
+
+
+                    <label class="privacy-switch">
+
+                      <input
+                        type="checkbox"
+                        name="mostrarTelefonoCuenta"
+                        [(ngModel)]="contactoData.mostrarTelefono"
+                      >
+
+                      <span>
+                      </span>
+
+                      Mostrar
+                    </label>
+
+                  </article>
+
+
+                  <article class="contact-setting-card">
+
+                    <div class="contact-setting-main">
+
+                      <div class="contact-icon">
+                        W
+                      </div>
+
+                      <div class="account-field">
+
+                        <label for="whatsappCuenta">
+                          WhatsApp
+                        </label>
+
+                        <input
+                          type="text"
+                          id="whatsappCuenta"
+                          name="whatsappCuenta"
+                          placeholder="999 999 999"
+                          [(ngModel)]="contactoData.whatsapp"
+                        >
+
+                      </div>
+
+                    </div>
+
+
+                    <label class="privacy-switch">
+
+                      <input
+                        type="checkbox"
+                        name="mostrarWhatsappCuenta"
+                        [(ngModel)]="contactoData.mostrarWhatsapp"
+                      >
+
+                      <span>
+                      </span>
+
+                      Mostrar
+                    </label>
+
+                  </article>
+
+
+                  <article class="contact-setting-card">
+
+                    <div class="contact-setting-main">
+
+                      <div class="contact-icon">
+                        IG
+                      </div>
+
+                      <div class="account-field">
+
+                        <label for="instagramCuenta">
+                          Instagram
+                        </label>
+
+                        <input
+                          type="text"
+                          id="instagramCuenta"
+                          name="instagramCuenta"
+                          placeholder="@usuario"
+                          [(ngModel)]="contactoData.instagram"
+                        >
+
+                      </div>
+
+                    </div>
+
+
+                    <label class="privacy-switch">
+
+                      <input
+                        type="checkbox"
+                        name="mostrarInstagramCuenta"
+                        [(ngModel)]="contactoData.mostrarInstagram"
+                      >
+
+                      <span>
+                      </span>
+
+                      Mostrar
+                    </label>
+
+                  </article>
+
+
+                  <article class="contact-setting-card">
+
+                    <div class="contact-setting-main">
+
+                      <div class="contact-icon">
+                        F
+                      </div>
+
+                      <div class="account-field">
+
+                        <label for="facebookCuenta">
+                          Facebook
+                        </label>
+
+                        <input
+                          type="text"
+                          id="facebookCuenta"
+                          name="facebookCuenta"
+                          placeholder="facebook.com/usuario"
+                          [(ngModel)]="contactoData.facebook"
+                        >
+
+                      </div>
+
+                    </div>
+
+
+                    <label class="privacy-switch">
+
+                      <input
+                        type="checkbox"
+                        name="mostrarFacebookCuenta"
+                        [(ngModel)]="contactoData.mostrarFacebook"
+                      >
+
+                      <span>
+                      </span>
+
+                      Mostrar
+                    </label>
+
+                  </article>
+
+
+                  <article class="contact-setting-card">
+
+                    <div class="contact-setting-main">
+
+                      <div class="contact-icon">
+                        ✉
+                      </div>
+
+                      <div class="account-field">
+
+                        <label for="emailContactoCuenta">
+                          Email de contacto
+                        </label>
+
+                        <input
+                          type="email"
+                          id="emailContactoCuenta"
+                          name="emailContactoCuenta"
+                          placeholder="contacto@correo.com"
+                          [(ngModel)]="contactoData.emailContacto"
+                        >
+
+                      </div>
+
+                    </div>
+
+
+                    <label class="privacy-switch">
+
+                      <input
+                        type="checkbox"
+                        name="mostrarEmailCuenta"
+                        [(ngModel)]="contactoData.mostrarEmail"
+                      >
+
+                      <span>
+                      </span>
+
+                      Mostrar
+                    </label>
+
+                  </article>
+
+                </div>
+
+
+                <section class="contact-privacy-info">
+
+                  <span>
+                    🔒
+                  </span>
+
+                  <div>
+
+                    <h3>
+                      ¿Quién puede ver estos datos?
+                    </h3>
+
+                    <p>
+                      Únicamente personas con una solicitud
+                      de contacto aceptada podrán consultar
+                      los campos que marques como visibles.
+                    </p>
+
+                  </div>
+
+                </section>
+
+
+                <footer class="account-form-actions">
+
+                  <button
+                    type="submit"
+                    [disabled]="guardandoContacto"
+                  >
+
+                    @if (guardandoContacto) {
+
+                      Guardando...
+
+                    } @else {
+
+                      Guardar contacto y privacidad
+
+                    }
+
+                  </button>
+
+                </footer>
+
+              </form>
+
+            </section>
+
+          }
+
+        </main>
+
+      </section>
+
+    }
+
+  </div>
+
+</section>

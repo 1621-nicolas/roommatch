@@ -1,0 +1,148 @@
+<section>
+  <h1>Reportes administrativos</h1>
+
+  <p>
+    Gestiona reportes de usuarios y habitaciones.
+  </p>
+
+  <div>
+    <button type="button">Reportes de usuarios</button>
+    <button type="button">Reportes de habitaciones</button>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2>Reportes de usuarios</h2>
+
+    <form>
+      <label for="estadoReporteUsuario">Filtrar por estado</label>
+
+      <select id="estadoReporteUsuario" name="estadoReporteUsuario">
+        <option value="">Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="revisado">Revisado</option>
+        <option value="rechazado">Rechazado</option>
+        <option value="sancionado">Sancionado</option>
+      </select>
+
+      <button type="button">
+        Filtrar
+      </button>
+    </form>
+
+    <br>
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Reportante</th>
+          <th>Usuario reportado</th>
+          <th>Motivo</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>Ana Torres</td>
+          <td>Juan Pérez</td>
+          <td>Perfil sospechoso</td>
+          <td>Información poco confiable.</td>
+          <td>Pendiente</td>
+          <td>03/07/2026</td>
+          <td>
+            <button type="button">Revisar</button>
+            <button type="button">Rechazar</button>
+            <button type="button">Sancionar</button>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Carlos Ramírez</td>
+          <td>María López</td>
+          <td>Comportamiento inadecuado</td>
+          <td>El usuario envió mensajes incómodos.</td>
+          <td>Revisado</td>
+          <td>02/07/2026</td>
+          <td>
+            <button type="button">Revisar</button>
+            <button type="button">Rechazar</button>
+            <button type="button">Sancionar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Reportes de habitaciones</h2>
+
+    <form>
+      <label for="estadoReporteHabitacion">Filtrar por estado</label>
+
+      <select id="estadoReporteHabitacion" name="estadoReporteHabitacion">
+        <option value="">Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="revisado">Revisado</option>
+        <option value="rechazado">Rechazado</option>
+        <option value="sancionado">Sancionado</option>
+      </select>
+
+      <button type="button">
+        Filtrar
+      </button>
+    </form>
+
+    <br>
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Reportante</th>
+          <th>Habitación</th>
+          <th>Motivo</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>Juan Pérez</td>
+          <td>Habitación amoblada cerca a UPN</td>
+          <td>Información engañosa</td>
+          <td>La habitación no coincide con la descripción.</td>
+          <td>Pendiente</td>
+          <td>03/07/2026</td>
+          <td>
+            <button type="button">Revisar</button>
+            <button type="button">Rechazar</button>
+            <button type="button">Sancionar habitación</button>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Ana Torres</td>
+          <td>Habitación en San Miguel</td>
+          <td>Precio falso</td>
+          <td>El propietario cambió el precio al contactar.</td>
+          <td>Pendiente</td>
+          <td>03/07/2026</td>
+          <td>
+            <button type="button">Revisar</button>
+            <button type="button">Rechazar</button>
+            <button type="button">Sancionar habitación</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</section>
