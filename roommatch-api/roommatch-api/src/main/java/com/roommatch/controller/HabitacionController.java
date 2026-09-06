@@ -6,15 +6,26 @@ import com.roommatch.dto.HabitacionResponse;
 import com.roommatch.model.Usuario;
 import com.roommatch.service.HabitacionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 
+@Validated
 @RestController
 @RequestMapping("/api/habitaciones")
 public class HabitacionController {
@@ -30,23 +41,15 @@ public class HabitacionController {
             Authentication authentication,
             @Valid @RequestBody HabitacionRequest request
     ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
+        Usuario usuario = usuarioAutenticado(authentication);
+        HabitacionResponse response = habitacionService.crearHabitacion(
+                usuario.getIdUsuario(),
+                request
+        );
 
-            HabitacionResponse response = habitacionService.crearHabitacion(
-                    usuario.getIdUsuario(),
-                    request
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación publicada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Habitación publicada correctamente")
+        );
     }
 
     @GetMapping
@@ -57,11 +60,16 @@ public class HabitacionController {
             @RequestParam(required = false) Boolean amoblado,
             @RequestParam(required = false) Boolean banoPrivado,
             @RequestParam(required = false) Boolean permiteMascotas,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "6") @Min(1) @Max(100) int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        if (precioMin != null && precioMax != null && precioMax.compareTo(precioMin) < 0) {
+            throw new IllegalArgumentException(
+                    "El precio máximo no puede ser menor que el precio mínimo"
+            );
+        }
 
+        Pageable pageable = PageRequest.of(page, size);
         Page<HabitacionResponse> habitaciones = habitacionService.listarHabitacionesPublicas(
                 distrito,
                 precioMin,
@@ -77,121 +85,90 @@ public class HabitacionController {
         );
     }
 
-    @GetMapping("/{idHabitacion}")
-    public ResponseEntity<ApiResponse<HabitacionResponse>> obtenerHabitacion(
-            @PathVariable Integer idHabitacion
-    ) {
-        try {
-            HabitacionResponse response = habitacionService.obtenerHabitacionPorId(idHabitacion);
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación obtenida correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
-    }
-
     @GetMapping("/mis")
     public ResponseEntity<ApiResponse<Page<HabitacionResponse>>> listarMisHabitaciones(
             Authentication authentication,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "6") @Min(1) @Max(100) int size
     ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-            Pageable pageable = PageRequest.of(page, size);
+        Usuario usuario = usuarioAutenticado(authentication);
+        Pageable pageable = PageRequest.of(page, size);
 
-            Page<HabitacionResponse> habitaciones = habitacionService.listarMisHabitaciones(
-                    usuario.getIdUsuario(),
-                    pageable
-            );
+        Page<HabitacionResponse> habitaciones = habitacionService.listarMisHabitaciones(
+                usuario.getIdUsuario(),
+                pageable
+        );
 
-            return ResponseEntity.ok(
-                    ApiResponse.success(habitaciones, "Mis habitaciones obtenidas correctamente")
-            );
+        return ResponseEntity.ok(
+                ApiResponse.success(habitaciones, "Mis habitaciones obtenidas correctamente")
+        );
+    }
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+    @GetMapping("/{idHabitacion}")
+    public ResponseEntity<ApiResponse<HabitacionResponse>> obtenerHabitacion(
+            @PathVariable @Min(1) Integer idHabitacion
+    ) {
+        HabitacionResponse response = habitacionService.obtenerHabitacionPorId(idHabitacion);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Habitación obtenida correctamente")
+        );
     }
 
     @PutMapping("/{idHabitacion}")
     public ResponseEntity<ApiResponse<HabitacionResponse>> actualizarHabitacion(
             Authentication authentication,
-            @PathVariable Integer idHabitacion,
+            @PathVariable @Min(1) Integer idHabitacion,
             @Valid @RequestBody HabitacionRequest request
     ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
+        Usuario usuario = usuarioAutenticado(authentication);
+        HabitacionResponse response = habitacionService.actualizarHabitacion(
+                usuario.getIdUsuario(),
+                idHabitacion,
+                request
+        );
 
-            HabitacionResponse response = habitacionService.actualizarHabitacion(
-                    usuario.getIdUsuario(),
-                    idHabitacion,
-                    request
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación actualizada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Habitación actualizada correctamente")
+        );
     }
 
     @PutMapping("/{idHabitacion}/pausar")
     public ResponseEntity<ApiResponse<HabitacionResponse>> pausarHabitacion(
             Authentication authentication,
-            @PathVariable Integer idHabitacion
+            @PathVariable @Min(1) Integer idHabitacion
     ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
+        Usuario usuario = usuarioAutenticado(authentication);
+        HabitacionResponse response = habitacionService.pausarHabitacion(
+                usuario.getIdUsuario(),
+                idHabitacion
+        );
 
-            HabitacionResponse response = habitacionService.pausarHabitacion(
-                    usuario.getIdUsuario(),
-                    idHabitacion
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación pausada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Habitación pausada correctamente")
+        );
     }
 
     @PutMapping("/{idHabitacion}/activar")
     public ResponseEntity<ApiResponse<HabitacionResponse>> activarHabitacion(
             Authentication authentication,
-            @PathVariable Integer idHabitacion
+            @PathVariable @Min(1) Integer idHabitacion
     ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
+        Usuario usuario = usuarioAutenticado(authentication);
+        HabitacionResponse response = habitacionService.activarHabitacion(
+                usuario.getIdUsuario(),
+                idHabitacion
+        );
 
-            HabitacionResponse response = habitacionService.activarHabitacion(
-                    usuario.getIdUsuario(),
-                    idHabitacion
-            );
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Habitación activada correctamente")
+        );
+    }
 
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación activada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
+    private Usuario usuarioAutenticado(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof Usuario usuario)) {
+            throw new IllegalStateException("No se pudo resolver el usuario autenticado");
         }
+        return usuario;
     }
 }
