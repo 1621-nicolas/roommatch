@@ -1,7 +1,9 @@
 package com.roommatch.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class RegistroRequest {
@@ -13,6 +15,10 @@ public class RegistroRequest {
     @NotBlank(message = "Los apellidos son obligatorios")
     @Size(max = 100, message = "Los apellidos no pueden superar 100 caracteres")
     private String apellidos;
+
+    @NotNull(message = "La edad es obligatoria")
+    @Min(value = 18, message = "Debes tener al menos 18 años")
+    private Integer edad;
 
     @NotBlank(message = "El correo electrónico es obligatorio")
     @Email(message = "El correo electrónico no tiene un formato válido")
@@ -41,6 +47,14 @@ public class RegistroRequest {
 
     public void setApellidos(String apellidos) {
         this.apellidos = apellidos;
+    }
+
+    public Integer getEdad() {
+        return edad;
+    }
+
+    public void setEdad(Integer edad) {
+        this.edad = edad;
     }
 
     public String getEmail() {
