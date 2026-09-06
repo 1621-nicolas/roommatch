@@ -1,63 +1,23 @@
-import {
-  HttpInterceptorFn
-} from '@angular/common/http';
+import { HttpInterceptorFn } from '@angular/common/http';
 
+import { API_BASE_URL } from '../config/api.config';
 
-export const authInterceptor: HttpInterceptorFn = (
-  request,
-  next
-) => {
+const TOKEN_KEY = 'roommatch_token';
 
-  const token =
-    localStorage.getItem(
-      'roommatch_token'
-    );
+export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const esApiRoomMatch = request.url.startsWith(`${API_BASE_URL}/`);
+  const esEndpointAuth = request.url.startsWith(`${API_BASE_URL}/auth/`);
 
-
-  const esApiRoomMatch =
-    request.url.startsWith(
-      'http://localhost:8081/api/'
-    );
-
-
-  const esEndpointAuth =
-    request.url.includes(
-      '/api/auth/'
-    );
-
-
-  /*
-   * No modificamos:
-   *
-   * - Peticiones sin sesión
-   * - Peticiones externas
-   * - Login
-   * - Registro
-   */
-  if (
-    !token ||
-    !esApiRoomMatch ||
-    esEndpointAuth
-  ) {
-
+  if (!token || !esApiRoomMatch || esEndpointAuth) {
     return next(request);
   }
 
-
-  const requestAutenticada =
-    request.clone({
-
-      setHeaders: {
-
-        Authorization:
-          `Bearer ${token}`
-
-      }
-
-    });
-
-
   return next(
-    requestAutenticada
+    request.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    })
   );
 };

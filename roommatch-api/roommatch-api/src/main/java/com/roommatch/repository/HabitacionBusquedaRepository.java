@@ -1,6 +1,7 @@
 package com.roommatch.repository;
 
 import com.roommatch.model.Habitacion;
+import com.roommatch.util.ApiConstants;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Repository
 public class HabitacionBusquedaRepository {
@@ -29,13 +31,15 @@ public class HabitacionBusquedaRepository {
             Boolean permiteMascotas,
             Pageable pageable
     ) {
+        Objects.requireNonNull(pageable, "pageable");
+
         StringBuilder where = new StringBuilder();
         Map<String, Object> parametros = new HashMap<>();
 
         where.append(" WHERE h.estado = :estado ");
-        parametros.put("estado", "activa");
+        parametros.put("estado", ApiConstants.ESTADO_ACTIVA);
 
-        if (distrito != null && !distrito.trim().isEmpty()) {
+        if (distrito != null && !distrito.isBlank()) {
             where.append(" AND LOWER(h.distrito) LIKE LOWER(:distrito) ");
             parametros.put("distrito", "%" + distrito.trim() + "%");
         }
@@ -73,13 +77,14 @@ public class HabitacionBusquedaRepository {
                 """;
 
         TypedQuery<Habitacion> query = entityManager.createQuery(jpql, Habitacion.class);
-
         parametros.forEach(query::setParameter);
-
         query.setFirstResult((int) pageable.getOffset());
         query.setMaxResults(pageable.getPageSize());
 
-        List<Habitacion> habitaciones = query.getResultList();
+        List<Habitacion> habitaciones = Objects.requireNonNull(
+                query.getResultList(),
+                "La consulta de habitaciones no puede devolver una lista nula"
+        );
 
         String jpqlCount = """
                 SELECT COUNT(h)
@@ -87,10 +92,12 @@ public class HabitacionBusquedaRepository {
                 """ + where;
 
         TypedQuery<Long> countQuery = entityManager.createQuery(jpqlCount, Long.class);
-
         parametros.forEach(countQuery::setParameter);
 
-        Long total = countQuery.getSingleResult();
+        Long total = Objects.requireNonNull(
+                countQuery.getSingleResult(),
+                "La consulta de conteo no puede devolver null"
+        );
 
         return new PageImpl<>(habitaciones, pageable, total);
     }

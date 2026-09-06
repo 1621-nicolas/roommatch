@@ -6,25 +6,22 @@ import { ApiResponse } from '../models/api-response';
 import { PageResponse } from '../models/page-response';
 import { HabitacionResponse } from '../models/habitacion-response';
 import { PublicacionRoomieResponse } from '../models/publicacion-roomie-response';
+import { API_BASE_URL } from '../config/api.config';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class HomeService {
-
-  private readonly apiUrl = 'http://localhost:8081/api';
 
   constructor(private http: HttpClient) {}
 
   listarHabitacionesDestacadas(): Observable<ApiResponse<PageResponse<HabitacionResponse>>> {
     return this.http.get<ApiResponse<PageResponse<HabitacionResponse>>>(
-      `${this.apiUrl}/habitaciones?page=0&size=3`
+      `${API_BASE_URL}/habitaciones?page=0&size=3`
     );
   }
 
   listarPublicacionesRoomie(): Observable<ApiResponse<PageResponse<PublicacionRoomieResponse>>> {
     return this.http.get<ApiResponse<PageResponse<PublicacionRoomieResponse>>>(
-      `${this.apiUrl}/publicaciones-roomie?page=0&size=3`
+      `${API_BASE_URL}/publicaciones-roomie?page=0&size=3`
     );
   }
 }

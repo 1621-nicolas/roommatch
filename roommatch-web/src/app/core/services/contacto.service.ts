@@ -5,36 +5,23 @@ import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/api-response';
 import { ContactoUsuarioRequest } from '../models/contacto-usuario-request';
 import { ContactoUsuarioResponse } from '../models/contacto-usuario-response';
+import { API_BASE_URL } from '../config/api.config';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ContactoService {
 
-  private readonly apiUrl =
-    'http://localhost:8081/api/contactos';
+  private readonly apiUrl = `${API_BASE_URL}/contactos`;
 
-  constructor(
-    private http: HttpClient
-  ) {}
+  constructor(private http: HttpClient) {}
 
-  obtenerMiContacto():
-    Observable<ApiResponse<ContactoUsuarioResponse>> {
-
-    return this.http.get<
-      ApiResponse<ContactoUsuarioResponse>
-    >(
-      `${this.apiUrl}/me`
-    );
+  obtenerMiContacto(): Observable<ApiResponse<ContactoUsuarioResponse>> {
+    return this.http.get<ApiResponse<ContactoUsuarioResponse>>(`${this.apiUrl}/me`);
   }
 
   crearMiContacto(
     request: ContactoUsuarioRequest
   ): Observable<ApiResponse<ContactoUsuarioResponse>> {
-
-    return this.http.post<
-      ApiResponse<ContactoUsuarioResponse>
-    >(
+    return this.http.post<ApiResponse<ContactoUsuarioResponse>>(
       `${this.apiUrl}/me`,
       request
     );
@@ -43,10 +30,7 @@ export class ContactoService {
   actualizarMiContacto(
     request: ContactoUsuarioRequest
   ): Observable<ApiResponse<ContactoUsuarioResponse>> {
-
-    return this.http.put<
-      ApiResponse<ContactoUsuarioResponse>
-    >(
+    return this.http.put<ApiResponse<ContactoUsuarioResponse>>(
       `${this.apiUrl}/me`,
       request
     );
@@ -55,10 +39,7 @@ export class ContactoService {
   obtenerContactoDesbloqueado(
     idUsuario: number
   ): Observable<ApiResponse<ContactoUsuarioResponse>> {
-
-    return this.http.get<
-      ApiResponse<ContactoUsuarioResponse>
-    >(
+    return this.http.get<ApiResponse<ContactoUsuarioResponse>>(
       `${this.apiUrl}/desbloqueado/${idUsuario}`
     );
   }

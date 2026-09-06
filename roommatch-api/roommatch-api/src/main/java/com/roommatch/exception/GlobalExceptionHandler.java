@@ -2,6 +2,9 @@ package com.roommatch.exception;
 
 import com.roommatch.dto.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> manejarIllegalArgument(
@@ -72,12 +77,29 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> manejarErrorBaseDatos(
+    public ResponseEntity<ApiResponse<Void>> manejarErrorIntegridadBaseDatos(
             DataIntegrityViolationException ex
     ) {
+        log.warn("Restricción de base de datos en RoomMatch", ex);
+
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail("No se pudo completar la operación por una restricción de la base de datos"));
+                .body(ApiResponse.fail(
+                        "No se pudo completar la operación por una restricción de la base de datos"
+                ));
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiResponse<Void>> manejarAccesoBaseDatos(
+            DataAccessException ex
+    ) {
+        log.error("Error de acceso a la base de datos de RoomMatch", ex);
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error(
+                        "El servicio de datos no está disponible temporalmente. Inténtalo nuevamente."
+                ));
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -99,46 +121,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-public ResponseEntity<ApiResponse<Object>> manejarExcepcionGeneral(
-        Exception exception
-) {
+    public ResponseEntity<ApiResponse<Void>> manejarExcepcionGeneral(
+            Exception ex
+    ) {
+        log.error("Error interno no controlado en RoomMatch", ex);
 
-    System.err.println();
-    System.err.println("================================================");
-    System.err.println("ERROR INTERNO ROOMMATCH");
-    System.err.println("================================================");
-
-    System.err.println(
-            "TIPO DE ERROR: "
-                    + exception
-                            .getClass()
-                            .getName()
-    );
-
-    System.err.println(
-            "MENSAJE: "
-                    + exception.getMessage()
-    );
-
-    System.err.println("================================================");
-
-    exception.printStackTrace();
-
-    System.err.println("================================================");
-    System.err.println();
-
-    return ResponseEntity
-            .status(
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            )
-            .body(
-                    ApiResponse.error(
-                            exception
-                                    .getClass()
-                                    .getSimpleName()
-                                    + ": "
-                                    + exception.getMessage()
-                    )
-            );
-}
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error(
+                        "Ocurrió un error interno. Inténtalo nuevamente."
+                ));
+    }
 }

@@ -1,51 +1,12 @@
 <section class="register-page">
 
-  <div class="route-search">
-
-    <span class="search-icon">
-      ⌕
-    </span>
-
-    <span class="search-placeholder">
-      Buscar ruta o pantalla...
-    </span>
-
-    <a routerLink="/login">
-      /login
-    </a>
-
-    <a routerLink="/register">
-      /register
-    </a>
-
-    <a routerLink="/perfil">
-      /perfil
-    </a>
-
-    <a routerLink="/matches">
-      /matches
-    </a>
-
-    <a routerLink="/habitaciones">
-      /habitaciones
-    </a>
-
-    <strong>
-      Ruta actual: /register
-    </strong>
-
-  </div>
-
-
   <section class="register-card">
 
     <div class="register-left">
 
       <h1>
         Crea tu cuenta en
-        <span>
-          RoomMatch
-        </span>
+        <span>RoomMatch</span>
       </h1>
 
       <p class="register-subtitle">
@@ -53,15 +14,11 @@
         y habitaciones que se ajusten a tu estilo de vida.
       </p>
 
-
       @if (mensajeError) {
-
         <div class="auth-error">
           {{ mensajeError }}
         </div>
-
       }
-
 
       <form
         (ngSubmit)="crearCuenta()"
@@ -71,134 +28,112 @@
         <div class="register-row">
 
           <div class="register-field">
-
-            <label for="nombres">
-              Nombres
-            </label>
-
+            <label for="nombres">Nombres</label>
             <div class="register-input">
-
               <span>♙</span>
-
               <input
                 type="text"
                 id="nombres"
                 name="nombres"
                 placeholder="Ingresa tus nombres"
+                autocomplete="given-name"
+                required
                 [(ngModel)]="registroData.nombres"
               >
-
             </div>
-
           </div>
 
-
           <div class="register-field">
-
-            <label for="apellidos">
-              Apellidos
-            </label>
-
+            <label for="apellidos">Apellidos</label>
             <div class="register-input">
-
               <span>♙</span>
-
               <input
                 type="text"
                 id="apellidos"
                 name="apellidos"
                 placeholder="Ingresa tus apellidos"
+                autocomplete="family-name"
+                required
                 [(ngModel)]="registroData.apellidos"
               >
-
             </div>
-
           </div>
 
         </div>
 
+        <div class="register-field">
+          <label for="edad">Edad</label>
+          <div class="register-input">
+            <span>🎂</span>
+            <input
+              type="number"
+              id="edad"
+              name="edad"
+              min="18"
+              max="120"
+              step="1"
+              required
+              [(ngModel)]="registroData.edad"
+            >
+          </div>
+          <small class="password-help">
+            Debes tener al menos 18 años para usar RoomMatch.
+          </small>
+        </div>
 
         <div class="register-field">
-
-          <label for="registerEmail">
-            Correo electrónico
-          </label>
-
+          <label for="registerEmail">Correo electrónico</label>
           <div class="register-input">
-
             <span>✉</span>
-
             <input
               type="email"
               id="registerEmail"
               name="registerEmail"
               placeholder="tu@email.com"
+              autocomplete="email"
+              required
               [(ngModel)]="registroData.email"
             >
-
           </div>
-
         </div>
 
-
         <div class="register-field">
-
-          <label for="registerPassword">
-            Contraseña
-          </label>
-
+          <label for="registerPassword">Contraseña</label>
           <div class="register-input">
-
             <span>🔒</span>
-
             <input
               type="password"
               id="registerPassword"
               name="registerPassword"
               placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password"
+              minlength="6"
+              required
               [(ngModel)]="registroData.password"
             >
-
           </div>
-
           <small class="password-help">
             Usa una contraseña de al menos 6 caracteres.
           </small>
-
         </div>
-
 
         <button
           type="submit"
           class="register-main-button"
           [disabled]="cargando"
         >
-
           @if (cargando) {
-
             Creando cuenta...
-
           } @else {
-
             Crear cuenta
-
           }
-
         </button>
 
-
         <div class="login-separator">
-
           <span></span>
-
-          <small>
-            o
-          </small>
-
+          <small>o</small>
           <span></span>
-
         </div>
-
 
         <a
           routerLink="/"
@@ -209,235 +144,94 @@
 
       </form>
 
-
       <p class="register-login-text">
-
         ¿Ya tienes cuenta?
-
-        <a routerLink="/login">
-          Inicia sesión
-        </a>
-
+        <a routerLink="/login">Inicia sesión</a>
       </p>
 
     </div>
 
-
     <div class="register-right">
 
       <article class="register-match-preview">
-
-        <div class="preview-avatar">
-          C
-        </div>
-
+        <div class="preview-avatar">C</div>
         <div>
-
-          <h3>
-            Camila, 22
-          </h3>
-
-          <p>
-            Estudiante
-          </p>
-
-          <strong>
-            95% Compatible
-          </strong>
-
+          <h3>Camila, 22</h3>
+          <p>Estudiante</p>
+          <strong>95% Compatible</strong>
         </div>
-
-        <span class="preview-heart">
-          ♡
-        </span>
-
+        <span class="preview-heart">♡</span>
       </article>
 
-
-      <div class="register-heart">
-        ♥
-      </div>
-
+      <div class="register-heart">♥</div>
 
       <article class="register-room-preview">
-
-        <div class="register-room-image">
-        </div>
-
+        <div class="register-room-image"></div>
         <div class="register-room-content">
-
-          <h3>
-            Habitación en Miraflores
-          </h3>
-
-          <p>
-            Miraflores, Lima
-          </p>
-
-          <strong>
-            S/ 1,250 / mes
-          </strong>
-
+          <h3>Habitación en Miraflores</h3>
+          <p>Miraflores, Lima</p>
+          <strong>S/ 1,250 / mes</strong>
           <div class="preview-room-tags">
-
-            <span>
-              Amoblado
-            </span>
-
-            <span>
-              Baño privado
-            </span>
-
-            <span>
-              Wi-Fi
-            </span>
-
+            <span>Amoblado</span>
+            <span>Baño privado</span>
+            <span>Wi-Fi</span>
           </div>
-
-          <a routerLink="/habitaciones/1">
-            Ver detalle
-          </a>
-
+          <a routerLink="/habitaciones/1">Ver detalle</a>
         </div>
-
       </article>
 
-
       <article class="register-publication-preview">
-
-        <div class="preview-avatar">
-          D
-        </div>
-
+        <div class="preview-avatar">D</div>
         <div>
-
-          <h3>
-            Diego, 24
-          </h3>
-
-          <p>
-            Busco roomie para compartir departamento.
-          </p>
-
-          <small>
-            Estudiante · Pet friendly
-          </small>
-
+          <h3>Diego, 24</h3>
+          <p>Busco roomie para compartir departamento.</p>
+          <small>Estudiante · Pet friendly</small>
         </div>
-
       </article>
 
     </div>
 
-
     <div class="register-benefits">
-
       <article>
-
-        <div>
-          1
-        </div>
-
+        <div>1</div>
         <section>
-
-          <h3>
-            Compatibilidad real
-          </h3>
-
-          <p>
-            Algoritmo basado en tu estilo de vida,
-            hábitos y preferencias.
-          </p>
-
+          <h3>Compatibilidad real</h3>
+          <p>Algoritmo basado en tu estilo de vida, hábitos y preferencias.</p>
         </section>
-
       </article>
 
-
       <article>
-
-        <div>
-          2
-        </div>
-
+        <div>2</div>
         <section>
-
-          <h3>
-            Privacidad protegida
-          </h3>
-
-          <p>
-            Tu información está segura.
-            Solo compartimos lo que tú decides.
-          </p>
-
+          <h3>Privacidad protegida</h3>
+          <p>Tu información está segura. Solo compartimos lo que tú decides.</p>
         </section>
-
       </article>
 
-
       <article>
-
-        <div>
-          3
-        </div>
-
+        <div>3</div>
         <section>
-
-          <h3>
-            Habitaciones verificables
-          </h3>
-
-          <p>
-            Publicaciones para encontrar
-            espacios según tus necesidades.
-          </p>
-
+          <h3>Habitaciones verificables</h3>
+          <p>Publicaciones para encontrar espacios según tus necesidades.</p>
         </section>
-
       </article>
 
-
       <article>
-
-        <div>
-          4
-        </div>
-
+        <div>4</div>
         <section>
-
-          <h3>
-            Planes para propietarios
-          </h3>
-
-          <p>
-            Publica habitaciones y encuentra
-            interesados más rápido.
-          </p>
-
+          <h3>Planes para propietarios</h3>
+          <p>Publica habitaciones y encuentra interesados más rápido.</p>
         </section>
-
       </article>
-
     </div>
 
   </section>
 
-
   <p class="register-legal">
-
     Al crear tu cuenta, aceptas nuestros
-
-    <a routerLink="/register">
-      Términos y Condiciones
-    </a>
-
+    <a routerLink="/register">Términos y Condiciones</a>
     y nuestra
-
-    <a routerLink="/register">
-      Política de Privacidad
-    </a>.
-
+    <a routerLink="/register">Política de Privacidad</a>.
   </p>
 
 </section>

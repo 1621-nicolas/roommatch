@@ -5,10 +5,12 @@ import com.roommatch.model.FavoritoUsuario;
 import com.roommatch.model.Usuario;
 import com.roommatch.repository.FavoritoUsuarioRepository;
 import com.roommatch.repository.UsuarioRepository;
+import com.roommatch.util.ApiConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class FavoritoService {
@@ -26,36 +28,53 @@ public class FavoritoService {
 
     @Transactional
     public FavoritoResponse agregarFavorito(Integer idUsuario, Integer idUsuarioFavorito) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer favoritoId = requerirId(idUsuarioFavorito, "idUsuarioFavorito");
 
-        if (idUsuario.equals(idUsuarioFavorito)) {
+        if (usuarioId.equals(favoritoId)) {
             throw new IllegalArgumentException("No puedes agregarte a ti mismo como favorito");
         }
 
-        if (favoritoRepository.existsByUsuarioIdUsuarioAndUsuarioFavoritoIdUsuario(idUsuario, idUsuarioFavorito)) {
+        if (favoritoRepository.existsByUsuarioIdUsuarioAndUsuarioFavoritoIdUsuario(
+                usuarioId,
+                favoritoId
+        )) {
             throw new IllegalArgumentException("Este usuario ya está en tus favoritos");
         }
 
-        Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario autenticado no encontrado"));
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Usuario autenticado no encontrado"
+                ));
 
-        Usuario usuarioFavorito = usuarioRepository.findById(idUsuarioFavorito)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario favorito no encontrado"));
+        Usuario usuarioFavorito = usuarioRepository.findById(favoritoId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Usuario favorito no encontrado"
+                ));
 
-        if (!usuarioFavorito.getEstado().equalsIgnoreCase("activo")) {
-            throw new IllegalArgumentException("No puedes agregar un usuario inactivo como favorito");
+        if (!ApiConstants.ESTADO_ACTIVO.equalsIgnoreCase(usuarioFavorito.getEstado())) {
+            throw new IllegalArgumentException(
+                    "No puedes agregar un usuario inactivo como favorito"
+            );
         }
 
         FavoritoUsuario favorito = new FavoritoUsuario();
         favorito.setUsuario(usuario);
         favorito.setUsuarioFavorito(usuarioFavorito);
 
-        FavoritoUsuario favoritoGuardado = favoritoRepository.save(favorito);
+        FavoritoUsuario guardado = favoritoRepository.save(
+                Objects.requireNonNull(favorito)
+        );
 
-        return FavoritoResponse.fromEntity(favoritoGuardado);
+        return FavoritoResponse.fromEntity(guardado);
     }
 
+    @Transactional(readOnly = true)
     public List<FavoritoResponse> listarMisFavoritos(Integer idUsuario) {
-        return favoritoRepository.findByUsuarioIdUsuarioOrderByFechaFavoritoDesc(idUsuario)
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+
+        return favoritoRepository
+                .findByUsuarioIdUsuarioOrderByFechaFavoritoDesc(usuarioId)
                 .stream()
                 .map(FavoritoResponse::fromEntity)
                 .toList();
@@ -63,11 +82,25 @@ public class FavoritoService {
 
     @Transactional
     public void eliminarFavorito(Integer idUsuario, Integer idUsuarioFavorito) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer favoritoId = requerirId(idUsuarioFavorito, "idUsuarioFavorito");
 
         FavoritoUsuario favorito = favoritoRepository
-                .findByUsuarioIdUsuarioAndUsuarioFavoritoIdUsuario(idUsuario, idUsuarioFavorito)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no está en tus favoritos"));
+                .findByUsuarioIdUsuarioAndUsuarioFavoritoIdUsuario(
+                        usuarioId,
+                        favoritoId
+                )
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "El usuario no está en tus favoritos"
+                ));
 
-        favoritoRepository.delete(favorito);
+        favoritoRepository.delete(Objects.requireNonNull(favorito));
+    }
+
+    private Integer requerirId(Integer id, String nombre) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(nombre + " debe ser un identificador válido");
+        }
+        return id;
     }
 }
