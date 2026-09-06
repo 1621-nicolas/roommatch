@@ -1,66 +1,29 @@
-import {
-  Injectable
-} from '@angular/core';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import {
-  HttpClient
-} from '@angular/common/http';
+import { ApiResponse } from '../models/api-response';
+import { PropietarioRequest } from '../models/propietario-request';
+import { PropietarioResponse } from '../models/propietario-response';
+import { API_BASE_URL } from '../config/api.config';
 
-import {
-  Observable
-} from 'rxjs';
-
-import {
-  ApiResponse
-} from '../models/api-response';
-
-import {
-  PropietarioRequest
-} from '../models/propietario-request';
-
-import {
-  PropietarioResponse
-} from '../models/propietario-response';
-
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PropietarioService {
 
-  private readonly apiUrl =
-    'http://localhost:8081/api/propietarios';
+  private readonly apiUrl = `${API_BASE_URL}/propietarios`;
 
-
-  constructor(
-    private http: HttpClient
-  ) {}
-
+  constructor(private http: HttpClient) {}
 
   convertirmeEnPropietario(
     request: PropietarioRequest
-  ): Observable<
-    ApiResponse<PropietarioResponse>
-  > {
-
-    return this.http.post<
-      ApiResponse<PropietarioResponse>
-    >(
+  ): Observable<ApiResponse<PropietarioResponse>> {
+    return this.http.post<ApiResponse<PropietarioResponse>>(
       `${this.apiUrl}/me`,
       request
     );
   }
 
-
-  obtenerMiPerfil():
-    Observable<
-      ApiResponse<PropietarioResponse>
-    > {
-
-    return this.http.get<
-      ApiResponse<PropietarioResponse>
-    >(
-      `${this.apiUrl}/me`
-    );
+  obtenerMiPerfil(): Observable<ApiResponse<PropietarioResponse>> {
+    return this.http.get<ApiResponse<PropietarioResponse>>(`${this.apiUrl}/me`);
   }
 }
