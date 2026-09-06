@@ -1,117 +1,46 @@
-import {
-  Injectable
-} from '@angular/core';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import {
-  HttpClient
-} from '@angular/common/http';
+import { ApiResponse } from '../models/api-response';
+import { PerfilConvivenciaRequest } from '../models/perfil-convivencia-request';
+import { PerfilConvivenciaResponse } from '../models/perfil-convivencia-response';
+import { API_BASE_URL } from '../config/api.config';
 
-import {
-  Observable
-} from 'rxjs';
-
-import {
-  ApiResponse
-} from '../models/api-response';
-
-import {
-  PerfilConvivenciaRequest
-} from '../models/perfil-convivencia-request';
-
-import {
-  PerfilConvivenciaResponse
-} from '../models/perfil-convivencia-response';
-
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PerfilService {
 
-  private readonly apiUrl =
-    'http://localhost:8081/api/perfil';
+  private readonly apiUrl = `${API_BASE_URL}/perfil`;
 
-
-  constructor(
-    private http: HttpClient
-  ) {}
-
-
-  /*
-   * =========================================================
-   * CREAR PERFIL
-   * =========================================================
-   */
+  constructor(private http: HttpClient) {}
 
   crearPerfil(
     request: PerfilConvivenciaRequest
-  ): Observable<
-    ApiResponse<PerfilConvivenciaResponse>
-  > {
-
-    return this.http.post<
-      ApiResponse<PerfilConvivenciaResponse>
-    >(
+  ): Observable<ApiResponse<PerfilConvivenciaResponse>> {
+    return this.http.post<ApiResponse<PerfilConvivenciaResponse>>(
       this.apiUrl,
       request
     );
   }
 
-
-  /*
-   * =========================================================
-   * OBTENER MI PERFIL
-   * =========================================================
-   */
-
-  obtenerMiPerfil(): Observable<
-    ApiResponse<PerfilConvivenciaResponse>
-  > {
-
-    return this.http.get<
-      ApiResponse<PerfilConvivenciaResponse>
-    >(
+  obtenerMiPerfil(): Observable<ApiResponse<PerfilConvivenciaResponse>> {
+    return this.http.get<ApiResponse<PerfilConvivenciaResponse>>(
       `${this.apiUrl}/me`
     );
   }
 
-
-  /*
-   * =========================================================
-   * ACTUALIZAR MI PERFIL
-   * =========================================================
-   */
-
   actualizarMiPerfil(
     request: PerfilConvivenciaRequest
-  ): Observable<
-    ApiResponse<PerfilConvivenciaResponse>
-  > {
-
-    return this.http.put<
-      ApiResponse<PerfilConvivenciaResponse>
-    >(
+  ): Observable<ApiResponse<PerfilConvivenciaResponse>> {
+    return this.http.put<ApiResponse<PerfilConvivenciaResponse>>(
       `${this.apiUrl}/me`,
       request
     );
   }
 
-
-  /*
-   * =========================================================
-   * COMPATIBILIDAD CON COMPONENTES EXISTENTES
-   * =========================================================
-   */
-
   actualizarPerfil(
     request: PerfilConvivenciaRequest
-  ): Observable<
-    ApiResponse<PerfilConvivenciaResponse>
-  > {
-
-    return this.actualizarMiPerfil(
-      request
-    );
+  ): Observable<ApiResponse<PerfilConvivenciaResponse>> {
+    return this.actualizarMiPerfil(request);
   }
-
 }
