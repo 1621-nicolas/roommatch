@@ -10,7 +10,6 @@ import com.roommatch.repository.RolRepository;
 import com.roommatch.repository.UsuarioRepository;
 import com.roommatch.security.JwtService;
 import com.roommatch.util.ApiConstants;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,10 +36,7 @@ public class AuthService {
 
     @Transactional
     public UsuarioResponse registrarUsuario(RegistroRequest request) {
-
-        String emailNormalizado = request.getEmail()
-                .trim()
-                .toLowerCase();
+        String emailNormalizado = request.getEmail().trim().toLowerCase();
 
         if (usuarioRepository.existsByEmail(emailNormalizado)) {
             throw new IllegalArgumentException(
@@ -50,92 +46,48 @@ public class AuthService {
 
         Rol rolUsuario = rolRepository
                 .findByNombreRol(ApiConstants.ROL_USUARIO)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Rol USUARIO no encontrado"
-                        )
-                );
+                .orElseThrow(() -> new IllegalStateException(
+                        "Configuración incompleta: no existe el rol USUARIO"
+                ));
 
         Usuario usuario = new Usuario();
+        usuario.setNombres(request.getNombres().trim());
+        usuario.setApellidos(request.getApellidos().trim());
+        usuario.setEdad(request.getEdad());
+        usuario.setEmail(emailNormalizado);
+        usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        usuario.setRol(rolUsuario);
+        usuario.setEstado(ApiConstants.ESTADO_ACTIVO);
 
-        usuario.setNombres(
-                request.getNombres().trim()
-        );
-
-        usuario.setApellidos(
-                request.getApellidos().trim()
-        );
-
-        usuario.setEmail(
-                emailNormalizado
-        );
-
-        usuario.setPasswordHash(
-                passwordEncoder.encode(
-                        request.getPassword()
-                )
-        );
-
-        usuario.setRol(
-                rolUsuario
-        );
-
-        usuario.setEstado(
-                ApiConstants.ESTADO_ACTIVO
-        );
-
-        Usuario usuarioGuardado =
-                usuarioRepository.save(usuario);
-
-        return UsuarioResponse.fromEntity(
-                usuarioGuardado
-        );
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+        return UsuarioResponse.fromEntity(usuarioGuardado);
     }
 
+    @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
-
-        String emailNormalizado = request.getEmail()
-                .trim()
-                .toLowerCase();
+        String emailNormalizado = request.getEmail().trim().toLowerCase();
 
         Usuario usuario = usuarioRepository
                 .findByEmail(emailNormalizado)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El correo no está registrado"
-                        )
-                );
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "El correo o la contraseña son incorrectos"
+                ));
 
-        if (!usuario.getEstado().equalsIgnoreCase(
-                ApiConstants.ESTADO_ACTIVO
-        )) {
+        if (!ApiConstants.ESTADO_ACTIVO.equalsIgnoreCase(usuario.getEstado())) {
             throw new IllegalArgumentException(
-                    "El usuario no se encuentra activo"
+                    "Tu cuenta no se encuentra activa"
             );
         }
 
-        boolean passwordValida = passwordEncoder.matches(
-                request.getPassword(),
-                usuario.getPasswordHash()
-        );
-
-        if (!passwordValida) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPasswordHash())) {
             throw new IllegalArgumentException(
-                    "La contraseña es incorrecta"
+                    "El correo o la contraseña son incorrectos"
             );
         }
 
-        String token = jwtService.generarToken(
-                usuario
-        );
+        String token = jwtService.generarToken(usuario);
+        UsuarioResponse usuarioResponse = UsuarioResponse.fromEntity(usuario);
 
-        UsuarioResponse usuarioResponse =
-                UsuarioResponse.fromEntity(usuario);
-
-        return new LoginResponse(
-                token,
-                "Bearer",
-                usuarioResponse
-        );
+        return new LoginResponse(token, "Bearer", usuarioResponse);
     }
 }
