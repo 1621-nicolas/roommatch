@@ -2,404 +2,140 @@ package com.roommatch.service;
 
 import com.roommatch.dto.ContactoUsuarioRequest;
 import com.roommatch.dto.ContactoUsuarioResponse;
-
 import com.roommatch.model.ContactoUsuario;
 import com.roommatch.model.Usuario;
-
 import com.roommatch.repository.ContactoRoomieRepository;
 import com.roommatch.repository.ContactoUsuarioRepository;
 import com.roommatch.repository.UsuarioRepository;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 
 @Service
 public class ContactoUsuarioService {
 
     private final ContactoUsuarioRepository contactoRepository;
-
     private final UsuarioRepository usuarioRepository;
-
     private final ContactoRoomieRepository contactoRoomieRepository;
 
-
     public ContactoUsuarioService(
-
             ContactoUsuarioRepository contactoRepository,
-
             UsuarioRepository usuarioRepository,
-
             ContactoRoomieRepository contactoRoomieRepository
-
     ) {
-
-        this.contactoRepository =
-                contactoRepository;
-
-        this.usuarioRepository =
-                usuarioRepository;
-
-        this.contactoRoomieRepository =
-                contactoRoomieRepository;
+        this.contactoRepository = contactoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.contactoRoomieRepository = contactoRoomieRepository;
     }
-
-
-    /*
-     * =========================================================
-     * GUARDAR O ACTUALIZAR MI CONTACTO
-     * =========================================================
-     */
 
     @Transactional
     public ContactoUsuarioResponse guardarOModificarMiContacto(
-
             Integer idUsuario,
-
             ContactoUsuarioRequest request
-
     ) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Objects.requireNonNull(request, "request");
 
-        Usuario usuario =
-                usuarioRepository
-                        .findById(idUsuario)
-                        .orElseThrow(
+        Usuario usuario = usuarioRepository
+                .findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-                                () ->
-                                        new IllegalArgumentException(
-                                                "Usuario no encontrado"
-                                        )
-
-                        );
-
-
-        ContactoUsuario contacto =
-                contactoRepository
-                        .findByUsuarioIdUsuario(idUsuario)
-                        .orElse(
-                                new ContactoUsuario()
-                        );
-
+        ContactoUsuario contacto = contactoRepository
+                .findByUsuarioIdUsuario(usuarioId)
+                .orElseGet(ContactoUsuario::new);
 
         contacto.setUsuario(usuario);
+        copiarDatos(request, contacto);
 
-
-        copiarDatos(
-                request,
-                contacto
+        ContactoUsuario guardado = contactoRepository.save(
+                Objects.requireNonNull(contacto)
         );
 
-
-        ContactoUsuario contactoGuardado =
-                contactoRepository.save(
-                        contacto
-                );
-
-
-        return ContactoUsuarioResponse
-                .fromEntity(
-
-                        contactoGuardado,
-
-                        false
-
-                );
+        return ContactoUsuarioResponse.fromEntity(guardado, false);
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER MI CONTACTO OBLIGATORIO
-     * =========================================================
-     */
-
     @Transactional(readOnly = true)
-    public ContactoUsuarioResponse obtenerMiContacto(
+    public ContactoUsuarioResponse obtenerMiContacto(Integer idUsuario) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
 
-            Integer idUsuario
+        ContactoUsuario contacto = contactoRepository
+                .findByUsuarioIdUsuario(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Aún no has registrado tus datos de contacto"
+                ));
 
-    ) {
-
-        ContactoUsuario contacto =
-                contactoRepository
-                        .findByUsuarioIdUsuario(idUsuario)
-                        .orElseThrow(
-
-                                () ->
-                                        new IllegalArgumentException(
-
-                                                "Aún no has registrado tus datos de contacto"
-
-                                        )
-
-                        );
-
-
-        return ContactoUsuarioResponse
-                .fromEntity(
-
-                        contacto,
-
-                        false
-
-                );
+        return ContactoUsuarioResponse.fromEntity(contacto, false);
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER MI CONTACTO OPCIONAL
-     * =========================================================
-     */
-
     @Transactional(readOnly = true)
-    public ContactoUsuarioResponse obtenerMiContactoOpcional(
-
-            Integer idUsuario
-
-    ) {
+    public ContactoUsuarioResponse obtenerMiContactoOpcional(Integer idUsuario) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
 
         return contactoRepository
-                .findByUsuarioIdUsuario(
-                        idUsuario
-                )
-                .map(
-
-                        contacto ->
-
-                                ContactoUsuarioResponse
-                                        .fromEntity(
-
-                                                contacto,
-
-                                                false
-
-                                        )
-
-                )
+                .findByUsuarioIdUsuario(usuarioId)
+                .map(contacto -> ContactoUsuarioResponse.fromEntity(contacto, false))
                 .orElse(null);
     }
 
-
-    /*
-     * =========================================================
-     * VER CONTACTO DESBLOQUEADO
-     * =========================================================
-     */
-
     @Transactional(readOnly = true)
     public ContactoUsuarioResponse verContactoDesbloqueado(
-
             Integer idUsuarioActual,
-
             Integer idUsuarioObjetivo
-
     ) {
+        Integer usuarioActualId = requerirId(idUsuarioActual, "idUsuarioActual");
+        Integer usuarioObjetivoId = requerirId(idUsuarioObjetivo, "idUsuarioObjetivo");
 
-        /*
-         * No se consulta el propio contacto
-         * mediante contacto desbloqueado.
-         */
-
-        if (
-                idUsuarioActual.equals(
-                        idUsuarioObjetivo
-                )
-        ) {
-
+        if (usuarioActualId.equals(usuarioObjetivoId)) {
             throw new IllegalArgumentException(
-
                     "No necesitas desbloquear tu propio contacto"
-
             );
         }
 
-
-        /*
-         * Verificar conexión aceptada.
-         */
-
-        boolean contactoDesbloqueado =
-                contactoRoomieRepository
-                        .existeContactoDesbloqueado(
-
-                                idUsuarioActual,
-
-                                idUsuarioObjetivo
-
-                        );
-
+        boolean contactoDesbloqueado = contactoRoomieRepository
+                .existeContactoDesbloqueado(usuarioActualId, usuarioObjetivoId);
 
         if (!contactoDesbloqueado) {
-
             throw new IllegalArgumentException(
-
                     "El contacto aún no está desbloqueado. Primero debe existir una solicitud aceptada"
-
             );
         }
 
+        ContactoUsuario contacto = contactoRepository
+                .findByUsuarioIdUsuario(usuarioObjetivoId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "El usuario aún no registró datos de contacto"
+                ));
 
-        /*
-         * Buscar información de contacto
-         * del usuario objetivo.
-         */
-
-        ContactoUsuario contacto =
-                contactoRepository
-                        .findByUsuarioIdUsuario(
-                                idUsuarioObjetivo
-                        )
-                        .orElseThrow(
-
-                                () ->
-                                        new IllegalArgumentException(
-
-                                                "El usuario aún no registró datos de contacto"
-
-                                        )
-
-                        );
-
-
-        /*
-         * true:
-         *
-         * Aplicar privacidad.
-         */
-
-        return ContactoUsuarioResponse
-                .fromEntity(
-
-                        contacto,
-
-                        true
-
-                );
+        return ContactoUsuarioResponse.fromEntity(contacto, true);
     }
-
-
-    /*
-     * =========================================================
-     * COPIAR DATOS
-     * =========================================================
-     */
 
     private void copiarDatos(
-
             ContactoUsuarioRequest request,
-
             ContactoUsuario contacto
-
     ) {
-
-        contacto.setTelefono(
-                request.getTelefono()
-        );
-
-
-        contacto.setWhatsapp(
-                request.getWhatsapp()
-        );
-
-
-        contacto.setInstagram(
-                request.getInstagram()
-        );
-
-
-        contacto.setFacebook(
-                request.getFacebook()
-        );
-
-
-        contacto.setEmailContacto(
-                request.getEmailContacto()
-        );
-
-
-        contacto.setMostrarTelefono(
-
-                valorBoolean(
-
-                        request.getMostrarTelefono(),
-
-                        false
-
-                )
-
-        );
-
-
-        contacto.setMostrarWhatsapp(
-
-                valorBoolean(
-
-                        request.getMostrarWhatsapp(),
-
-                        false
-
-                )
-
-        );
-
-
-        contacto.setMostrarInstagram(
-
-                valorBoolean(
-
-                        request.getMostrarInstagram(),
-
-                        false
-
-                )
-
-        );
-
-
-        contacto.setMostrarFacebook(
-
-                valorBoolean(
-
-                        request.getMostrarFacebook(),
-
-                        false
-
-                )
-
-        );
-
-
+        contacto.setTelefono(normalizarTexto(request.getTelefono()));
+        contacto.setWhatsapp(normalizarTexto(request.getWhatsapp()));
+        contacto.setInstagram(normalizarTexto(request.getInstagram()));
+        contacto.setFacebook(normalizarTexto(request.getFacebook()));
+        contacto.setEmailContacto(normalizarTexto(request.getEmailContacto()));
+        contacto.setMostrarTelefono(Boolean.TRUE.equals(request.getMostrarTelefono()));
+        contacto.setMostrarWhatsapp(Boolean.TRUE.equals(request.getMostrarWhatsapp()));
+        contacto.setMostrarInstagram(Boolean.TRUE.equals(request.getMostrarInstagram()));
+        contacto.setMostrarFacebook(Boolean.TRUE.equals(request.getMostrarFacebook()));
         contacto.setMostrarEmail(
-
-                valorBoolean(
-
-                        request.getMostrarEmail(),
-
-                        true
-
-                )
-
+                request.getMostrarEmail() == null || Boolean.TRUE.equals(request.getMostrarEmail())
         );
     }
 
+    private String normalizarTexto(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
+    }
 
-    /*
-     * =========================================================
-     * VALOR BOOLEAN SEGURO
-     * =========================================================
-     */
-
-    private Boolean valorBoolean(
-
-            Boolean valor,
-
-            Boolean defecto
-
-    ) {
-
-        return valor != null
-                ? valor
-                : defecto;
+    private Integer requerirId(Integer id, String nombre) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(nombre + " debe ser un identificador válido");
+        }
+        return id;
     }
 }
