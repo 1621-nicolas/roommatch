@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ImagenPublicacionService {
@@ -31,36 +32,53 @@ public class ImagenPublicacionService {
             Integer idPublicacion,
             ImagenPublicacionRequest request
     ) {
-        PublicacionRoomie publicacion = publicacionRepository
-                .findByIdPublicacionAndUsuarioIdUsuario(idPublicacion, idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Publicación no encontrada o no te pertenece"));
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer publicacionId = requerirId(idPublicacion, "idPublicacion");
+        Objects.requireNonNull(request, "request");
 
-        long cantidadImagenes = imagenRepository.countByPublicacionIdPublicacion(idPublicacion);
+        PublicacionRoomie publicacion = publicacionRepository
+                .findByIdPublicacionAndUsuarioIdUsuario(publicacionId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Publicación no encontrada o no te pertenece"
+                ));
+
+        long cantidadImagenes = imagenRepository.countByPublicacionIdPublicacion(publicacionId);
 
         if (cantidadImagenes >= 5) {
-            throw new IllegalArgumentException("Solo puedes registrar hasta 5 imágenes por publicación");
+            throw new IllegalArgumentException(
+                    "Solo puedes registrar hasta 5 imágenes por publicación"
+            );
         }
 
         boolean esPrincipal = Boolean.TRUE.equals(request.getPrincipal());
 
         if (esPrincipal) {
-            imagenRepository.desmarcarImagenesPrincipales(idPublicacion);
+            imagenRepository.desmarcarImagenesPrincipales(publicacionId);
         }
 
         ImagenPublicacion imagen = new ImagenPublicacion();
         imagen.setPublicacion(publicacion);
-        imagen.setUrlImagen(request.getUrlImagen());
-        imagen.setOrden(request.getOrden() != null ? request.getOrden() : (int) cantidadImagenes + 1);
+        imagen.setUrlImagen(request.getUrlImagen().trim());
+        imagen.setOrden(
+                request.getOrden() != null
+                        ? request.getOrden()
+                        : (int) cantidadImagenes + 1
+        );
         imagen.setPrincipal(esPrincipal || cantidadImagenes == 0);
 
-        ImagenPublicacion guardada = imagenRepository.save(imagen);
+        ImagenPublicacion guardada = imagenRepository.save(
+                Objects.requireNonNull(imagen)
+        );
 
         return ImagenPublicacionResponse.fromEntity(guardada);
     }
 
+    @Transactional(readOnly = true)
     public List<ImagenPublicacionResponse> listarImagenesPorPublicacion(Integer idPublicacion) {
+        Integer publicacionId = requerirId(idPublicacion, "idPublicacion");
+
         return imagenRepository
-                .findByPublicacionIdPublicacionOrderByOrdenAsc(idPublicacion)
+                .findByPublicacionIdPublicacionOrderByOrdenAsc(publicacionId)
                 .stream()
                 .map(ImagenPublicacionResponse::fromEntity)
                 .toList();
@@ -71,17 +89,26 @@ public class ImagenPublicacionService {
             Integer idUsuario,
             Integer idImagen
     ) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer imagenId = requerirId(idImagen, "idImagen");
+
         ImagenPublicacion imagen = imagenRepository
-                .findByIdImagenAndPublicacionUsuarioIdUsuario(idImagen, idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Imagen no encontrada o no te pertenece"));
+                .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Imagen no encontrada o no te pertenece"
+                ));
 
-        Integer idPublicacion = imagen.getPublicacion().getIdPublicacion();
+        Integer publicacionId = requerirId(
+                imagen.getPublicacion().getIdPublicacion(),
+                "idPublicacion"
+        );
 
-        imagenRepository.desmarcarImagenesPrincipales(idPublicacion);
-
+        imagenRepository.desmarcarImagenesPrincipales(publicacionId);
         imagen.setPrincipal(true);
 
-        ImagenPublicacion actualizada = imagenRepository.save(imagen);
+        ImagenPublicacion actualizada = imagenRepository.save(
+                Objects.requireNonNull(imagen)
+        );
 
         return ImagenPublicacionResponse.fromEntity(actualizada);
     }
@@ -91,10 +118,22 @@ public class ImagenPublicacionService {
             Integer idUsuario,
             Integer idImagen
     ) {
-        ImagenPublicacion imagen = imagenRepository
-                .findByIdImagenAndPublicacionUsuarioIdUsuario(idImagen, idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Imagen no encontrada o no te pertenece"));
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer imagenId = requerirId(idImagen, "idImagen");
 
-        imagenRepository.delete(imagen);
+        ImagenPublicacion imagen = imagenRepository
+                .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Imagen no encontrada o no te pertenece"
+                ));
+
+        imagenRepository.delete(Objects.requireNonNull(imagen));
+    }
+
+    private Integer requerirId(Integer id, String nombre) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(nombre + " debe ser un identificador válido");
+        }
+        return id;
     }
 }
