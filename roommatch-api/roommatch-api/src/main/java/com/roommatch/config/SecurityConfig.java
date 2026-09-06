@@ -1,450 +1,116 @@
 package com.roommatch.config;
 
 import com.roommatch.security.JwtAuthenticationFilter;
-
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.http.HttpMethod;
-
 import org.springframework.security.config.Customizer;
-
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
 
-
 @Configuration
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
     private final String allowedOriginsProperty;
 
-
     public SecurityConfig(
-
             JwtAuthenticationFilter jwtAuthenticationFilter,
-
-            @Value(
-                    "${app.cors.allowed-origins:http://localhost:4200}"
-            )
-            String allowedOriginsProperty
-
+            @Value("${app.cors.allowed-origins:http://localhost:4200}") String allowedOriginsProperty
     ) {
-
-        this.jwtAuthenticationFilter =
-                jwtAuthenticationFilter;
-
-
-        this.allowedOriginsProperty =
-                allowedOriginsProperty;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.allowedOriginsProperty = allowedOriginsProperty;
     }
-
-
-    /*
-     * =========================================================
-     * PASSWORD ENCODER
-     * =========================================================
-     */
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-
         return new BCryptPasswordEncoder();
     }
 
-
-    /*
-     * =========================================================
-     * SECURITY FILTER CHAIN
-     * =========================================================
-     */
-
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-
-                /*
-                 * =================================================
-                 * CSRF
-                 * =================================================
-                 */
-
-                .csrf(
-                        csrf ->
-                                csrf.disable()
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/error", "/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
 
+                        // Administración: defensa adicional además de las validaciones de servicio.
+                        .requestMatchers("/api/admin/**", "/api/reportes/admin/**").hasRole("ADMIN")
 
-                /*
-                 * =================================================
-                 * CORS
-                 * =================================================
-                 */
+                        // Estas rutas exactas deben evaluarse antes de los comodines públicos.
+                        .requestMatchers(HttpMethod.GET, "/api/habitaciones/mis").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/publicaciones-roomie/mis").authenticated()
 
-                .cors(
-                        Customizer.withDefaults()
+                        // Catálogo y contenido público.
+                        .requestMatchers(HttpMethod.GET, "/api/planes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/habitaciones/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/publicaciones-roomie/**").permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/imagenes-habitacion/habitacion/**"
+                        ).permitAll()
+
+                        .anyRequest().authenticated()
                 )
-
-
-                /*
-                 * =================================================
-                 * SESSION STATELESS
-                 * =================================================
-                 */
-
-                .sessionManagement(
-
-                        session ->
-
-                                session.sessionCreationPolicy(
-
-                                        SessionCreationPolicy.STATELESS
-
-                                )
-
-                )
-
-
-                /*
-                 * =================================================
-                 * AUTORIZACIÓN
-                 * =================================================
-                 */
-
-                .authorizeHttpRequests(
-
-                        auth -> auth
-
-
-                                /*
-                                 * =================================
-                                 * PREFLIGHT CORS
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.OPTIONS,
-                                        "/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * ERROR
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        "/error"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * AUTENTICACIÓN
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        "/api/auth/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * TEST
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        "/api/test/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * SWAGGER
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        "/v3/api-docs"
-                                )
-                                .permitAll()
-
-
-                                .requestMatchers(
-                                        "/v3/api-docs/**"
-                                )
-                                .permitAll()
-
-
-                                .requestMatchers(
-                                        "/swagger-ui.html"
-                                )
-                                .permitAll()
-
-
-                                .requestMatchers(
-                                        "/swagger-ui/**"
-                                )
-                                .permitAll()
-
-
-                                .requestMatchers(
-                                        "/swagger-resources/**"
-                                )
-                                .permitAll()
-
-
-                                .requestMatchers(
-                                        "/webjars/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * RUTAS PRIVADAS DE HABITACIONES
-                                 *
-                                 * IMPORTANTE:
-                                 * DEBEN IR ANTES DE /**
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/habitaciones/mis"
-                                )
-                                .authenticated()
-
-
-                                /*
-                                 * =================================
-                                 * RUTAS PRIVADAS DE
-                                 * PUBLICACIONES ROOMIE
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/publicaciones-roomie/mis"
-                                )
-                                .authenticated()
-
-
-                                /*
-                                 * =================================
-                                 * PLANES PÚBLICOS
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/planes"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * HABITACIONES PÚBLICAS
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/habitaciones/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * PUBLICACIONES ROOMIE PÚBLICAS
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/publicaciones-roomie/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * IMÁGENES DE HABITACIONES PÚBLICAS
-                                 * =================================
-                                 */
-
-                                .requestMatchers(
-                                        HttpMethod.GET,
-                                        "/api/imagenes-habitacion/habitacion/**"
-                                )
-                                .permitAll()
-
-
-                                /*
-                                 * =================================
-                                 * RESTO PROTEGIDO
-                                 * =================================
-                                 */
-
-                                .anyRequest()
-                                .authenticated()
-
-                )
-
-
-                /*
-                 * =================================================
-                 * JWT FILTER
-                 * =================================================
-                 */
-
                 .addFilterBefore(
-
                         jwtAuthenticationFilter,
-
                         UsernamePasswordAuthenticationFilter.class
-
                 );
-
 
         return http.build();
     }
 
-
-    /*
-     * =========================================================
-     * CORS
-     * =========================================================
-     */
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        List<String> allowedOrigins = Arrays.stream(allowedOriginsProperty.split(","))
+                .map(origin -> origin.trim())
+                .filter(origin -> !origin.isBlank())
+                .distinct()
+                .toList();
 
-        List<String> allowedOrigins =
+        if (allowedOrigins.isEmpty()) {
+            throw new IllegalStateException(
+                    "app.cors.allowed-origins debe contener al menos un origen permitido"
+            );
+        }
 
-                Arrays
-                        .stream(
-
-                                allowedOriginsProperty
-                                        .split(",")
-
-                        )
-
-                        .map(
-                                String::trim
-                        )
-
-                        .filter(
-                                origin ->
-
-                                        !origin.isBlank()
-                        )
-
-                        .toList();
-
-
-        CorsConfiguration configuration =
-                new CorsConfiguration();
-
-
-        configuration.setAllowedOrigins(
-                allowedOrigins
-        );
-
-
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(
-
-                List.of(
-
-                        "GET",
-
-                        "POST",
-
-                        "PUT",
-
-                        "DELETE",
-
-                        "OPTIONS"
-
-                )
-
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         );
-
-
         configuration.setAllowedHeaders(
-
-                List.of(
-
-                        "Authorization",
-
-                        "Content-Type",
-
-                        "Accept",
-
-                        "Origin",
-
-                        "X-Requested-With"
-
-                )
-
+                List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With")
         );
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
-
-        configuration.setAllowCredentials(
-                true
-        );
-
-
-        configuration.setMaxAge(
-                3600L
-        );
-
-
-        UrlBasedCorsConfigurationSource source =
-
-                new UrlBasedCorsConfigurationSource();
-
-
-        source.registerCorsConfiguration(
-
-                "/**",
-
-                configuration
-
-        );
-
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
