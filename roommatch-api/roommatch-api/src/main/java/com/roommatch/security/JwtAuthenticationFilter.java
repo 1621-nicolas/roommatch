@@ -2,12 +2,13 @@ package com.roommatch.security;
 
 import com.roommatch.model.Usuario;
 import com.roommatch.repository.UsuarioRepository;
-
+import com.roommatch.util.ApiConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,6 +22,8 @@ import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
@@ -40,95 +43,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authorizationHeader =
-                request.getHeader("Authorization");
+        String authorizationHeader = request.getHeader("Authorization");
 
-        /*
-         * Si no existe Authorization
-         * o no utiliza Bearer,
-         * continuamos la cadena.
-         */
-        if (
-                authorizationHeader == null ||
-                !authorizationHeader.startsWith("Bearer ")
-        ) {
-
-            filterChain.doFilter(
-                    request,
-                    response
-            );
-
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String token =
-                authorizationHeader.substring(7);
+        String token = authorizationHeader.substring(7).trim();
+
+        if (token.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
-
-            /*
-             * Validamos firma y expiración
-             * del token JWT.
-             */
             if (!jwtService.validarToken(token)) {
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
                 return;
             }
 
-            /*
-             * El subject del JWT contiene
-             * el correo del usuario.
-             */
-            String email =
-                    jwtService.obtenerEmailDelToken(token);
+            String email = jwtService.obtenerEmailDelToken(token);
 
-            if (
-                    email != null &&
-                    SecurityContextHolder
-                            .getContext()
-                            .getAuthentication() == null
-            ) {
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                Usuario usuario = usuarioRepository
+                        .findByEmail(email.trim().toLowerCase())
+                        .orElse(null);
 
-                /*
-                 * Recuperamos la entidad Usuario.
-                 */
-                Usuario usuario =
-                        usuarioRepository
-                                .findByEmail(
-                                        email
-                                                .trim()
-                                                .toLowerCase()
-                                )
-                                .orElse(null);
-
-                if (usuario != null) {
-
-                    String nombreRol =
-                            usuario
-                                    .getRol()
-                                    .getNombreRol();
+                if (
+                        usuario != null &&
+                        ApiConstants.ESTADO_ACTIVO.equalsIgnoreCase(usuario.getEstado()) &&
+                        usuario.getRol() != null
+                ) {
+                    String nombreRol = usuario.getRol().getNombreRol();
 
                     SimpleGrantedAuthority authority =
-                            new SimpleGrantedAuthority(
-                                    "ROLE_" + nombreRol
-                            );
+                            new SimpleGrantedAuthority("ROLE_" + nombreRol);
 
-                    /*
-                     * IMPORTANTE:
-                     *
-                     * EL PRINCIPAL ES EL USUARIO.
-                     *
-                     * Por tanto:
-                     *
-                     * authentication.getPrincipal()
-                     *
-                     * devuelve un objeto Usuario.
-                     */
                     UsernamePasswordAuthenticationToken authentication =
                             UsernamePasswordAuthenticationToken.authenticated(
                                     usuario,
@@ -137,39 +89,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             );
 
                     authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
+                            new WebAuthenticationDetailsSource().buildDetails(request)
                     );
 
-                    SecurityContextHolder
-                            .getContext()
-                            .setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
-
-        } catch (Exception exception) {
-
-            System.err.println(
-                    "ERROR JWT ROOMMATCH: "
-                            + exception
-                                    .getClass()
-                                    .getName()
-            );
-
-            System.err.println(
-                    "MENSAJE: "
-                            + exception.getMessage()
-            );
-
-            exception.printStackTrace();
-
-            SecurityContextHolder
-                    .clearContext();
+        } catch (Exception ex) {
+            SecurityContextHolder.clearContext();
+            log.debug("JWT inválido o no procesable", ex);
         }
 
-        filterChain.doFilter(
-                request,
-                response
-        );
+        filterChain.doFilter(request, response);
     }
 }
