@@ -9,12 +9,15 @@ import com.roommatch.repository.HabitacionBusquedaRepository;
 import com.roommatch.repository.HabitacionRepository;
 import com.roommatch.repository.PropietarioRepository;
 import com.roommatch.repository.SuscripcionPropietarioRepository;
+import com.roommatch.util.ApiConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class HabitacionService {
@@ -23,41 +26,56 @@ public class HabitacionService {
     private final PropietarioRepository propietarioRepository;
     private final SuscripcionPropietarioRepository suscripcionRepository;
     private final HabitacionBusquedaRepository habitacionBusquedaRepository;
-    
 
-   public HabitacionService(
-        HabitacionRepository habitacionRepository,
-        PropietarioRepository propietarioRepository,
-        SuscripcionPropietarioRepository suscripcionRepository,
-        HabitacionBusquedaRepository habitacionBusquedaRepository
-) {
-    this.habitacionRepository = habitacionRepository;
-    this.propietarioRepository = propietarioRepository;
-    this.suscripcionRepository = suscripcionRepository;
-    this.habitacionBusquedaRepository = habitacionBusquedaRepository;
-}
+    public HabitacionService(
+            HabitacionRepository habitacionRepository,
+            PropietarioRepository propietarioRepository,
+            SuscripcionPropietarioRepository suscripcionRepository,
+            HabitacionBusquedaRepository habitacionBusquedaRepository
+    ) {
+        this.habitacionRepository = habitacionRepository;
+        this.propietarioRepository = propietarioRepository;
+        this.suscripcionRepository = suscripcionRepository;
+        this.habitacionBusquedaRepository = habitacionBusquedaRepository;
+    }
 
     @Transactional
     public HabitacionResponse crearHabitacion(
             Integer idUsuario,
             HabitacionRequest request
     ) {
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Primero debes convertirte en propietario"));
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Objects.requireNonNull(request, "request");
+
+        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Primero debes convertirte en propietario"
+                ));
+
+        Integer propietarioId = requerirId(
+                propietario.getIdPropietario(),
+                "idPropietario"
+        );
 
         SuscripcionPropietario suscripcion = suscripcionRepository
                 .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-                        propietario.getIdPropietario(),
-                        "activo"
+                        propietarioId,
+                        ApiConstants.ESTADO_ACTIVO
                 )
-                .orElseThrow(() -> new IllegalArgumentException("No tienes una suscripción activa"));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No tienes una suscripción activa"
+                ));
 
-        long habitacionesActivas = habitacionRepository.countByPropietarioIdPropietarioAndEstadoIn(
-                propietario.getIdPropietario(),
-                List.of("activa", "pausada")
+        long habitacionesActivas = habitacionRepository
+                .countByPropietarioIdPropietarioAndEstadoIn(
+                        propietarioId,
+                        List.of(ApiConstants.ESTADO_ACTIVA, ApiConstants.ESTADO_PAUSADA)
+                );
+
+        Integer limitePlan = Objects.requireNonNull(
+                suscripcion.getPlan().getLimiteHabitaciones(),
+                "El plan no tiene límite de habitaciones configurado"
         );
-
-        Integer limitePlan = suscripcion.getPlan().getLimiteHabitaciones();
 
         if (habitacionesActivas >= limitePlan) {
             throw new IllegalArgumentException(
@@ -65,63 +83,92 @@ public class HabitacionService {
             );
         }
 
-        Boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
+        boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
 
         if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException("Tu plan actual no permite destacar habitaciones");
+            throw new IllegalArgumentException(
+                    "Tu plan actual no permite destacar habitaciones"
+            );
         }
 
         Habitacion habitacion = new Habitacion();
         habitacion.setPropietario(propietario);
         copiarDatos(request, habitacion);
-        habitacion.setEstado("activa");
+        habitacion.setEstado(ApiConstants.ESTADO_ACTIVA);
 
-        Habitacion habitacionGuardada = habitacionRepository.save(habitacion);
+        Habitacion guardada = habitacionRepository.save(
+                Objects.requireNonNull(habitacion)
+        );
 
-        return HabitacionResponse.fromEntity(habitacionGuardada);
+        return HabitacionResponse.fromEntity(guardada);
     }
 
+    @Transactional(readOnly = true)
     public Page<HabitacionResponse> listarHabitacionesPublicas(
-        String distrito,
-        BigDecimal precioMin,
-        BigDecimal precioMax,
-        Boolean amoblado,
-        Boolean banoPrivado,
-        Boolean permiteMascotas,
-        Pageable pageable
-) {
-    return habitacionBusquedaRepository.buscarHabitacionesAvanzado(
-            distrito,
-            precioMin,
-            precioMax,
-            amoblado,
-            banoPrivado,
-            permiteMascotas,
-            pageable
-    ).map(HabitacionResponse::fromEntity);
-}
+            String distrito,
+            BigDecimal precioMin,
+            BigDecimal precioMax,
+            Boolean amoblado,
+            Boolean banoPrivado,
+            Boolean permiteMascotas,
+            Pageable pageable
+    ) {
+        Objects.requireNonNull(pageable, "pageable");
 
+        if (precioMin != null && precioMax != null && precioMax.compareTo(precioMin) < 0) {
+            throw new IllegalArgumentException(
+                    "El precio máximo no puede ser menor que el precio mínimo"
+            );
+        }
+
+        return habitacionBusquedaRepository.buscarHabitacionesAvanzado(
+                distrito,
+                precioMin,
+                precioMax,
+                amoblado,
+                banoPrivado,
+                permiteMascotas,
+                pageable
+        ).map(HabitacionResponse::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
     public HabitacionResponse obtenerHabitacionPorId(Integer idHabitacion) {
-        Habitacion habitacion = habitacionRepository.findById(idHabitacion)
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada"));
+        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
 
-        if (!habitacion.getEstado().equalsIgnoreCase("activa")) {
+        Habitacion habitacion = habitacionRepository.findById(habitacionId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Habitación no encontrada"
+                ));
+
+        if (!ApiConstants.ESTADO_ACTIVA.equalsIgnoreCase(habitacion.getEstado())) {
             throw new IllegalArgumentException("La habitación no está disponible");
         }
 
         return HabitacionResponse.fromEntity(habitacion);
     }
 
+    @Transactional(readOnly = true)
     public Page<HabitacionResponse> listarMisHabitaciones(
             Integer idUsuario,
             Pageable pageable
     ) {
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Objects.requireNonNull(pageable, "pageable");
+
+        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No tienes perfil de propietario"
+                ));
+
+        Integer propietarioId = requerirId(
+                propietario.getIdPropietario(),
+                "idPropietario"
+        );
 
         return habitacionRepository
                 .findByPropietarioIdPropietarioOrderByFechaPublicacionDesc(
-                        propietario.getIdPropietario(),
+                        propietarioId,
                         pageable
                 )
                 .map(HabitacionResponse::fromEntity);
@@ -133,34 +180,53 @@ public class HabitacionService {
             Integer idHabitacion,
             HabitacionRequest request
     ) {
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
+        Objects.requireNonNull(request, "request");
+
+        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No tienes perfil de propietario"
+                ));
+
+        Integer propietarioId = requerirId(
+                propietario.getIdPropietario(),
+                "idPropietario"
+        );
 
         Habitacion habitacion = habitacionRepository
                 .findByIdHabitacionAndPropietarioIdPropietario(
-                        idHabitacion,
-                        propietario.getIdPropietario()
+                        habitacionId,
+                        propietarioId
                 )
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada o no te pertenece"));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Habitación no encontrada o no te pertenece"
+                ));
 
         SuscripcionPropietario suscripcion = suscripcionRepository
                 .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-                        propietario.getIdPropietario(),
-                        "activo"
+                        propietarioId,
+                        ApiConstants.ESTADO_ACTIVO
                 )
-                .orElseThrow(() -> new IllegalArgumentException("No tienes una suscripción activa"));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No tienes una suscripción activa"
+                ));
 
-        Boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
+        boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
 
         if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException("Tu plan actual no permite destacar habitaciones");
+            throw new IllegalArgumentException(
+                    "Tu plan actual no permite destacar habitaciones"
+            );
         }
 
         copiarDatos(request, habitacion);
 
-        Habitacion habitacionActualizada = habitacionRepository.save(habitacion);
+        Habitacion actualizada = habitacionRepository.save(
+                Objects.requireNonNull(habitacion)
+        );
 
-        return HabitacionResponse.fromEntity(habitacionActualizada);
+        return HabitacionResponse.fromEntity(actualizada);
     }
 
     @Transactional
@@ -168,19 +234,12 @@ public class HabitacionService {
             Integer idUsuario,
             Integer idHabitacion
     ) {
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
-
-        Habitacion habitacion = habitacionRepository
-                .findByIdHabitacionAndPropietarioIdPropietario(
-                        idHabitacion,
-                        propietario.getIdPropietario()
-                )
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada o no te pertenece"));
-
-        habitacion.setEstado("pausada");
-
-        return HabitacionResponse.fromEntity(habitacionRepository.save(habitacion));
+        return cambiarEstado(
+                idUsuario,
+                idHabitacion,
+                ApiConstants.ESTADO_PAUSADA,
+                "Habitación no encontrada o no te pertenece"
+        );
     }
 
     @Transactional
@@ -188,41 +247,77 @@ public class HabitacionService {
             Integer idUsuario,
             Integer idHabitacion
     ) {
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+        return cambiarEstado(
+                idUsuario,
+                idHabitacion,
+                ApiConstants.ESTADO_ACTIVA,
+                "Habitación no encontrada o no te pertenece"
+        );
+    }
+
+    private HabitacionResponse cambiarEstado(
+            Integer idUsuario,
+            Integer idHabitacion,
+            String estado,
+            String mensajeNoEncontrada
+    ) {
+        Integer usuarioId = requerirId(idUsuario, "idUsuario");
+        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
+
+        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No tienes perfil de propietario"
+                ));
+
+        Integer propietarioId = requerirId(
+                propietario.getIdPropietario(),
+                "idPropietario"
+        );
 
         Habitacion habitacion = habitacionRepository
                 .findByIdHabitacionAndPropietarioIdPropietario(
-                        idHabitacion,
-                        propietario.getIdPropietario()
+                        habitacionId,
+                        propietarioId
                 )
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada o no te pertenece"));
+                .orElseThrow(() -> new IllegalArgumentException(mensajeNoEncontrada));
 
-        habitacion.setEstado("activa");
+        habitacion.setEstado(estado);
 
-        return HabitacionResponse.fromEntity(habitacionRepository.save(habitacion));
+        Habitacion actualizada = habitacionRepository.save(
+                Objects.requireNonNull(habitacion)
+        );
+
+        return HabitacionResponse.fromEntity(actualizada);
     }
 
     private void copiarDatos(HabitacionRequest request, Habitacion habitacion) {
-        habitacion.setTitulo(request.getTitulo());
-        habitacion.setDescripcion(request.getDescripcion());
-        habitacion.setDistrito(request.getDistrito());
-        habitacion.setDireccionReferencial(request.getDireccionReferencial());
+        habitacion.setTitulo(request.getTitulo().trim());
+        habitacion.setDescripcion(request.getDescripcion().trim());
+        habitacion.setDistrito(request.getDistrito().trim());
+        habitacion.setDireccionReferencial(normalizarTexto(request.getDireccionReferencial()));
         habitacion.setPrecio(request.getPrecio());
         habitacion.setAreaM2(request.getAreaM2());
-
-        habitacion.setAmoblado(valorBoolean(request.getAmoblado(), false));
-        habitacion.setBanoPrivado(valorBoolean(request.getBanoPrivado(), false));
-        habitacion.setInternetIncluido(valorBoolean(request.getInternetIncluido(), false));
-        habitacion.setAguaIncluida(valorBoolean(request.getAguaIncluida(), false));
-        habitacion.setLuzIncluida(valorBoolean(request.getLuzIncluida(), false));
-        habitacion.setPermiteMascotas(valorBoolean(request.getPermiteMascotas(), false));
-
+        habitacion.setAmoblado(Boolean.TRUE.equals(request.getAmoblado()));
+        habitacion.setBanoPrivado(Boolean.TRUE.equals(request.getBanoPrivado()));
+        habitacion.setInternetIncluido(Boolean.TRUE.equals(request.getInternetIncluido()));
+        habitacion.setAguaIncluida(Boolean.TRUE.equals(request.getAguaIncluida()));
+        habitacion.setLuzIncluida(Boolean.TRUE.equals(request.getLuzIncluida()));
+        habitacion.setPermiteMascotas(Boolean.TRUE.equals(request.getPermiteMascotas()));
         habitacion.setDisponibleDesde(request.getDisponibleDesde());
-        habitacion.setDestacada(valorBoolean(request.getDestacada(), false));
+        habitacion.setDestacada(Boolean.TRUE.equals(request.getDestacada()));
     }
 
-    private Boolean valorBoolean(Boolean valor, Boolean defecto) {
-        return valor != null ? valor : defecto;
+    private String normalizarTexto(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return null;
+        }
+        return valor.trim();
+    }
+
+    private Integer requerirId(Integer id, String nombre) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(nombre + " debe ser un identificador válido");
+        }
+        return id;
     }
 }
