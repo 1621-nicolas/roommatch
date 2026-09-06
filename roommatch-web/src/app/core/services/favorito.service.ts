@@ -4,43 +4,27 @@ import { Observable } from 'rxjs';
 
 import { ApiResponse } from '../models/api-response';
 import { FavoritoResponse } from '../models/favorito-response';
+import { API_BASE_URL } from '../config/api.config';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class FavoritoService {
 
-  private readonly apiUrl =
-    'http://localhost:8081/api/favoritos';
+  private readonly apiUrl = `${API_BASE_URL}/favoritos`;
 
-  constructor(
-    private http: HttpClient
-  ) {}
+  constructor(private http: HttpClient) {}
 
-  listarFavoritos():
-    Observable<ApiResponse<FavoritoResponse[]>> {
-
-    return this.http.get<
-      ApiResponse<FavoritoResponse[]>
-    >(
-      this.apiUrl
-    );
+  listarFavoritos(): Observable<ApiResponse<FavoritoResponse[]>> {
+    return this.http.get<ApiResponse<FavoritoResponse[]>>(this.apiUrl);
   }
 
-  agregarFavorito(
-    idUsuarioFavorito: number
-  ): Observable<ApiResponse<unknown>> {
-
+  agregarFavorito(idUsuarioFavorito: number): Observable<ApiResponse<unknown>> {
     return this.http.post<ApiResponse<unknown>>(
       `${this.apiUrl}/${idUsuarioFavorito}`,
       {}
     );
   }
 
-  eliminarFavorito(
-    idUsuarioFavorito: number
-  ): Observable<ApiResponse<unknown>> {
-
+  eliminarFavorito(idUsuarioFavorito: number): Observable<ApiResponse<unknown>> {
     return this.http.delete<ApiResponse<unknown>>(
       `${this.apiUrl}/${idUsuarioFavorito}`
     );
