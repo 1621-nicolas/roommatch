@@ -2,6 +2,7 @@ package com.roommatch.config;
 
 import com.roommatch.security.JwtAuthenticationFilter;
 import com.roommatch.security.SecurityErrorWriter;
+import com.roommatch.security.AbuseProtectionFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,17 +30,20 @@ public class SecurityConfig {
     private final String allowedOriginsProperty;
     private final SecurityErrorWriter errors;
     private final boolean docsEnabled;
+    private final AbuseProtectionFilter abuseProtectionFilter;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             @Value("${app.cors.allowed-origins:http://localhost:4200}") String allowedOriginsProperty,
             @Value("${springdoc.api-docs.enabled:false}") boolean docsEnabled,
-            SecurityErrorWriter errors
+            SecurityErrorWriter errors,
+            AbuseProtectionFilter abuseProtectionFilter
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.allowedOriginsProperty = allowedOriginsProperty;
         this.errors = errors;
         this.docsEnabled = docsEnabled;
+        this.abuseProtectionFilter = abuseProtectionFilter;
     }
 
     @Bean
@@ -93,7 +97,8 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
-                );
+                )
+                .addFilterAfter(abuseProtectionFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

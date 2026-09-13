@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiResponse<Void>> rateLimit(RateLimitException ex) {
+        return ResponseEntity.status(429).header("Retry-After", Long.toString(ex.getRetryAfter()))
+                .body(ApiResponse.fail(ex.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> notFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(404).body(ApiResponse.fail(ex.getMessage()));
@@ -130,6 +136,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("No estás autenticado o el token no es válido"));
+    }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> invalidCredentials(Exception ex) {
+        return ResponseEntity.status(401).body(ApiResponse.fail("El correo o la contraseña son incorrectos"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
