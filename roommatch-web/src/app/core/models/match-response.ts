@@ -4,7 +4,6 @@ export interface MatchResponse {
 
   nombres: string;
   apellidos: string;
-  email: string;
 
   edad: number | null;
   ocupacion: string | null;

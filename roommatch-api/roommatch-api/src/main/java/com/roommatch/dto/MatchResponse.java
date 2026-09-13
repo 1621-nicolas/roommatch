@@ -11,7 +11,6 @@ public class MatchResponse {
     private Integer idUsuarioDestino;
     private String nombres;
     private String apellidos;
-    private String email;
     private Integer edad;
     private String ocupacion;
     private String universidad;
@@ -30,7 +29,7 @@ public class MatchResponse {
             response.setIdUsuarioDestino(match.getUsuarioDestino().getIdUsuario());
             response.setNombres(match.getUsuarioDestino().getNombres());
             response.setApellidos(match.getUsuarioDestino().getApellidos());
-            response.setEmail(match.getUsuarioDestino().getEmail());
+
             response.setEdad(match.getUsuarioDestino().getEdad());
             response.setOcupacion(match.getUsuarioDestino().getOcupacion());
             response.setUniversidad(match.getUsuarioDestino().getUniversidad());
@@ -77,15 +76,7 @@ public class MatchResponse {
         this.apellidos = apellidos;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-  
-    public Integer getEdad() {
+public Integer getEdad() {
         return edad;
     }
 

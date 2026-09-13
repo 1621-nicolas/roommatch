@@ -87,16 +87,14 @@ public class ContactoUsuarioService {
         Integer usuarioObjetivoId = requerirId(idUsuarioObjetivo, "idUsuarioObjetivo");
 
         if (usuarioActualId.equals(usuarioObjetivoId)) {
-            throw new IllegalArgumentException(
-                    "No necesitas desbloquear tu propio contacto"
-            );
+            return obtenerMiContacto(usuarioActualId);
         }
 
         boolean contactoDesbloqueado = contactoRoomieRepository
                 .existeContactoDesbloqueado(usuarioActualId, usuarioObjetivoId);
 
         if (!contactoDesbloqueado) {
-            throw new IllegalArgumentException(
+            throw new org.springframework.security.access.AccessDeniedException(
                     "El contacto aún no está desbloqueado. Primero debe existir una solicitud aceptada"
             );
         }

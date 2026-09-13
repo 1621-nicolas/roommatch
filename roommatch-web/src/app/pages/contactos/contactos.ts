@@ -293,15 +293,6 @@ export class Contactos implements OnInit {
         this.contactos =
           contactos;
 
-
-        console.log(
-
-          '[RoomMatch contactos cargados]',
-
-          this.contactos
-
-        );
-
       },
 
 
