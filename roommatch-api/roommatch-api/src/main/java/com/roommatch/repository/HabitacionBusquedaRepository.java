@@ -19,6 +19,9 @@ import java.util.Objects;
 @Repository
 public class HabitacionBusquedaRepository {
 
+    private final java.time.Clock clock;
+    public HabitacionBusquedaRepository(java.time.Clock clock) { this.clock = clock; }
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -38,6 +41,13 @@ public class HabitacionBusquedaRepository {
 
         where.append(" WHERE h.estado = :estado ");
         parametros.put("estado", ApiConstants.ESTADO_ACTIVA);
+        where.append("""
+             AND h.bloqueada = false AND h.propietario.estado = 'activo' AND h.propietario.usuario.estado = 'activo'
+             AND EXISTS (select s.idSuscripcion from SuscripcionPropietario s where s.propietario = h.propietario
+                 and s.estado = 'activo' and s.plan.estado = 'activo' and s.fechaInicio <= :ahora
+                 and (s.fechaFin is null or s.fechaFin > :ahora))
+            """);
+        parametros.put("ahora", java.time.LocalDateTime.now(clock));
 
         if (distrito != null && !distrito.isBlank()) {
             where.append(" AND LOWER(h.distrito) LIKE LOWER(:distrito) ");
@@ -71,9 +81,9 @@ public class HabitacionBusquedaRepository {
 
         String jpql = """
                 SELECT h
-                FROM Habitacion h
+                FROM Habitacion h JOIN FETCH h.propietario p JOIN FETCH p.usuario
                 """ + where + """
-                ORDER BY h.destacada DESC, h.fechaPublicacion DESC
+                ORDER BY h.destacada DESC, h.fechaPublicacion DESC, h.idHabitacion DESC
                 """;
 
         TypedQuery<Habitacion> query = entityManager.createQuery(jpql, Habitacion.class);

@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 public class HabitacionResponse {
 
     private Integer idHabitacion;
+    private Boolean bloqueada;
+    public Boolean getBloqueada() { return bloqueada; }
+    public void setBloqueada(Boolean bloqueada) { this.bloqueada = bloqueada; }
     private Integer idPropietario;
     private String nombrePropietario;
     private Boolean propietarioVerificado;
@@ -59,6 +62,7 @@ public class HabitacionResponse {
         response.setDisponibleDesde(habitacion.getDisponibleDesde());
         response.setDestacada(habitacion.getDestacada());
         response.setEstado(habitacion.getEstado());
+        response.setBloqueada(habitacion.getBloqueada());
         response.setFechaPublicacion(habitacion.getFechaPublicacion());
         response.setFechaActualizacion(habitacion.getFechaActualizacion());
 

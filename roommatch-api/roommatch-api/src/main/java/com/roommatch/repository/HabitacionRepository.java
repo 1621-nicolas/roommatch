@@ -49,4 +49,5 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, Integer>
             @Param("permiteMascotas") Boolean permiteMascotas,
             Pageable pageable
     );
+    long countByPropietarioIdPropietarioAndDestacadaTrueAndEstadoNot(Integer propietario, String estado);
 }

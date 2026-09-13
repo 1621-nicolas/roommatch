@@ -38,6 +38,8 @@ export interface HabitacionResponse {
 
   estado: string;
 
+  bloqueada: boolean;
+
   fechaPublicacion: string;
 
   fechaActualizacion: string;

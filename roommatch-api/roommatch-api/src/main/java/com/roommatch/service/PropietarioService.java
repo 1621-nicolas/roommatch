@@ -84,286 +84,39 @@ public class PropietarioService {
      */
 
     @Transactional
-    public PropietarioResponse convertirmeEnPropietario(
-
-            Integer idUsuario,
-
-            PropietarioRequest request
-
-    ) {
-
-        /*
-         * =====================================================
-         * VALIDAR PROPIETARIO EXISTENTE
-         * =====================================================
-         */
-
-        if (
-                propietarioRepository
-                        .existsByUsuarioIdUsuario(
-                                idUsuario
-                        )
-        ) {
-
-            throw new ConflictException(
-                    "Este usuario ya tiene perfil de propietario"
-            );
-        }
-
-
-        /*
-         * =====================================================
-         * VALIDAR TIPO DE PROPIETARIO
-         * =====================================================
-         */
-
-        if (
-                request.getTipoPropietario() == null
-        ) {
-
-            throw new IllegalArgumentException(
-                    "Debes seleccionar un tipo de propietario"
-            );
-        }
-
-
-        String tipoPropietario =
-
-                request
-                        .getTipoPropietario()
-                        .trim()
-                        .toLowerCase();
-
-
-        if (
-                !tipoPropietario.equals("persona") &&
-                !tipoPropietario.equals("empresa")
-        ) {
-
-            throw new IllegalArgumentException(
-                    "El tipo de propietario debe ser persona o empresa"
-            );
-        }
-
-
-        /*
-         * =====================================================
-         * BUSCAR USUARIO
-         * =====================================================
-         */
-
-        Usuario usuario =
-
-                usuarioRepository
-                        .findById(
-                                idUsuario
-                        )
-                        .orElseThrow(
-
-                                () ->
-
-                                        new ResourceNotFoundException(
-                                                "Usuario no encontrado"
-                                        )
-
-                        );
-
-
-        /*
-         * =====================================================
-         * BUSCAR ROL PROPIETARIO
-         * =====================================================
-         */
-
-        Rol rolPropietario =
-
-                rolRepository
-                        .findByNombreRol(
-                                "PROPIETARIO"
-                        )
-                        .orElseThrow(
-
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No existe el rol PROPIETARIO en la base de datos"
-                                        )
-
-                        );
-
-
-        /*
-         * =====================================================
-         * BUSCAR PLAN GRATIS
-         * =====================================================
-         */
-
-        PlanPropietario planGratis =
-
-                planRepository
-                        .findByNombrePlan(
-                                "Gratis"
-                        )
-                        .orElseThrow(
-
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No existe el plan Gratis en la base de datos"
-                                        )
-
-                        );
-
-
-        /*
-         * =====================================================
-         * CAMBIAR ROL DEL USUARIO
-         * =====================================================
-         */
-
-        usuario.setRol(
-                rolPropietario
-        );
-
-
-        usuarioRepository.save(
-                usuario
-        );
-
-
-        /*
-         * =====================================================
-         * CREAR PROPIETARIO
-         * =====================================================
-         */
-
-        Propietario propietario =
-                new Propietario();
-
-
-        propietario.setUsuario(
-                usuario
-        );
-
-        propietario.setTipoPropietario(
-                tipoPropietario
-        );
-
-        propietario.setNombreComercial(
-                request.getNombreComercial()
-        );
-
-        propietario.setRuc(
-                request.getRuc()
-        );
-
-        propietario.setDescripcion(
-                request.getDescripcion()
-        );
-
-        propietario.setEstado(
-                "activo"
-        );
-
-        propietario.setVerificado(
-                false
-        );
-
-
-        Propietario propietarioGuardado =
-
-                propietarioRepository.save(
-                        propietario
-                );
-
-
-        /*
-         * =====================================================
-         * CREAR SUSCRIPCIÓN GRATIS
-         * =====================================================
-         */
-
-        SuscripcionPropietario suscripcion =
-                new SuscripcionPropietario();
-
-
-        suscripcion.setPropietario(
-                propietarioGuardado
-        );
-
-        suscripcion.setPlan(
-                planGratis
-        );
-
-        suscripcion.setEstado(
-                "activo"
-        );
-
-
-        SuscripcionPropietario suscripcionGuardada =
-
-                suscripcionRepository.save(
-                        suscripcion
-                );
-
-
-        /*
-         * =====================================================
-         * CREAR NOTIFICACIÓN
-         * =====================================================
-         */
-
-        Notificacion notificacion =
-                new Notificacion();
-
-
-        notificacion.setUsuario(
-                usuario
-        );
-
-        notificacion.setTitulo(
-                "Perfil de propietario creado"
-        );
-
-        notificacion.setMensaje(
-                "Ahora puedes publicar habitaciones en RoomMatch con el plan Gratis."
-        );
-
-        notificacion.setTipo(
-                "sistema"
-        );
-
-        notificacion.setUrlDestino(
-                "/propietario"
-        );
-
-
-        notificacionRepository.save(
-                notificacion
-        );
-
-
-        /*
-         * =====================================================
-         * RESPUESTA
-         * =====================================================
-         */
-
-        return PropietarioResponse.fromEntity(
-
-                propietarioGuardado,
-
-                suscripcionGuardada
-
-        );
+    public PropietarioResponse convertirmeEnPropietario(Integer idUsuario, PropietarioRequest request) {
+        Usuario usuario = usuarioRepository.lockById(idUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (!"activo".equals(usuario.getEstado())) throw new AccessDeniedException("Tu cuenta no está activa");
+        if (propietarioRepository.existsByUsuarioIdUsuario(idUsuario)) throw new ConflictException("Este usuario ya tiene perfil de propietario");
+        String tipo = request.getTipoPropietario() == null ? "" : request.getTipoPropietario().trim().toLowerCase(java.util.Locale.ROOT);
+        if (!tipo.equals("persona") && !tipo.equals("empresa")) throw new IllegalArgumentException("El tipo de propietario debe ser persona o empresa");
+        Rol rol = rolRepository.findByNombreRol("PROPIETARIO").orElseThrow(() -> new IllegalStateException("Falta el catálogo de roles"));
+        PlanPropietario gratis = planRepository.findByNombrePlan("Gratis").orElseThrow(() -> new IllegalStateException("Falta el plan Gratis"));
+        if (!"activo".equals(gratis.getEstado())) throw new ConflictException("El plan inicial no está disponible");
+        // Owner capability does not remove an administrator or future privileged role.
+        if ("USUARIO".equals(usuario.getRol().getNombreRol())) usuario.setRol(rol);
+        usuarioRepository.save(usuario);
+        Propietario propietario = new Propietario();
+        propietario.setUsuario(usuario);
+        propietario.setTipoPropietario(tipo);
+        propietario.setNombreComercial(request.getNombreComercial());
+        propietario.setRuc(request.getRuc());
+        propietario.setDescripcion(request.getDescripcion());
+        propietario = propietarioRepository.saveAndFlush(propietario);
+        SuscripcionPropietario suscripcion = new SuscripcionPropietario();
+        suscripcion.setPropietario(propietario);
+        suscripcion.setPlan(gratis);
+        suscripcion = suscripcionRepository.saveAndFlush(suscripcion);
+        Notificacion notificacion = new Notificacion();
+        notificacion.setUsuario(usuario);
+        notificacion.setTitulo("Perfil de propietario creado");
+        notificacion.setMensaje("Ahora puedes publicar habitaciones en RoomMatch con el plan Gratis.");
+        notificacion.setTipo("sistema");
+        notificacion.setUrlDestino("/propietario");
+        notificacionRepository.save(notificacion);
+        return PropietarioResponse.fromEntity(propietario, suscripcion);
     }
-
-
-    /*
-     * =========================================================
-     * OBTENER MI PERFIL DE PROPIETARIO
-     * =========================================================
-     */
 
     @Transactional(readOnly = true)
     public PropietarioResponse obtenerMiPerfilPropietario(

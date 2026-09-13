@@ -42,6 +42,29 @@ class SqlServerIT {
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
+    @Autowired com.roommatch.service.PropietarioService propietarios;
+    @Autowired com.roommatch.service.HabitacionService habitaciones;
+
+    @Test
+    void concurrentRoomCreationCannotExceedOneSlotPlan() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc);
+        var ownerRequest = new com.roommatch.dto.PropietarioRequest();
+        ownerRequest.setTipoPropietario("persona");
+        var owner = propietarios.convertirmeEnPropietario(user, ownerRequest);
+        var room = new com.roommatch.dto.HabitacionRequest();
+        room.setTitulo("Habitación de prueba"); room.setDescripcion("Prueba del límite del plan");
+        room.setDistrito("Lima"); room.setPrecio(new java.math.BigDecimal("500.00"));
+        assertThat(race(() -> habitaciones.crearHabitacion(user, room), () -> habitaciones.crearHabitacion(user, room)))
+                .containsExactlyInAnyOrder("success", "conflict");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM habitacion WHERE id_propietario=?", Integer.class, owner.getIdPropietario())).isEqualTo(1);
+        // Search runs its actual production query, with subscription and moderation visibility.
+        var page = habitaciones.listarHabitacionesPublicas("Lima", null, null, null, null, null, org.springframework.data.domain.PageRequest.of(0, 20));
+        assertThat(page.getContent()).extracting(com.roommatch.dto.HabitacionResponse::getIdPropietario).contains(owner.getIdPropietario());
+        jdbc.update("UPDATE suscripcion_propietario SET fecha_inicio=DATEADD(day,-2,SYSDATETIME()),fecha_fin=DATEADD(day,-1,SYSDATETIME()) WHERE id_propietario=?", owner.getIdPropietario());
+        assertThat(habitaciones.listarHabitacionesPublicas("Lima", null, null, null, null, null, org.springframework.data.domain.PageRequest.of(0, 20)).getContent())
+                .extracting(com.roommatch.dto.HabitacionResponse::getIdPropietario).doesNotContain(owner.getIdPropietario());
+    }
 
     @Test
     void reciprocalConcurrentSendsCreateOnlyOnePendingRequest() throws Exception {

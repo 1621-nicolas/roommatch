@@ -146,4 +146,9 @@ public class SuscripcionPropietario {
     ) {
         this.estado = estado;
     }
+    public boolean vigente(LocalDateTime ahora) {
+        return "activo".equals(estado) && plan != null && "activo".equals(plan.getEstado())
+                && (fechaInicio == null || !fechaInicio.isAfter(ahora))
+                && (fechaFin == null || fechaFin.isAfter(ahora));
+    }
 }

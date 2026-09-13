@@ -18,3 +18,23 @@ Los cambios de política se concentran en configuración, pruebas y este documen
 - Los servicios bloquean los dos usuarios en orden ascendente durante la transacción.
   SQL Server protege además una pendiente por pareja y un contacto por pareja con índices únicos.
 - V5 se detiene si descubre duplicados históricos; exige conciliarlos, sin eliminar filas automáticamente.
+
+## Habitaciones y planes
+
+- El cupo cuenta habitaciones activas y pausadas. Alquiladas y archivadas (`eliminada`) no consumen cupo.
+- Un downgrade que no admite el inventario actual responde 409 sin cambiar plan ni habitaciones.
+  El propietario decide qué marcar como alquilado o archivar. Una habitación archivada conserva
+  imágenes, leads y reportes, y no puede reactivarse. Una alquilada puede reactivarse si hay cupo.
+- Pausar solo pasa de activa a pausada, manteniendo cupo. Reactivar siempre vuelve a comprobarlo.
+- Una fecha de fin alcanzada o un plan inactivo impiden publicación/reactivación y visibilidad pública.
+  El catálogo académico todavía no procesa cobros: cambiar de plan no representa un pago ni genera
+  facturas. No se inventa una renovación automática. Si hay fecha de fin, se respeta.
+- Para pasar a un plan que no destaca, el propietario debe quitar antes sus destacados. Puede editar
+  contenido y quitar destacados tras la expiración. V6 retira destacados históricos incompatibles
+  con las capacidades de su plan; no elimina habitaciones.
+- Todas las operaciones de cupo y suscripción bloquean el mismo propietario. La BD admite una sola
+  suscripción activa por propietario; `@Version` evita sobrescribir sanciones con una edición concurrente.
+- Una sanción tiene una marca separada (`bloqueada`) y no se revierte con pausar/activar. V6 recupera
+  sanciones históricas desde los reportes sancionados. Su revisión corresponde a administración.
+- Crear un perfil de propietario conserva el rol ADMIN. El modelo continúa con un rol de usuario
+  más la capacidad asociada al perfil de propietario; no incorpora una tabla multirrol innecesaria.

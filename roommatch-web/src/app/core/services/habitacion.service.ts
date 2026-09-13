@@ -364,4 +364,11 @@ export class HabitacionService {
       }
     );
   }
+  alquilar(id: number): Observable<ApiResponse<HabitacionResponse>> {
+    return this.http.put<ApiResponse<HabitacionResponse>>(`${this.apiUrl}/${id}/alquilar`, {});
+  }
+
+  archivar(id: number): Observable<ApiResponse<HabitacionResponse>> {
+    return this.http.delete<ApiResponse<HabitacionResponse>>(`${this.apiUrl}/${id}`);
+  }
 }

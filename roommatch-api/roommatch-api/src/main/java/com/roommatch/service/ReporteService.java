@@ -210,6 +210,8 @@ public class ReporteService {
         reporteHabitacionRepository.save(reporte);
 
         habitacion.setEstado("pausada");
+        habitacion.setBloqueada(true);
+        habitacion.setDestacada(false);
         habitacionRepository.save(habitacion);
 
         Notificacion notificacion = new Notificacion();
