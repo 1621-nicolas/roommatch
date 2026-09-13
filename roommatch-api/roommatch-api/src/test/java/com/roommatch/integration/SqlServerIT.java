@@ -41,6 +41,71 @@ class SqlServerIT {
 
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
+    @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
+
+    @Test
+    void reciprocalConcurrentSendsCreateOnlyOnePendingRequest() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int a = addUser(jdbc), b = addUser(jdbc);
+        var request = new com.roommatch.dto.SolicitudContactoRequest();
+        var outcomes = race(() -> solicitudes.enviarSolicitud(a, b, request), () -> solicitudes.enviarSolicitud(b, a, request));
+        assertThat(outcomes).containsExactlyInAnyOrder("success", "conflict");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM solicitud_contacto WHERE usuario_menor=? AND usuario_mayor=? AND estado='pendiente'",
+                Integer.class, Math.min(a, b), Math.max(a, b))).isEqualTo(1);
+        // A direct SQL writer cannot bypass the same invariant in the opposite direction.
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO solicitud_contacto(id_usuario_emisor,id_usuario_receptor) "
+                + "SELECT id_usuario_receptor,id_usuario_emisor FROM solicitud_contacto WHERE usuario_menor=? AND usuario_mayor=? AND estado='pendiente'", a, b))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void acceptAndRejectRaceHasOneTerminalStateAndContactMatchesThatState() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int a = addUser(jdbc), b = addUser(jdbc);
+        var pending = solicitudes.enviarSolicitud(a, b, new com.roommatch.dto.SolicitudContactoRequest());
+        assertThat(race(() -> solicitudes.aceptarSolicitud(b, pending.getIdSolicitud()),
+                () -> solicitudes.rechazarSolicitud(b, pending.getIdSolicitud())))
+                .containsExactlyInAnyOrder("success", "conflict");
+        String state = jdbc.queryForObject("SELECT estado FROM solicitud_contacto WHERE id_solicitud=?", String.class, pending.getIdSolicitud());
+        assertThat(state).isIn("aceptada", "rechazada");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contacto_roomie WHERE id_solicitud=?", Integer.class, pending.getIdSolicitud()))
+                .isEqualTo("aceptada".equals(state) ? 1 : 0);
+    }
+
+    @Test
+    void cancelledRequestStaysInHistoryAndReverseSendWorks() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int a = addUser(jdbc), b = addUser(jdbc);
+        var first = solicitudes.enviarSolicitud(a, b, new com.roommatch.dto.SolicitudContactoRequest());
+        solicitudes.cancelarSolicitud(a, first.getIdSolicitud());
+        var second = solicitudes.enviarSolicitud(b, a, new com.roommatch.dto.SolicitudContactoRequest());
+        assertThat(second.getIdSolicitud()).isNotEqualTo(first.getIdSolicitud());
+        assertThat(jdbc.queryForObject("SELECT estado FROM solicitud_contacto WHERE id_solicitud=?", String.class, first.getIdSolicitud())).isEqualTo("cancelada");
+    }
+
+    private static int addUser(JdbcTemplate jdbc) {
+        String email = java.util.UUID.randomUUID() + "@example.invalid";
+        jdbc.update("INSERT INTO usuario(id_rol,nombres,apellidos,email,password_hash,edad) "
+                + "SELECT id_rol,'Race','Test',?,'unused',25 FROM rol WHERE nombre_rol='USUARIO'", email);
+        return jdbc.queryForObject("SELECT id_usuario FROM usuario WHERE email=?", Integer.class, email);
+    }
+
+    private static java.util.List<String> race(Runnable first, Runnable second) throws Exception {
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var a = executor.submit(() -> outcome(first, start));
+            var b = executor.submit(() -> outcome(second, start));
+            start.countDown();
+            return java.util.List.of(a.get(30, java.util.concurrent.TimeUnit.SECONDS), b.get(30, java.util.concurrent.TimeUnit.SECONDS));
+        } finally { executor.shutdownNow(); }
+    }
+
+    private static String outcome(Runnable action, java.util.concurrent.CountDownLatch start) throws InterruptedException {
+        start.await();
+        try { action.run(); return "success"; }
+        catch (com.roommatch.exception.ConflictException expected) { return "conflict"; }
+    }
 
     @Test
     void cleanInstallMigratesAndHibernateValidatesRealSchema() {

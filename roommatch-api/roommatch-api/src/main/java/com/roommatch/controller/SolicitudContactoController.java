@@ -113,4 +113,11 @@ public class SolicitudContactoController {
 
 
     }
+    @PutMapping("/{idSolicitud}/cancelar")
+    public ResponseEntity<ApiResponse<SolicitudContactoResponse>> cancelarSolicitud(
+            Authentication authentication, @PathVariable Integer idSolicitud) {
+        Usuario usuario = (Usuario) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.success(
+                solicitudService.cancelarSolicitud(usuario.getIdUsuario(), idSolicitud), "Solicitud cancelada"));
+    }
 }
