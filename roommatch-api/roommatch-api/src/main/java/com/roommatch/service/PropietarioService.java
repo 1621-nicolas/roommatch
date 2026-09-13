@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import org.springframework.security.access.AccessDeniedException;
+
 import com.roommatch.exception.ResourceNotFoundException;
 
 import com.roommatch.exception.ConflictException;
