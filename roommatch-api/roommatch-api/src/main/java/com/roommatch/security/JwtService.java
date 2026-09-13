@@ -57,7 +57,6 @@ public class JwtService {
         this.audience = audience;
         this.clock = clock;
         parser = Jwts.parser().verifyWith(key)
-                .sig().clear().add(Jwts.SIG.HS256).and()
                 .requireIssuer(issuer).requireAudience(audience)
                 .clock(() -> Date.from(clock.instant())).build();
     }
@@ -72,7 +71,11 @@ public class JwtService {
     }
 
     public Integer obtenerIdUsuario(String token) {
-        Claims claims = parser.parseSignedClaims(token).getPayload();
+        var signed = parser.parseSignedClaims(token);
+        // JJWT 0.12.6 cannot clear its algorithm registry. Check the verified header
+        // before exposing any claims; every accepted token must be HS256.
+        if (!"HS256".equals(signed.getHeader().getAlgorithm())) throw new JwtException("Algoritmo no permitido");
+        Claims claims = signed.getPayload();
         Date now = Date.from(clock.instant());
         if (claims.getExpiration() == null || !claims.getExpiration().after(now) ||
                 claims.getIssuedAt() == null || claims.getIssuedAt().after(now) ||
