@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.MiPlanResponse;
 import com.roommatch.dto.PlanPropietarioResponse;
 
@@ -94,7 +98,7 @@ public class PlanPropietarioService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "No tienes perfil de propietario"
                                         )
                         );
@@ -113,7 +117,7 @@ public class PlanPropietarioService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ConflictException(
                                                 "No tienes una suscripción activa"
                                         )
                         );
@@ -152,7 +156,7 @@ public class PlanPropietarioService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "No tienes perfil de propietario"
                                         )
                         );
@@ -173,7 +177,7 @@ public class PlanPropietarioService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Plan no encontrado"
                                         )
                         );
@@ -185,7 +189,7 @@ public class PlanPropietarioService {
                 )
         ) {
 
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "El plan seleccionado no está activo"
             );
         }
@@ -210,7 +214,7 @@ public class PlanPropietarioService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ConflictException(
                                                 "No tienes una suscripción activa"
                                         )
                         );
@@ -232,7 +236,7 @@ public class PlanPropietarioService {
                         )
         ) {
 
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Ya tienes activo el plan " +
                             nuevoPlan.getNombrePlan()
             );

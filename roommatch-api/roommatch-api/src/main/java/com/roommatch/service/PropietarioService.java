@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.PropietarioRequest;
 import com.roommatch.dto.PropietarioResponse;
 
@@ -101,7 +105,7 @@ public class PropietarioService {
                         )
         ) {
 
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Este usuario ya tiene perfil de propietario"
             );
         }
@@ -158,7 +162,7 @@ public class PropietarioService {
 
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Usuario no encontrado"
                                         )
 
@@ -378,7 +382,7 @@ public class PropietarioService {
 
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Aún no tienes perfil de propietario"
                                         )
 

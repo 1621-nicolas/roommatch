@@ -30,7 +30,7 @@ public class ReporteController {
             @PathVariable Integer idUsuarioReportado,
             @Valid @RequestBody ReporteRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteUsuarioResponse response = reporteService.reportarUsuario(
@@ -43,11 +43,7 @@ public class ReporteController {
                     ApiResponse.success(response, "Usuario reportado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PostMapping("/habitaciones/{idHabitacion}")
@@ -56,7 +52,7 @@ public class ReporteController {
             @PathVariable Integer idHabitacion,
             @Valid @RequestBody ReporteRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteHabitacionResponse response = reporteService.reportarHabitacion(
@@ -69,11 +65,7 @@ public class ReporteController {
                     ApiResponse.success(response, "Habitación reportada correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping("/admin/usuarios")
@@ -83,7 +75,7 @@ public class ReporteController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
             Pageable pageable = PageRequest.of(page, size);
 
@@ -97,11 +89,7 @@ public class ReporteController {
                     ApiResponse.success(reportes, "Reportes de usuarios obtenidos correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping("/admin/habitaciones")
@@ -111,7 +99,7 @@ public class ReporteController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
             Pageable pageable = PageRequest.of(page, size);
 
@@ -125,11 +113,7 @@ public class ReporteController {
                     ApiResponse.success(reportes, "Reportes de habitaciones obtenidos correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/admin/usuarios/{idReporte}/revisar")
@@ -138,7 +122,7 @@ public class ReporteController {
             @PathVariable Integer idReporte,
             @RequestParam String estado
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteUsuarioResponse response = reporteService.revisarReporteUsuario(
@@ -151,11 +135,7 @@ public class ReporteController {
                     ApiResponse.success(response, "Reporte de usuario actualizado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/admin/habitaciones/{idReporte}/revisar")
@@ -164,7 +144,7 @@ public class ReporteController {
             @PathVariable Integer idReporte,
             @RequestParam String estado
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteHabitacionResponse response = reporteService.revisarReporteHabitacion(
@@ -177,11 +157,7 @@ public class ReporteController {
                     ApiResponse.success(response, "Reporte de habitación actualizado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/admin/usuarios/{idReporte}/sancionar")
@@ -189,7 +165,7 @@ public class ReporteController {
             Authentication authentication,
             @PathVariable Integer idReporte
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteUsuarioResponse response = reporteService.sancionarUsuario(
@@ -201,11 +177,7 @@ public class ReporteController {
                     ApiResponse.success(response, "Usuario sancionado y suspendido correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/admin/habitaciones/{idReporte}/sancionar")
@@ -213,7 +185,7 @@ public class ReporteController {
             Authentication authentication,
             @PathVariable Integer idReporte
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             ReporteHabitacionResponse response = reporteService.sancionarHabitacion(
@@ -225,10 +197,6 @@ public class ReporteController {
                     ApiResponse.success(response, "Habitación sancionada y pausada correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 }

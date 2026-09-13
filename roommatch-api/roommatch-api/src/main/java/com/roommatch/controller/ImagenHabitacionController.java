@@ -60,7 +60,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -92,20 +92,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -127,7 +114,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             List<ImagenHabitacionResponse> response =
 
@@ -149,20 +136,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -186,7 +160,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -217,20 +191,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -254,7 +215,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -282,19 +243,6 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 }

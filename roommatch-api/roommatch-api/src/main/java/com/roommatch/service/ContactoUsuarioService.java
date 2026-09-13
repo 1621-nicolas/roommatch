@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.ContactoUsuarioRequest;
 import com.roommatch.dto.ContactoUsuarioResponse;
 import com.roommatch.model.ContactoUsuario;
@@ -39,7 +41,7 @@ public class ContactoUsuarioService {
 
         Usuario usuario = usuarioRepository
                 .findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         ContactoUsuario contacto = contactoRepository
                 .findByUsuarioIdUsuario(usuarioId)
@@ -61,7 +63,7 @@ public class ContactoUsuarioService {
 
         ContactoUsuario contacto = contactoRepository
                 .findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Aún no has registrado tus datos de contacto"
                 ));
 
@@ -101,7 +103,7 @@ public class ContactoUsuarioService {
 
         ContactoUsuario contacto = contactoRepository
                 .findByUsuarioIdUsuario(usuarioObjetivoId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "El usuario aún no registró datos de contacto"
                 ));
 

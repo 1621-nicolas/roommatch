@@ -195,7 +195,7 @@ export class MiCuenta implements OnInit {
 
             catchError(error => {
 
-              if (error.status === 400) {
+              if (error.status === 404) {
 
                 return of(null);
 
@@ -222,7 +222,7 @@ export class MiCuenta implements OnInit {
 
             catchError(error => {
 
-              if (error.status === 400) {
+              if (error.status === 404) {
 
                 return of(null);
 

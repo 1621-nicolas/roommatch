@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.NotificacionResponse;
 import com.roommatch.model.Notificacion;
 import com.roommatch.repository.NotificacionRepository;
@@ -38,7 +40,7 @@ public class NotificacionService {
     ) {
         Notificacion notificacion = notificacionRepository
                 .findByIdNotificacionAndUsuarioIdUsuario(idNotificacion, idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Notificación no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notificación no encontrada"));
 
         notificacion.setLeido(true);
 

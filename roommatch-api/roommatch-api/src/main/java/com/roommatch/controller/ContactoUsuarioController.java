@@ -47,7 +47,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -77,20 +77,7 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -113,7 +100,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -143,20 +130,7 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -244,7 +218,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -274,19 +248,6 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 }

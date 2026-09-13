@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.ImagenPublicacionRequest;
 import com.roommatch.dto.ImagenPublicacionResponse;
 import com.roommatch.model.ImagenPublicacion;
@@ -38,14 +42,14 @@ public class ImagenPublicacionService {
 
         PublicacionRoomie publicacion = publicacionRepository
                 .findByIdPublicacionAndUsuarioIdUsuario(publicacionId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Publicación no encontrada o no te pertenece"
                 ));
 
         long cantidadImagenes = imagenRepository.countByPublicacionIdPublicacion(publicacionId);
 
         if (cantidadImagenes >= 5) {
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Solo puedes registrar hasta 5 imágenes por publicación"
             );
         }
@@ -94,7 +98,7 @@ public class ImagenPublicacionService {
 
         ImagenPublicacion imagen = imagenRepository
                 .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Imagen no encontrada o no te pertenece"
                 ));
 
@@ -123,7 +127,7 @@ public class ImagenPublicacionService {
 
         ImagenPublicacion imagen = imagenRepository
                 .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Imagen no encontrada o no te pertenece"
                 ));
 

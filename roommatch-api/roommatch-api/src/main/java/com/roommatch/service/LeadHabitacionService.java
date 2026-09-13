@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.LeadHabitacionRequest;
 import com.roommatch.dto.LeadHabitacionResponse;
 import com.roommatch.model.Habitacion;
@@ -50,13 +54,13 @@ public class LeadHabitacionService {
             LeadHabitacionRequest request
     ) {
         Usuario usuarioInteresado = usuarioRepository.findById(idUsuarioInteresado)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario interesado no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario interesado no encontrado"));
 
         Habitacion habitacion = habitacionRepository.findById(idHabitacion)
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
 
         if (!habitacion.getEstado().equalsIgnoreCase("activa")) {
-            throw new IllegalArgumentException("La habitación no está disponible");
+            throw new ResourceNotFoundException("La habitación no está disponible");
         }
 
         Integer idUsuarioPropietario = habitacion.getPropietario().getUsuario().getIdUsuario();
@@ -69,7 +73,7 @@ public class LeadHabitacionService {
                 idHabitacion,
                 idUsuarioInteresado
         )) {
-            throw new IllegalArgumentException("Ya enviaste interés por esta habitación");
+            throw new ConflictException("Ya enviaste interés por esta habitación");
         }
 
         LeadHabitacion lead = new LeadHabitacion();
@@ -110,7 +114,7 @@ public class LeadHabitacionService {
             Pageable pageable
     ) {
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuarioPropietario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
 
         return leadRepository
                 .listarLeadsDePropietario(
@@ -130,14 +134,14 @@ public class LeadHabitacionService {
         validarEstadoLead(nuevoEstado);
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuarioPropietario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
 
         LeadHabitacion lead = leadRepository
                 .findByIdLeadAndHabitacionPropietarioIdPropietario(
                         idLead,
                         propietario.getIdPropietario()
                 )
-                .orElseThrow(() -> new IllegalArgumentException("Lead no encontrado o no pertenece a tus habitaciones"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lead no encontrado o no pertenece a tus habitaciones"));
 
         lead.setEstado(nuevoEstado.toLowerCase());
 

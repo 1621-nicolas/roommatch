@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.CompatibilidadCalculada;
 import com.roommatch.dto.MatchResponse;
 
@@ -78,7 +80,7 @@ public class MatchService {
                         .findById(idUsuarioOrigen)
                         .orElseThrow(
                                 () ->
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Usuario no encontrado"
                                         )
                         );

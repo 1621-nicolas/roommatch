@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.LoginRequest;
 import com.roommatch.dto.LoginResponse;
 import com.roommatch.dto.RegistroRequest;
@@ -39,7 +41,7 @@ public class AuthService {
         String emailNormalizado = request.getEmail().trim().toLowerCase();
 
         if (usuarioRepository.existsByEmail(emailNormalizado)) {
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Ya existe una cuenta registrada con este correo electrónico"
             );
         }

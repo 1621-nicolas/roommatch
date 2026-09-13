@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.CompatibilidadCalculada;
 import com.roommatch.dto.PublicacionRoomieRequest;
 import com.roommatch.dto.PublicacionRoomieResponse;
@@ -114,7 +116,7 @@ public class PublicacionRoomieService {
                         .findById(idUsuario)
                         .orElseThrow(
                                 () ->
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Usuario no encontrado"
                                         )
                         );
@@ -398,7 +400,7 @@ public class PublicacionRoomieService {
                         .findById(idPublicacion)
                         .orElseThrow(
                                 () ->
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Publicación no encontrada"
                                         )
                         );
@@ -424,7 +426,7 @@ public class PublicacionRoomieService {
 
         ) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
 
                     "La publicación no está disponible"
 
@@ -557,7 +559,7 @@ public class PublicacionRoomieService {
 
                         .orElseThrow(
                                 () ->
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
 
                                                 "Publicación no encontrada o no te pertenece"
 
@@ -781,7 +783,7 @@ public void eliminarPublicacion(
                             idUsuario
                     )
                     .orElseThrow(() ->
-                            new IllegalArgumentException(
+                            new ResourceNotFoundException(
                                     "La publicación no existe o no te pertenece"
                             )
                     );
@@ -956,7 +958,7 @@ public void eliminarPublicacion(
 
                 .orElseThrow(
                         () ->
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
 
                                         "Publicación no encontrada o no te pertenece"
 
@@ -1105,7 +1107,7 @@ public void eliminarPublicacion(
 
                             .orElseThrow(
                                     () ->
-                                            new IllegalArgumentException(
+                                            new ResourceNotFoundException(
 
                                                     "La habitación seleccionada no existe"
 

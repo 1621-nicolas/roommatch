@@ -28,7 +28,7 @@ public class SolicitudContactoController {
             @PathVariable Integer idUsuarioReceptor,
             @Valid @RequestBody SolicitudContactoRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             SolicitudContactoResponse response = solicitudService.enviarSolicitud(
@@ -41,11 +41,7 @@ public class SolicitudContactoController {
                     ApiResponse.success(response, "Solicitud enviada correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping("/recibidas")
@@ -83,7 +79,7 @@ public class SolicitudContactoController {
             Authentication authentication,
             @PathVariable Integer idSolicitud
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             SolicitudContactoResponse response = solicitudService.aceptarSolicitud(
@@ -95,11 +91,7 @@ public class SolicitudContactoController {
                     ApiResponse.success(response, "Solicitud aceptada y contacto desbloqueado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/{idSolicitud}/rechazar")
@@ -107,7 +99,7 @@ public class SolicitudContactoController {
             Authentication authentication,
             @PathVariable Integer idSolicitud
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             SolicitudContactoResponse response = solicitudService.rechazarSolicitud(
@@ -119,10 +111,6 @@ public class SolicitudContactoController {
                     ApiResponse.success(response, "Solicitud rechazada correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 }
