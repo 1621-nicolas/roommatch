@@ -1,5 +1,11 @@
 package com.roommatch.service;
 
+import org.springframework.security.access.AccessDeniedException;
+
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.SolicitudContactoRequest;
 import com.roommatch.dto.SolicitudContactoResponse;
 import com.roommatch.model.ContactoRoomie;
@@ -50,21 +56,21 @@ public class SolicitudContactoService {
                 idUsuarioEmisor,
                 idUsuarioReceptor
         )) {
-            throw new IllegalArgumentException("Ya enviaste una solicitud a este usuario");
+            throw new ConflictException("Ya enviaste una solicitud a este usuario");
         }
 
         if (solicitudRepository.existsByUsuarioEmisorIdUsuarioAndUsuarioReceptorIdUsuario(
                 idUsuarioReceptor,
                 idUsuarioEmisor
         )) {
-            throw new IllegalArgumentException("Ya existe una solicitud entre ambos usuarios");
+            throw new ConflictException("Ya existe una solicitud entre ambos usuarios");
         }
 
         Usuario emisor = usuarioRepository.findById(idUsuarioEmisor)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario emisor no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario emisor no encontrado"));
 
         Usuario receptor = usuarioRepository.findById(idUsuarioReceptor)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario receptor no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario receptor no encontrado"));
 
         if (!receptor.getEstado().equalsIgnoreCase("activo")) {
             throw new IllegalArgumentException("No puedes enviar solicitud a un usuario inactivo");
@@ -112,14 +118,14 @@ public class SolicitudContactoService {
             Integer idSolicitud
     ) {
         SolicitudContacto solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
 
         if (!solicitud.getUsuarioReceptor().getIdUsuario().equals(idUsuarioReceptor)) {
-            throw new IllegalArgumentException("No tienes permiso para aceptar esta solicitud");
+            throw new AccessDeniedException("No tienes permiso para aceptar esta solicitud");
         }
 
         if (!solicitud.getEstado().equalsIgnoreCase("pendiente")) {
-            throw new IllegalArgumentException("Solo se pueden aceptar solicitudes pendientes");
+            throw new ConflictException("Solo se pueden aceptar solicitudes pendientes");
         }
 
         solicitud.setEstado("aceptada");
@@ -128,7 +134,7 @@ public class SolicitudContactoService {
         SolicitudContacto solicitudActualizada = solicitudRepository.save(solicitud);
 
         if (contactoRoomieRepository.existsBySolicitudIdSolicitud(idSolicitud)) {
-            throw new IllegalArgumentException("El contacto ya fue desbloqueado anteriormente");
+            throw new ConflictException("El contacto ya fue desbloqueado anteriormente");
         }
 
         ContactoRoomie contactoRoomie = new ContactoRoomie();
@@ -159,14 +165,14 @@ public class SolicitudContactoService {
             Integer idSolicitud
     ) {
         SolicitudContacto solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
 
         if (!solicitud.getUsuarioReceptor().getIdUsuario().equals(idUsuarioReceptor)) {
-            throw new IllegalArgumentException("No tienes permiso para rechazar esta solicitud");
+            throw new AccessDeniedException("No tienes permiso para rechazar esta solicitud");
         }
 
         if (!solicitud.getEstado().equalsIgnoreCase("pendiente")) {
-            throw new IllegalArgumentException("Solo se pueden rechazar solicitudes pendientes");
+            throw new ConflictException("Solo se pueden rechazar solicitudes pendientes");
         }
 
         solicitud.setEstado("rechazada");

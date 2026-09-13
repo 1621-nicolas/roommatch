@@ -1,5 +1,7 @@
 package com.roommatch.controller;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+
 import com.roommatch.dto.ApiResponse;
 import com.roommatch.dto.PublicacionRoomieRequest;
 import com.roommatch.dto.PublicacionRoomieResponse;
@@ -629,7 +631,7 @@ public ResponseEntity<
 
         ) {
 
-            throw new IllegalArgumentException(
+            throw new AuthenticationCredentialsNotFoundException(
 
                     "Usuario no autenticado"
 

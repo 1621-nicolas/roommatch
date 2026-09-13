@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.ImagenHabitacionRequest;
 import com.roommatch.dto.ImagenHabitacionResponse;
 
@@ -83,7 +87,7 @@ public class ImagenHabitacionService {
 
         if (cantidadImagenes >= 5) {
 
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Solo puedes registrar hasta 5 imágenes por habitación"
             );
         }
@@ -212,7 +216,7 @@ public class ImagenHabitacionService {
                         )
         ) {
 
-            throw new IllegalArgumentException(
+            throw new ResourceNotFoundException(
                     "Habitación no encontrada"
             );
         }
@@ -265,7 +269,7 @@ public class ImagenHabitacionService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Imagen no encontrada o no te pertenece"
                                         )
                         );
@@ -343,7 +347,7 @@ public class ImagenHabitacionService {
                         .orElseThrow(
                                 () ->
 
-                                        new IllegalArgumentException(
+                                        new ResourceNotFoundException(
                                                 "Imagen no encontrada o no te pertenece"
                                         )
                         );
@@ -434,7 +438,7 @@ public class ImagenHabitacionService {
                 .orElseThrow(
                         () ->
 
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "No tienes perfil de propietario"
                                 )
                 );
@@ -465,7 +469,7 @@ public class ImagenHabitacionService {
                 .orElseThrow(
                         () ->
 
-                                new IllegalArgumentException(
+                                new ResourceNotFoundException(
                                         "Habitación no encontrada o no te pertenece"
                                 )
                 );

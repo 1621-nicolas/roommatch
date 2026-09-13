@@ -69,7 +69,7 @@ como:
 application-local.properties
 ```
 
-Luego configura tus credenciales locales de SQL Server y una clave JWT de al menos 32 caracteres.
+Luego configura tus credenciales locales de SQL Server. En el perfil `development`, dejar `jwt.secret` vacío genera una clave temporal que cambia al reiniciar. Para conservar sesiones locales puedes definir una clave aleatoria propia de al menos 32 bytes.
 
 `application-local.properties` está ignorado por Git.
 
@@ -84,17 +84,18 @@ roommatch-api/roommatch-api
 Windows PowerShell:
 
 ```powershell
-.\mvnw spring-boot:run
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=development"
 ```
 
 Linux/macOS:
 
 ```bash
-chmod +x mvnw
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=development
 ```
 
-Por defecto la API se inicia en:
+Sin un perfil explícito se utiliza `production`: requiere `JWT_SECRET`, `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`; la URL SQL debe incluir `encrypt=true;trustServerCertificate=false`. Swagger queda deshabilitado. No se importa el archivo local en producción. Los tokens nuevos usan identidad numérica, issuer/audience y vencen por defecto en dos horas; las sesiones anteriores deben iniciar sesión de nuevo.
+
+En desarrollo la API se inicia en:
 
 ```text
 http://localhost:8081

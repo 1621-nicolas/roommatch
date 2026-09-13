@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import org.springframework.security.access.AccessDeniedException;
+
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.ReporteHabitacionResponse;
 import com.roommatch.dto.ReporteRequest;
 import com.roommatch.dto.ReporteUsuarioResponse;
@@ -47,10 +51,10 @@ public class ReporteService {
         }
 
         Usuario reportante = usuarioRepository.findById(idUsuarioReportante)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario reportante no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario reportante no encontrado"));
 
         Usuario reportado = usuarioRepository.findById(idUsuarioReportado)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario reportado no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario reportado no encontrado"));
 
         ReporteUsuario reporte = new ReporteUsuario();
         reporte.setUsuarioReportante(reportante);
@@ -71,10 +75,10 @@ public class ReporteService {
             ReporteRequest request
     ) {
         Usuario reportante = usuarioRepository.findById(idUsuarioReportante)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario reportante no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario reportante no encontrado"));
 
         Habitacion habitacion = habitacionRepository.findById(idHabitacion)
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
 
         Integer idUsuarioPropietario = habitacion.getPropietario().getUsuario().getIdUsuario();
 
@@ -128,7 +132,7 @@ public class ReporteService {
         validarEstadoRevision(nuevoEstado);
 
         ReporteUsuario reporte = reporteUsuarioRepository.findById(idReporte)
-                .orElseThrow(() -> new IllegalArgumentException("Reporte no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporte no encontrado"));
 
         reporte.setEstado(nuevoEstado.toLowerCase());
         reporte.setFechaRevision(LocalDateTime.now());
@@ -148,7 +152,7 @@ public class ReporteService {
         validarEstadoRevision(nuevoEstado);
 
         ReporteHabitacion reporte = reporteHabitacionRepository.findById(idReporte)
-                .orElseThrow(() -> new IllegalArgumentException("Reporte de habitación no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporte de habitación no encontrado"));
 
         reporte.setEstado(nuevoEstado.toLowerCase());
         reporte.setFechaRevision(LocalDateTime.now());
@@ -166,7 +170,7 @@ public class ReporteService {
         validarAdmin(idAdmin);
 
         ReporteUsuario reporte = reporteUsuarioRepository.findById(idReporte)
-                .orElseThrow(() -> new IllegalArgumentException("Reporte no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporte no encontrado"));
 
         Usuario usuarioReportado = reporte.getUsuarioReportado();
 
@@ -197,7 +201,7 @@ public class ReporteService {
         validarAdmin(idAdmin);
 
         ReporteHabitacion reporte = reporteHabitacionRepository.findById(idReporte)
-                .orElseThrow(() -> new IllegalArgumentException("Reporte de habitación no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporte de habitación no encontrado"));
 
         Habitacion habitacion = reporte.getHabitacion();
 
@@ -225,11 +229,11 @@ public class ReporteService {
 
     private void validarAdmin(Integer idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         if (usuario.getRol() == null ||
                 !usuario.getRol().getNombreRol().equalsIgnoreCase("ADMIN")) {
-            throw new IllegalArgumentException("No tienes permisos de administrador");
+            throw new AccessDeniedException("No tienes permisos de administrador");
         }
     }
 

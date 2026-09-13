@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.PerfilConvivenciaRequest;
 import com.roommatch.dto.PerfilConvivenciaResponse;
 import com.roommatch.model.PerfilConvivencia;
@@ -32,11 +36,11 @@ public class PerfilConvivenciaService {
     public PerfilConvivenciaResponse crearPerfil(Integer idUsuario, PerfilConvivenciaRequest request) {
 
         if (perfilRepository.existsByUsuarioIdUsuario(idUsuario)) {
-            throw new IllegalArgumentException("El usuario ya tiene un perfil de convivencia registrado");
+            throw new ConflictException("El usuario ya tiene un perfil de convivencia registrado");
         }
 
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         validarPresupuesto(request);
 
@@ -53,7 +57,7 @@ public class PerfilConvivenciaService {
     public PerfilConvivenciaResponse obtenerMiPerfil(Integer idUsuario) {
 
         PerfilConvivencia perfil = perfilRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes un perfil de convivencia registrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes un perfil de convivencia registrado"));
 
         return PerfilConvivenciaResponse.fromEntity(perfil);
     }
@@ -62,7 +66,7 @@ public class PerfilConvivenciaService {
     public PerfilConvivenciaResponse actualizarMiPerfil(Integer idUsuario, PerfilConvivenciaRequest request) {
 
         PerfilConvivencia perfil = perfilRepository.findByUsuarioIdUsuario(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes un perfil de convivencia registrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes un perfil de convivencia registrado"));
 
         validarPresupuesto(request);
 

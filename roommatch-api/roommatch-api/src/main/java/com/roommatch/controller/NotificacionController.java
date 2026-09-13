@@ -62,7 +62,7 @@ public class NotificacionController {
             Authentication authentication,
             @PathVariable Integer idNotificacion
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             NotificacionResponse response = notificacionService.marcarComoLeida(
@@ -74,11 +74,7 @@ public class NotificacionController {
                     ApiResponse.success(response, "Notificación marcada como leída")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/leer-todas")
@@ -93,6 +89,6 @@ public class NotificacionController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(cantidadActualizada, "Todas las notificaciones fueron marcadas como leídas")
-        );  
+        );
     }
 }

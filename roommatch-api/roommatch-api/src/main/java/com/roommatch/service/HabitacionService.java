@@ -1,5 +1,11 @@
 package com.roommatch.service;
 
+import org.springframework.security.access.AccessDeniedException;
+
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.HabitacionRequest;
 import com.roommatch.dto.HabitacionResponse;
 import com.roommatch.model.Habitacion;
@@ -48,7 +54,7 @@ public class HabitacionService {
         Objects.requireNonNull(request, "request");
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new AccessDeniedException(
                         "Primero debes convertirte en propietario"
                 ));
 
@@ -62,7 +68,7 @@ public class HabitacionService {
                         propietarioId,
                         ApiConstants.ESTADO_ACTIVO
                 )
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ConflictException(
                         "No tienes una suscripción activa"
                 ));
 
@@ -78,7 +84,7 @@ public class HabitacionService {
         );
 
         if (habitacionesActivas >= limitePlan) {
-            throw new IllegalArgumentException(
+            throw new ConflictException(
                     "Tu plan actual solo permite publicar " + limitePlan + " habitación(es)"
             );
         }
@@ -86,7 +92,7 @@ public class HabitacionService {
         boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
 
         if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     "Tu plan actual no permite destacar habitaciones"
             );
         }
@@ -137,12 +143,12 @@ public class HabitacionService {
         Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
 
         Habitacion habitacion = habitacionRepository.findById(habitacionId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Habitación no encontrada"
                 ));
 
         if (!ApiConstants.ESTADO_ACTIVA.equalsIgnoreCase(habitacion.getEstado())) {
-            throw new IllegalArgumentException("La habitación no está disponible");
+            throw new ResourceNotFoundException("La habitación no está disponible");
         }
 
         return HabitacionResponse.fromEntity(habitacion);
@@ -157,7 +163,7 @@ public class HabitacionService {
         Objects.requireNonNull(pageable, "pageable");
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "No tienes perfil de propietario"
                 ));
 
@@ -185,7 +191,7 @@ public class HabitacionService {
         Objects.requireNonNull(request, "request");
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "No tienes perfil de propietario"
                 ));
 
@@ -199,7 +205,7 @@ public class HabitacionService {
                         habitacionId,
                         propietarioId
                 )
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Habitación no encontrada o no te pertenece"
                 ));
 
@@ -208,14 +214,14 @@ public class HabitacionService {
                         propietarioId,
                         ApiConstants.ESTADO_ACTIVO
                 )
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ConflictException(
                         "No tienes una suscripción activa"
                 ));
 
         boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
 
         if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     "Tu plan actual no permite destacar habitaciones"
             );
         }
@@ -265,7 +271,7 @@ public class HabitacionService {
         Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "No tienes perfil de propietario"
                 ));
 

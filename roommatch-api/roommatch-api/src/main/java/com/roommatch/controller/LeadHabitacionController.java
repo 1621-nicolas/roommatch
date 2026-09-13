@@ -31,7 +31,7 @@ public class LeadHabitacionController {
             @PathVariable Integer idHabitacion,
             @Valid @RequestBody LeadHabitacionRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             LeadHabitacionResponse response = leadService.crearLead(
@@ -44,11 +44,7 @@ public class LeadHabitacionController {
                     ApiResponse.success(response, "Interés enviado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping("/mis")
@@ -73,7 +69,7 @@ public class LeadHabitacionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             Pageable pageable = PageRequest.of(page, size);
@@ -88,11 +84,7 @@ public class LeadHabitacionController {
                     ApiResponse.success(leads, "Leads del propietario obtenidos correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @PutMapping("/{idLead}/estado")
@@ -101,7 +93,7 @@ public class LeadHabitacionController {
             @PathVariable Integer idLead,
             @RequestParam String estado
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             LeadHabitacionResponse response = leadService.cambiarEstadoLead(
@@ -114,10 +106,6 @@ public class LeadHabitacionController {
                     ApiResponse.success(response, "Estado del lead actualizado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 }

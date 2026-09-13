@@ -28,7 +28,7 @@ public class MatchController {
     public ResponseEntity<ApiResponse<List<MatchResponse>>> calcularMatches(
             Authentication authentication
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             List<MatchResponse> matches = matchService.calcularMatches(
@@ -39,11 +39,7 @@ public class MatchController {
                     ApiResponse.success(matches, "Matches calculados correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping
