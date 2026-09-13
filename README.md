@@ -35,17 +35,11 @@ roommatch/
 
 ## 1. Base de datos
 
-El archivo `Base de datos_Roommatch.sql` recrea `roommatch_db` desde cero.
+Crea una base vacía `roommatch_db` y configura la conexión del backend. Flyway ejecuta las migraciones versionadas de `roommatch-api/roommatch-api/src/main/resources/db/migration`, incluidos los roles y el plan `Gratis`.
 
-> ADVERTENCIA: el script elimina `roommatch_db` si ya existe. No debe ejecutarse sobre una base con información que necesites conservar.
+Para una base existente sigue el [procedimiento de baseline y actualización](database/README.md). El baseline es explícito: arrancar contra una base antigua sin historial Flyway falla, sin borrar sus datos.
 
-Para una instalación nueva:
-
-1. Ejecuta `Base de datos_Roommatch.sql` en SQL Server.
-2. Ejecuta los scripts de `database/migrations/` en orden.
-3. Ejecuta `database/seed_required_data.sql`.
-
-El seed agrega los roles `USUARIO`, `PROPIETARIO`, `ADMIN` y el plan inicial `Gratis` que necesita el backend.
+`Base de datos_Roommatch.sql` se conserva como bootstrap histórico **destructivo y exclusivo de desarrollo**. No es un mecanismo de actualización.
 
 ## 2. Configuración local del backend
 
@@ -139,7 +133,9 @@ Backend:
 
 ```powershell
 cd roommatch-api\roommatch-api
-.\mvnw clean test
+.\mvnw clean verify
+# Con Docker, incluye migraciones e integración sobre SQL Server 2022:
+.\mvnw clean verify -Psqlserver
 ```
 
 Frontend:
@@ -148,6 +144,7 @@ Frontend:
 cd roommatch-web
 npm ci
 npm run build
+npm test -- --watch=false
 ```
 
 El repositorio incluye GitHub Actions para validar ambas partes automáticamente.
