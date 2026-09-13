@@ -1,11 +1,13 @@
 package com.roommatch.config;
 
 import com.roommatch.security.JwtAuthenticationFilter;
+import com.roommatch.security.SecurityErrorWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,17 +22,24 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final String allowedOriginsProperty;
+    private final SecurityErrorWriter errors;
+    private final boolean docsEnabled;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            @Value("${app.cors.allowed-origins:http://localhost:4200}") String allowedOriginsProperty
+            @Value("${app.cors.allowed-origins:http://localhost:4200}") String allowedOriginsProperty,
+            @Value("${springdoc.api-docs.enabled:false}") boolean docsEnabled,
+            SecurityErrorWriter errors
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.allowedOriginsProperty = allowedOriginsProperty;
+        this.errors = errors;
+        this.docsEnabled = docsEnabled;
     }
 
     @Bean
@@ -43,6 +52,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
+                .requestCache(cache -> cache.disable())
+                .exceptionHandling(handler -> handler
+                        .authenticationEntryPoint((req, res, ex) -> errors.write(res, 401, "Inicia sesión para continuar"))
+                        .accessDeniedHandler((req, res, ex) -> errors.write(res, 403, "No tienes permiso para esta acción")))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -56,7 +69,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/webjars/**"
-                        ).permitAll()
+                        ).access((authentication, context) ->
+                                new org.springframework.security.authorization.AuthorizationDecision(docsEnabled))
 
                         // Administración: defensa adicional además de las validaciones de servicio.
                         .requestMatchers("/api/admin/**", "/api/reportes/admin/**").hasRole("ADMIN")
@@ -106,7 +120,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(
                 List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With")
         );
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
