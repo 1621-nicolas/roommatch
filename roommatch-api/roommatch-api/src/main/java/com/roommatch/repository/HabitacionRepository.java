@@ -50,4 +50,6 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, Integer>
             Pageable pageable
     );
     long countByPropietarioIdPropietarioAndDestacadaTrueAndEstadoNot(Integer propietario, String estado);
+    @Query("select h.idHabitacion from Habitacion h where h.idHabitacion in :ids and " + PublicRoomQuery.VISIBLE)
+    java.util.List<Integer> findPublicIds(@Param("ids") java.util.Collection<Integer> ids, @Param("ahora") java.time.LocalDateTime ahora);
 }

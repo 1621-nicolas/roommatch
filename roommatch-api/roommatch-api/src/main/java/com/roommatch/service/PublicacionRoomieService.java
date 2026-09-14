@@ -1,1537 +1,282 @@
 package com.roommatch.service;
 
+import com.roommatch.dto.*;
+import com.roommatch.exception.ConflictException;
 import com.roommatch.exception.ResourceNotFoundException;
-
-import com.roommatch.dto.CompatibilidadCalculada;
-import com.roommatch.dto.PublicacionRoomieRequest;
-import com.roommatch.dto.PublicacionRoomieResponse;
-import com.roommatch.repository.ImagenPublicacionRepository;
-import com.roommatch.model.Habitacion;
-import com.roommatch.model.PublicacionRoomie;
-import com.roommatch.model.Usuario;
-
-import com.roommatch.repository.HabitacionRepository;
-import com.roommatch.repository.ImagenPublicacionRepository;
-import com.roommatch.repository.PublicacionRoomieRepository;
-import com.roommatch.repository.UsuarioRepository;
-
+import com.roommatch.model.*;
+import com.roommatch.repository.*;
 import com.roommatch.util.ApiConstants;
-
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-
-import java.util.Optional;
-import java.util.Set;
-
-
 @Service
+@Transactional(readOnly = true)
 public class PublicacionRoomieService {
+    private final PublicacionRoomieRepository publicaciones;
+    private final UsuarioRepository usuarios;
+    private final HabitacionRepository habitaciones;
+    private final MatchService matches;
+    private final PlanPolicy planPolicy;
+    private final Clock clock;
 
-
-    /*
-     * =========================================================
-     * DEPENDENCIAS
-     * =========================================================
-     */
-
-    private final PublicacionRoomieRepository
-            publicacionRepository;
-
-
-    private final UsuarioRepository
-            usuarioRepository;
-
-
-    private final HabitacionRepository
-            habitacionRepository;
-
-
-    private final MatchService
-            matchService;
-
-        private final ImagenPublicacionRepository imagenPublicacionRepository;
-
-
-    /*
-     * =========================================================
-     * CONSTRUCTOR
-     * =========================================================
-     */
-
-    public PublicacionRoomieService(
-        PublicacionRoomieRepository publicacionRepository,
-        UsuarioRepository usuarioRepository,
-        MatchService matchService,
-        HabitacionRepository habitacionRepository,
-        ImagenPublicacionRepository imagenPublicacionRepository
-) {
-
-    this.publicacionRepository =
-            publicacionRepository;
-
-    this.usuarioRepository =
-            usuarioRepository;
-
-    this.matchService =
-            matchService;
-
-    this.habitacionRepository =
-            habitacionRepository;
-
-    this.imagenPublicacionRepository =
-            imagenPublicacionRepository;
-}
-
-
-    /*
-     * =========================================================
-     * CREAR PUBLICACIÓN
-     * =========================================================
-     */
+    public PublicacionRoomieService(PublicacionRoomieRepository publicaciones, UsuarioRepository usuarios,
+            MatchService matches, HabitacionRepository habitaciones, PlanPolicy planPolicy, Clock clock) {
+        this.publicaciones = publicaciones; this.usuarios = usuarios; this.matches = matches;
+        this.habitaciones = habitaciones; this.planPolicy = planPolicy; this.clock = clock;
+    }
 
     @Transactional
-    public PublicacionRoomieResponse crearPublicacion(
-
-            Integer idUsuario,
-
-            PublicacionRoomieRequest request
-
-    ) {
-
-        /*
-         * =====================================================
-         * BUSCAR USUARIO
-         * =====================================================
-         */
-
-        Usuario usuario =
-
-                usuarioRepository
-                        .findById(idUsuario)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Usuario no encontrado"
-                                        )
-                        );
-
-
-        /*
-         * =====================================================
-         * VALIDACIONES
-         * =====================================================
-         */
-
-        validarTipoPublicacion(
-
-                request.getTipoPublicacion()
-
-        );
-
-
-        validarPresupuesto(
-
-                request
-
-        );
-
-
-        validarVinculacionVivienda(
-
-                request
-
-        );
-
-
-        /*
-         * =====================================================
-         * CREAR PUBLICACIÓN
-         * =====================================================
-         */
-
-        PublicacionRoomie publicacion =
-
-                new PublicacionRoomie();
-
-
-        publicacion.setUsuario(
-
-                usuario
-
-        );
-
-
-        copiarDatos(
-
-                request,
-
-                publicacion
-
-        );
-
-
-        aplicarVinculacionVivienda(
-
-                request,
-
-                publicacion
-
-        );
-
-
-        publicacion.setEstado(
-
-                ApiConstants.ESTADO_ACTIVA
-
-        );
-
-
-        /*
-         * =====================================================
-         * GUARDAR
-         * =====================================================
-         */
-
-        PublicacionRoomie guardada =
-
-                publicacionRepository
-                        .save(publicacion);
-
-
-        /*
-         * =====================================================
-         * RESPONSE
-         * =====================================================
-         */
-
-        return crearResponse(
-
-                guardada,
-
-                idUsuario
-
-        );
-
+    public PublicacionRoomieResponse crearPublicacion(Integer usuarioId, PublicacionRoomieRequest request) {
+        Usuario usuario = usuarios.findById(usuarioId).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (!"activo".equals(usuario.getEstado())) throw new AccessDeniedException("Tu cuenta no está activa");
+        validar(request);
+        PublicacionRoomie publicacion = new PublicacionRoomie();
+        publicacion.setUsuario(usuario);
+        copiarDatos(request, publicacion);
+        aplicarVinculacionVivienda(request, publicacion);
+        return response(publicaciones.saveAndFlush(publicacion), usuarioId);
     }
 
-
-    /*
-     * =========================================================
-     * LISTAR PUBLICACIONES
-     * =========================================================
-     */
-
-    @Transactional(readOnly = true)
-    public Page<PublicacionRoomieResponse>
-    listarPublicaciones(
-
-            Integer idUsuarioActual,
-
-            String tipo,
-
-            String distrito,
-
-            BigDecimal presupuestoMin,
-
-            BigDecimal presupuestoMax,
-
-            Pageable pageable
-
-    ) {
-
-        /*
-         * =====================================================
-         * NORMALIZAR TIPO
-         * =====================================================
-         */
-
-        if (
-
-                tipo != null
-
-                &&
-
-                !tipo.trim().isEmpty()
-
-        ) {
-
-            validarTipoPublicacion(
-
-                    tipo
-
-            );
-
-
-            tipo =
-
-                    tipo
-                            .trim()
-                            .toLowerCase();
-
-        } else {
-
-            tipo = null;
-
-        }
-
-
-        /*
-         * =====================================================
-         * NORMALIZAR DISTRITO
-         * =====================================================
-         */
-
-        if (
-
-                distrito != null
-
-                &&
-
-                distrito.trim().isEmpty()
-
-        ) {
-
-            distrito = null;
-
-        }
-
-
-        /*
-         * =====================================================
-         * VALIDAR RANGO DE PRESUPUESTO
-         * =====================================================
-         */
-
-        if (
-
-                presupuestoMin != null
-
-                &&
-
-                presupuestoMax != null
-
-                &&
-
-                presupuestoMax
-                        .compareTo(
-                                presupuestoMin
-                        ) < 0
-
-        ) {
-
-            throw new IllegalArgumentException(
-
-                    "El presupuesto máximo no puede ser menor que el presupuesto mínimo"
-
-            );
-
-        }
-
-
-        /*
-         * =====================================================
-         * CONSULTAR PUBLICACIONES
-         * =====================================================
-         */
-
-        return publicacionRepository
-
-                .buscarPublicaciones(
-
-                        tipo,
-
-                        distrito,
-
-                        presupuestoMin,
-
-                        presupuestoMax,
-
-                        pageable
-
-                )
-
-                .map(
-
-                        publicacion ->
-
-                                crearResponse(
-
-                                        publicacion,
-
-                                        idUsuarioActual
-
-                                )
-
-                );
-
+    public Page<PublicacionRoomieResponse> listarPublicaciones(Integer actual, String tipo, String distrito,
+            BigDecimal minimo, BigDecimal maximo, Pageable pageable) {
+        validarPagina(pageable);
+        tipo = normalizarTexto(tipo);
+        if (tipo != null) validarTipoPublicacion(tipo);
+        if (minimo != null && maximo != null && maximo.compareTo(minimo) < 0) throw new IllegalArgumentException("El presupuesto máximo no puede ser menor que el mínimo");
+        return responses(publicaciones.buscarPublicaciones(tipo, texto(distrito), minimo, maximo, pageable), actual);
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER PUBLICACIÓN
-     * =========================================================
-     */
-
-    @Transactional(readOnly = true)
-    public PublicacionRoomieResponse obtenerPublicacion(
-
-            Integer idUsuarioActual,
-
-            Integer idPublicacion
-
-    ) {
-
-        /*
-         * =====================================================
-         * BUSCAR PUBLICACIÓN
-         * =====================================================
-         */
-
-        PublicacionRoomie publicacion =
-
-                publicacionRepository
-                        .findById(idPublicacion)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Publicación no encontrada"
-                                        )
-                        );
-
-
-        /*
-         * =====================================================
-         * VALIDAR ESTADO
-         * =====================================================
-         */
-
-        if (
-
-                publicacion.getEstado() == null
-
-                ||
-
-                !publicacion
-                        .getEstado()
-                        .equalsIgnoreCase(
-                                ApiConstants.ESTADO_ACTIVA
-                        )
-
-        ) {
-
-            throw new ResourceNotFoundException(
-
-                    "La publicación no está disponible"
-
-            );
-
-        }
-
-
-        /*
-         * =====================================================
-         * RESPONSE
-         * =====================================================
-         */
-
-        return crearResponse(
-
-                publicacion,
-
-                idUsuarioActual
-
-        );
-
+    public PublicacionRoomieResponse obtenerPublicacion(Integer actual, Integer id) {
+        PublicacionRoomie publicacion = publicaciones.findById(id).orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada"));
+        if (!"activa".equals(publicacion.getEstado()) || !"activo".equals(publicacion.getUsuario().getEstado()))
+            throw new ResourceNotFoundException("La publicación no está disponible");
+        return response(publicacion, actual);
     }
 
-
-    /*
-     * =========================================================
-     * LISTAR MIS PUBLICACIONES
-     * =========================================================
-     */
-
-    @Transactional(readOnly = true)
-    public Page<PublicacionRoomieResponse>
-    listarMisPublicaciones(
-
-            Integer idUsuario,
-
-            Pageable pageable
-
-    ) {
-
-        return publicacionRepository
-
-                .findByUsuarioIdUsuarioOrderByFechaPublicacionDesc(
-
-                        idUsuario,
-
-                        pageable
-
-                )
-
-                .map(
-
-                        publicacion ->
-
-                                crearResponse(
-
-                                        publicacion,
-
-                                        idUsuario
-
-                                )
-
-                );
-
+    public Page<PublicacionRoomieResponse> listarMisPublicaciones(Integer usuario, Pageable pageable) {
+        validarPagina(pageable);
+        return responses(publicaciones.findByUsuarioIdUsuarioAndEstadoNotOrderByFechaPublicacionDesc(usuario, "eliminada", pageable), usuario);
     }
-
-
-    /*
-     * =========================================================
-     * ACTUALIZAR PUBLICACIÓN
-     * =========================================================
-     */
 
     @Transactional
-    public PublicacionRoomieResponse actualizarPublicacion(
-
-            Integer idUsuario,
-
-            Integer idPublicacion,
-
-            PublicacionRoomieRequest request
-
-    ) {
-
-        /*
-         * =====================================================
-         * VALIDACIONES
-         * =====================================================
-         */
-
-        validarTipoPublicacion(
-
-                request.getTipoPublicacion()
-
-        );
-
-
-        validarPresupuesto(
-
-                request
-
-        );
-
-
-        validarVinculacionVivienda(
-
-                request
-
-        );
-
-
-        /*
-         * =====================================================
-         * BUSCAR PUBLICACIÓN DEL USUARIO
-         * =====================================================
-         */
-
-        PublicacionRoomie publicacion =
-
-                publicacionRepository
-
-                        .findByIdPublicacionAndUsuarioIdUsuario(
-
-                                idPublicacion,
-
-                                idUsuario
-
-                        )
-
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-
-                                                "Publicación no encontrada o no te pertenece"
-
-                                        )
-                        );
-
-
-        /*
-         * =====================================================
-         * ACTUALIZAR DATOS
-         * =====================================================
-         */
-
-        copiarDatos(
-
-                request,
-
-                publicacion
-
-        );
-
-
-        aplicarVinculacionVivienda(
-
-                request,
-
-                publicacion
-
-        );
-
-
-        /*
-         * =====================================================
-         * GUARDAR
-         * =====================================================
-         */
-
-        PublicacionRoomie actualizada =
-
-                publicacionRepository
-                        .save(publicacion);
-
-
-        return crearResponse(
-
-                actualizada,
-
-                idUsuario
-
-        );
-
+    public PublicacionRoomieResponse actualizarPublicacion(Integer usuario, Integer id, PublicacionRoomieRequest request) {
+        validar(request);
+        PublicacionRoomie publicacion = propia(usuario, id);
+        copiarDatos(request, publicacion);
+        aplicarVinculacionVivienda(request, publicacion);
+        return response(publicaciones.saveAndFlush(publicacion), usuario);
     }
 
-
-    /*
-     * =========================================================
-     * PAUSAR PUBLICACIÓN
-     * =========================================================
-     */
+    @Transactional
+    public PublicacionRoomieResponse pausarPublicacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "pausada"); }
+    @Transactional
+    public PublicacionRoomieResponse activarPublicacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "activa"); }
+    @Transactional
+    public PublicacionRoomieResponse cerrarPublicacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "cerrada"); }
 
     @Transactional
-    public PublicacionRoomieResponse pausarPublicacion(
-
-            Integer idUsuario,
-
-            Integer idPublicacion
-
-    ) {
-
-        PublicacionRoomie publicacion =
-
-                obtenerPublicacionPropia(
-
-                        idUsuario,
-
-                        idPublicacion
-
-                );
-
-
-        publicacion.setEstado(
-
-                ApiConstants.ESTADO_PAUSADA
-
-        );
-
-
-        PublicacionRoomie actualizada =
-
-                publicacionRepository
-                        .save(publicacion);
-
-
-        return crearResponse(
-
-                actualizada,
-
-                idUsuario
-
-        );
-
-    }
-
-
-    /*
-     * =========================================================
-     * ACTIVAR PUBLICACIÓN
-     * =========================================================
-     */
-
-    @Transactional
-    public PublicacionRoomieResponse activarPublicacion(
-
-            Integer idUsuario,
-
-            Integer idPublicacion
-
-    ) {
-
-        PublicacionRoomie publicacion =
-
-                obtenerPublicacionPropia(
-
-                        idUsuario,
-
-                        idPublicacion
-
-                );
-
-
-        publicacion.setEstado(
-
-                ApiConstants.ESTADO_ACTIVA
-
-        );
-
-
-        PublicacionRoomie actualizada =
-
-                publicacionRepository
-                        .save(publicacion);
-
-
-        return crearResponse(
-
-                actualizada,
-
-                idUsuario
-
-        );
-
-    }
-
-
-    /*
-     * =========================================================
-     * CERRAR PUBLICACIÓN
-     * =========================================================
-     */
-
-    @Transactional
-    public PublicacionRoomieResponse cerrarPublicacion(
-
-            Integer idUsuario,
-
-            Integer idPublicacion
-
-    ) {
-
-        PublicacionRoomie publicacion =
-
-                obtenerPublicacionPropia(
-
-                        idUsuario,
-
-                        idPublicacion
-
-                );
-
-
-        publicacion.setEstado(
-
-                ApiConstants.ESTADO_CERRADA
-
-        );
-
-
-        PublicacionRoomie actualizada =
-
-                publicacionRepository
-                        .save(publicacion);
-
-
-        return crearResponse(
-
-                actualizada,
-
-                idUsuario
-
-        );
-
-    }
-
-
-    /*
-     * =========================================================
-     * ELIMINAR PUBLICACIÓN LÓGICAMENTE
-     * =========================================================
-     */
-
-    @Transactional
-public void eliminarPublicacion(
-        Integer idUsuario,
-        Integer idPublicacion
-) {
-
-    PublicacionRoomie publicacion =
-            publicacionRepository
-                    .findByIdPublicacionAndUsuarioIdUsuario(
-                            idPublicacion,
-                            idUsuario
-                    )
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "La publicación no existe o no te pertenece"
-                            )
-                    );
-
-
-    /*
-     * =========================================================
-     * ELIMINAR IMÁGENES RELACIONADAS
-     * =========================================================
-     */
-
-    imagenPublicacionRepository
-            .deleteByPublicacionIdPublicacion(
-                    publicacion.getIdPublicacion()
-            );
-
-
-    /*
-     * =========================================================
-     * ELIMINAR PUBLICACIÓN
-     * =========================================================
-     */
-
-    publicacionRepository.delete(
-            publicacion
-    );
-}
-
-    /*
-     * =========================================================
-     * CREAR RESPONSE CON COMPATIBILIDAD
-     * =========================================================
-     */
-
-    private PublicacionRoomieResponse crearResponse(
-
-            PublicacionRoomie publicacion,
-
-            Integer idUsuarioActual
-
-    ) {
-
-        /*
-         * =====================================================
-         * OBTENER AUTOR
-         * =====================================================
-         */
-
-        Usuario autor =
-
-                publicacion.getUsuario();
-
-
-        if (
-
-                autor == null
-
-        ) {
-
-            throw new IllegalStateException(
-
-                    "La publicación no tiene un usuario asociado"
-
-            );
-
+    public void eliminarPublicacion(Integer usuario, Integer id) {
+        PublicacionRoomie publicacion = publicaciones.findByIdPublicacionAndUsuarioIdUsuario(id, usuario)
+                .orElseThrow(() -> new ResourceNotFoundException("La publicación no existe o no te pertenece"));
+        if (!"eliminada".equals(publicacion.getEstado())) {
+            publicacion.setEstado("eliminada");
+            publicaciones.saveAndFlush(publicacion);
         }
+    }
 
+    private PublicacionRoomieResponse cambiarEstado(Integer usuario, Integer id, String estado) {
+        PublicacionRoomie publicacion = propia(usuario, id);
+        if ("activa".equals(estado) && publicacion.getHabitacion() != null && !planPolicy.visible(publicacion.getHabitacion()))
+            throw new ConflictException("La habitación vinculada ya no está disponible. Edita la referencia antes de reactivar.");
+        publicacion.setEstado(estado);
+        return response(publicaciones.saveAndFlush(publicacion), usuario);
+    }
 
-        Integer idUsuarioAutor =
+    private PublicacionRoomie propia(Integer usuario, Integer id) {
+        PublicacionRoomie publicacion = publicaciones.findByIdPublicacionAndUsuarioIdUsuario(id, usuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada o no te pertenece"));
+        if ("eliminada".equals(publicacion.getEstado())) throw new ResourceNotFoundException("La publicación fue eliminada");
+        if (!"activo".equals(publicacion.getUsuario().getEstado())) throw new AccessDeniedException("Tu cuenta no está activa");
+        return publicacion;
+    }
 
-                autor.getIdUsuario();
+    private Page<PublicacionRoomieResponse> responses(Page<PublicacionRoomie> page, Integer actual) {
+        List<PublicacionRoomie> rows = page.getContent();
+        Map<Integer, CompatibilidadCalculada> compatibility = matches.obtenerCompatibilidades(actual,
+                rows.stream().map(p -> p.getUsuario().getIdUsuario()).toList());
+        Set<Integer> linkedIds = rows.stream().map(PublicacionRoomie::getHabitacion).filter(Objects::nonNull)
+                .map(Habitacion::getIdHabitacion).collect(Collectors.toSet());
+        Set<Integer> visible = linkedIds.isEmpty() ? Set.of() : new HashSet<>(habitaciones.findPublicIds(linkedIds, LocalDateTime.now(clock)));
+        return page.map(publicacion -> {
+            PublicacionRoomieResponse dto = PublicacionRoomieResponse.fromEntity(publicacion,
+                    compatibility.get(publicacion.getUsuario().getIdUsuario()), actual);
+            boolean disponible = publicacion.getHabitacion() != null && visible.contains(publicacion.getHabitacion().getIdHabitacion());
+            dto.setViviendaReferenciaDisponible(disponible);
+            if (publicacion.getHabitacion() != null && !disponible) {
+                dto.setIdHabitacion(null); dto.setHabitacionTitulo(null); dto.setHabitacionDistrito(null);
+                dto.setHabitacionPrecio(null); dto.setNombrePropietarioHabitacion(null);
+            }
+            return dto;
+        });
+    }
 
+    private PublicacionRoomieResponse response(PublicacionRoomie publicacion, Integer actual) {
+        return responses(new PageImpl<>(List.of(publicacion)), actual).getContent().get(0);
+    }
 
-        /*
-         * =====================================================
-         * PUBLICACIÓN PROPIA O SIN USUARIO AUTENTICADO
-         * =====================================================
-         */
-
-        if (
-
-                idUsuarioActual == null
-
-                ||
-
-                idUsuarioActual.equals(
-                        idUsuarioAutor
-                )
-
-        ) {
-
-            return PublicacionRoomieResponse
-
-                    .fromEntity(
-
-                            publicacion,
-
-                            (CompatibilidadCalculada) null,
-
-                            idUsuarioActual
-
-                    );
-
+    private void aplicarVinculacionVivienda(PublicacionRoomieRequest request, PublicacionRoomie publicacion) {
+        String tipo = normalizarTexto(request.getTipoVinculacionVivienda());
+        publicacion.setTipoVinculacionVivienda(tipo);
+        publicacion.setHabitacion(null);
+        publicacion.setViviendaExternaTitulo(null);
+        publicacion.setViviendaExternaDireccion(null);
+        publicacion.setViviendaExternaPrecio(null);
+        if ("roommatch".equals(tipo)) {
+            Habitacion habitacion = habitaciones.findById(request.getIdHabitacion()).orElseThrow(() -> new ResourceNotFoundException("La habitación seleccionada no existe"));
+            // A public reference helps find someone to share; it grants no owner capability.
+            if (!planPolicy.visible(habitacion)) throw new ConflictException("La habitación seleccionada no está disponible");
+            publicacion.setHabitacion(habitacion);
+        } else if ("externa".equals(tipo)) {
+            publicacion.setViviendaExternaTitulo(request.getViviendaExternaTitulo().trim());
+            publicacion.setViviendaExternaDireccion(texto(request.getViviendaExternaDireccion()));
+            publicacion.setViviendaExternaPrecio(request.getViviendaExternaPrecio());
         }
-
-
-        /*
-         * =====================================================
-         * OBTENER COMPATIBILIDAD
-         * =====================================================
-         */
-
-        Optional<CompatibilidadCalculada>
-                compatibilidad =
-
-                matchService
-
-                        .obtenerCompatibilidadEntreUsuarios(
-
-                                idUsuarioActual,
-
-                                idUsuarioAutor
-
-                        );
-
-
-        /*
-         * =====================================================
-         * CONSTRUIR RESPONSE
-         * =====================================================
-         */
-
-        return PublicacionRoomieResponse
-
-                .fromEntity(
-
-                        publicacion,
-
-                        compatibilidad
-                                .orElse(null),
-
-                        idUsuarioActual
-
-                );
-
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER PUBLICACIÓN PROPIA
-     * =========================================================
-     */
-
-    private PublicacionRoomie obtenerPublicacionPropia(
-
-            Integer idUsuario,
-
-            Integer idPublicacion
-
-    ) {
-
-        return publicacionRepository
-
-                .findByIdPublicacionAndUsuarioIdUsuario(
-
-                        idPublicacion,
-
-                        idUsuario
-
-                )
-
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-
-                                        "Publicación no encontrada o no te pertenece"
-
-                                )
-                );
-
+    private void validar(PublicacionRoomieRequest request) {
+        validarTipoPublicacion(request.getTipoPublicacion()); validarPresupuesto(request); validarVinculacionVivienda(request);
     }
-
-
-    /*
-     * =========================================================
-     * COPIAR DATOS GENERALES
-     * =========================================================
-     */
+    private void validarPagina(Pageable page) {
+        if (page.getPageSize() > 100 || page.getPageSize() < 1 || page.getPageNumber() > 10000)
+            throw new IllegalArgumentException("Usa un tamaño de página entre 1 y 100");
+    }
+    private String texto(String valor) { return valor == null || valor.isBlank() ? null : valor.trim(); }
+    private String normalizarTexto(String valor) { return texto(valor) == null ? null : texto(valor).toLowerCase(java.util.Locale.ROOT); }
 
     private void copiarDatos(
-
             PublicacionRoomieRequest request,
-
             PublicacionRoomie publicacion
-
     ) {
-
         publicacion.setTipoPublicacion(
-
                 request
                         .getTipoPublicacion()
                         .trim()
-                        .toLowerCase()
-
+                        .toLowerCase(java.util.Locale.ROOT)
         );
-
-
         publicacion.setTitulo(
-
                 request
                         .getTitulo()
                         .trim()
-
         );
-
-
         publicacion.setDescripcion(
-
                 request
                         .getDescripcion()
                         .trim()
-
         );
-
-
         publicacion.setDistrito(
-
                 request
                         .getDistrito()
                         .trim()
-
         );
-
-
         publicacion.setPresupuestoMin(
-
                 request.getPresupuestoMin()
-
         );
-
-
         publicacion.setPresupuestoMax(
-
                 request.getPresupuestoMax()
-
         );
-
     }
-
-
-    /*
-     * =========================================================
-     * APLICAR VINCULACIÓN DE VIVIENDA
-     * =========================================================
-     */
-
-    private void aplicarVinculacionVivienda(
-
-            PublicacionRoomieRequest request,
-
-            PublicacionRoomie publicacion
-
-    ) {
-
-        String tipoVinculacion =
-
-                normalizarTexto(
-
-                        request
-                                .getTipoVinculacionVivienda()
-
-                );
-
-
-        /*
-         * =====================================================
-         * SIN VIVIENDA VINCULADA
-         * =====================================================
-         */
-
-        if (
-
-                tipoVinculacion == null
-
-        ) {
-
-            limpiarVinculacionVivienda(
-
-                    publicacion
-
-            );
-
-            return;
-
-        }
-
-
-        /*
-         * =====================================================
-         * HABITACIÓN ROOMMATCH
-         * =====================================================
-         */
-
-        if (
-
-                tipoVinculacion
-                        .equals("roommatch")
-
-        ) {
-
-            Habitacion habitacion =
-
-                    habitacionRepository
-
-                            .findById(
-
-                                    request.getIdHabitacion()
-
-                            )
-
-                            .orElseThrow(
-                                    () ->
-                                            new ResourceNotFoundException(
-
-                                                    "La habitación seleccionada no existe"
-
-                                            )
-                            );
-
-
-            if (
-
-                    habitacion.getEstado() == null
-
-                    ||
-
-                    !habitacion
-                            .getEstado()
-                            .equalsIgnoreCase(
-                                    ApiConstants.ESTADO_ACTIVA
-                            )
-
-            ) {
-
-                throw new IllegalArgumentException(
-
-                        "La habitación seleccionada no está disponible"
-
-                );
-
-            }
-
-
-            publicacion.setTipoVinculacionVivienda(
-
-                    "roommatch"
-
-            );
-
-
-            publicacion.setHabitacion(
-
-                    habitacion
-
-            );
-
-
-            /*
-             * LIMPIAR DATOS EXTERNOS
-             */
-
-            publicacion.setViviendaExternaTitulo(
-
-                    null
-
-            );
-
-
-            publicacion.setViviendaExternaDireccion(
-
-                    null
-
-            );
-
-
-            publicacion.setViviendaExternaPrecio(
-
-                    null
-
-            );
-
-
-            return;
-
-        }
-
-
-        /*
-         * =====================================================
-         * VIVIENDA EXTERNA
-         * =====================================================
-         */
-
-        if (
-
-                tipoVinculacion
-                        .equals("externa")
-
-        ) {
-
-            publicacion.setTipoVinculacionVivienda(
-
-                    "externa"
-
-            );
-
-
-            /*
-             * NO UTILIZAR HABITACIÓN ROOMMATCH
-             */
-
-            publicacion.setHabitacion(
-
-                    null
-
-            );
-
-
-            publicacion.setViviendaExternaTitulo(
-
-                    request
-                            .getViviendaExternaTitulo()
-                            .trim()
-
-            );
-
-
-            publicacion.setViviendaExternaDireccion(
-
-                    normalizarTexto(
-
-                            request
-                                    .getViviendaExternaDireccion()
-
-                    )
-
-            );
-
-
-            publicacion.setViviendaExternaPrecio(
-
-                    request
-                            .getViviendaExternaPrecio()
-
-            );
-
-        }
-
-    }
-
-
-    /*
-     * =========================================================
-     * LIMPIAR VINCULACIÓN DE VIVIENDA
-     * =========================================================
-     */
-
-    private void limpiarVinculacionVivienda(
-
-            PublicacionRoomie publicacion
-
-    ) {
-
-        publicacion.setTipoVinculacionVivienda(
-
-                null
-
-        );
-
-
-        publicacion.setHabitacion(
-
-                null
-
-        );
-
-
-        publicacion.setViviendaExternaTitulo(
-
-                null
-
-        );
-
-
-        publicacion.setViviendaExternaDireccion(
-
-                null
-
-        );
-
-
-        publicacion.setViviendaExternaPrecio(
-
-                null
-
-        );
-
-    }
-
-
-    /*
-     * =========================================================
-     * VALIDAR VINCULACIÓN DE VIVIENDA
-     * =========================================================
-     */
 
     private void validarVinculacionVivienda(
-
             PublicacionRoomieRequest request
-
     ) {
-
         String tipoPublicacion =
-
                 request
                         .getTipoPublicacion()
                         .trim()
-                        .toLowerCase();
-
-
+                        .toLowerCase(java.util.Locale.ROOT);
         String tipoVinculacion =
-
                 normalizarTexto(
-
                         request
                                 .getTipoVinculacionVivienda()
-
                 );
-
-
-        /*
-         * =====================================================
-         * SIN VINCULACIÓN
-         * =====================================================
-         */
-
         if (
-
                 tipoVinculacion == null
-
         ) {
-
             return;
-
         }
-
-
-        /*
-         * =====================================================
-         * SOLO BUSCO COMPARTIR PUEDE VINCULAR VIVIENDA
-         * =====================================================
-         */
-
         if (
-
                 !tipoPublicacion.equals(
-
                         ApiConstants.TIPO_BUSCO_COMPARTIR
-
                 )
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "Solo una publicación de tipo busco_compartir puede vincular una vivienda"
-
             );
-
         }
-
-
-        /*
-         * =====================================================
-         * VALIDAR TIPO DE VINCULACIÓN
-         * =====================================================
-         */
-
         if (
-
                 !tipoVinculacion.equals("roommatch")
-
                 &&
-
                 !tipoVinculacion.equals("externa")
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "Tipo de vinculación no válido. Usa: roommatch o externa"
-
             );
-
         }
-
-
-        /*
-         * =====================================================
-         * VALIDAR HABITACIÓN ROOMMATCH
-         * =====================================================
-         */
-
         if (
-
                 tipoVinculacion.equals("roommatch")
-
                 &&
-
                 request.getIdHabitacion() == null
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "Debes seleccionar una habitación de RoomMatch"
-
             );
-
         }
-
-
-        /*
-         * =====================================================
-         * VALIDAR VIVIENDA EXTERNA
-         * =====================================================
-         */
-
         if (
-
                 tipoVinculacion.equals("externa")
-
                 &&
-
                 (
-
                         request.getViviendaExternaTitulo() == null
-
                         ||
-
                         request
                                 .getViviendaExternaTitulo()
                                 .trim()
                                 .isEmpty()
-
                 )
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "Debes ingresar una referencia para la vivienda externa"
-
             );
-
         }
-
     }
-
-
-    /*
-     * =========================================================
-     * NORMALIZAR TEXTO
-     * =========================================================
-     */
-
-    private String normalizarTexto(
-
-            String valor
-
-    ) {
-
-        if (
-
-                valor == null
-
-                ||
-
-                valor.trim().isEmpty()
-
-        ) {
-
-            return null;
-
-        }
-
-
-        return valor
-                .trim()
-                .toLowerCase();
-
-    }
-
-
-    /*
-     * =========================================================
-     * VALIDAR TIPO DE PUBLICACIÓN
-     * =========================================================
-     */
 
     private void validarTipoPublicacion(
-
             String tipo
-
     ) {
-
         Set<String> tiposPermitidos =
-
                 Set.of(
-
                         ApiConstants.TIPO_BUSCO_ROOMIE,
-
                         ApiConstants.TIPO_BUSCO_CUARTO,
-
                         ApiConstants.TIPO_BUSCO_COMPARTIR
-
                 );
-
-
         if (
-
                 tipo == null
-
                 ||
-
                 !tiposPermitidos.contains(
-
                         tipo
                                 .trim()
-                                .toLowerCase()
-
+                                .toLowerCase(java.util.Locale.ROOT)
                 )
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "Tipo de publicación no válido. "
                             +
                             "Usa: busco_roomie, "
@@ -1539,54 +284,27 @@ public void eliminarPublicacion(
                             "busco_cuarto o "
                             +
                             "busco_compartir"
-
             );
-
         }
-
     }
 
-
-    /*
-     * =========================================================
-     * VALIDAR PRESUPUESTO
-     * =========================================================
-     */
-
     private void validarPresupuesto(
-
             PublicacionRoomieRequest request
-
     ) {
-
         if (
-
                 request.getPresupuestoMin() != null
-
                 &&
-
                 request.getPresupuestoMax() != null
-
                 &&
-
                 request
                         .getPresupuestoMax()
                         .compareTo(
-
                                 request.getPresupuestoMin()
-
                         ) < 0
-
         ) {
-
             throw new IllegalArgumentException(
-
                     "El presupuesto máximo no puede ser menor que el presupuesto mínimo"
-
             );
-
         }
-
     }
-
 }

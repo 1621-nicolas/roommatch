@@ -46,6 +46,7 @@ public class ImagenPublicacionService {
                         "Publicación no encontrada o no te pertenece"
                 ));
 
+        if ("eliminada".equals(publicacion.getEstado())) throw new ConflictException("La publicación fue eliminada");
         long cantidadImagenes = imagenRepository.countByPublicacionIdPublicacion(publicacionId);
 
         if (cantidadImagenes >= 5) {
@@ -78,9 +79,14 @@ public class ImagenPublicacionService {
     }
 
     @Transactional(readOnly = true)
-    public List<ImagenPublicacionResponse> listarImagenesPorPublicacion(Integer idPublicacion) {
+    public List<ImagenPublicacionResponse> listarImagenesPorPublicacion(Integer idPublicacion, Integer usuarioActual) {
         Integer publicacionId = requerirId(idPublicacion, "idPublicacion");
 
+        PublicacionRoomie publicacion = publicacionRepository.findById(publicacionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada"));
+        boolean propia = publicacion.getUsuario().getIdUsuario().equals(usuarioActual);
+        if (!propia && (!"activa".equals(publicacion.getEstado()) || !"activo".equals(publicacion.getUsuario().getEstado())))
+            throw new ResourceNotFoundException("La publicación no está disponible");
         return imagenRepository
                 .findByPublicacionIdPublicacionOrderByOrdenAsc(publicacionId)
                 .stream()

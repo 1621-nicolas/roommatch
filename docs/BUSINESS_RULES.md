@@ -38,3 +38,20 @@ Los cambios de política se concentran en configuración, pruebas y este documen
   sanciones históricas desde los reportes sancionados. Su revisión corresponde a administración.
 - Crear un perfil de propietario conserva el rol ADMIN. El modelo continúa con un rol de usuario
   más la capacidad asociada al perfil de propietario; no incorpora una tabla multirrol innecesaria.
+
+## Publicaciones roomie
+
+- Una publicación `busco_compartir` puede referenciar una habitación pública de otra persona.
+  La referencia expresa interés en compartir y no acredita propiedad, disponibilidad garantizada
+  ni autorización para administrar el anuncio. La UI lo identifica como referencia a un anuncio.
+- La API exige visibilidad pública al vincular o reactivar esa referencia. Si luego se pausa,
+  alquila, bloquea o expira la habitación, oculta sus datos en la publicación mediante una carga
+  batch de IDs visibles. No mantiene una copia pública de información retirada.
+- Eliminar es lógico: `estado=eliminada`. Se conservan publicación, imágenes y relaciones;
+  la publicación desaparece de los listados habituales y no puede editarse ni reactivarse.
+  Los endpoints públicos tampoco muestran las imágenes de publicaciones retiradas o de autores
+  suspendidos. El propietario puede consultar sus propias imágenes autenticado.
+- Una publicación cerrada puede reabrirse; no se confunde con una publicación eliminada.
+- La consulta de detalle pública admite visitantes. Solo el propietario puede modificar estados
+  y contenido; la API comprueba su identidad. El listado carga autores y viviendas en un fetch
+  y compatibilidades en lote, en vez de una consulta por tarjeta.

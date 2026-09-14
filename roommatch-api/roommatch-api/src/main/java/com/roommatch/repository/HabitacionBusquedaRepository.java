@@ -39,14 +39,7 @@ public class HabitacionBusquedaRepository {
         StringBuilder where = new StringBuilder();
         Map<String, Object> parametros = new HashMap<>();
 
-        where.append(" WHERE h.estado = :estado ");
-        parametros.put("estado", ApiConstants.ESTADO_ACTIVA);
-        where.append("""
-             AND h.bloqueada = false AND h.propietario.estado = 'activo' AND h.propietario.usuario.estado = 'activo'
-             AND EXISTS (select s.idSuscripcion from SuscripcionPropietario s where s.propietario = h.propietario
-                 and s.estado = 'activo' and s.plan.estado = 'activo' and s.fechaInicio <= :ahora
-                 and (s.fechaFin is null or s.fechaFin > :ahora))
-            """);
+        where.append(" WHERE " + PublicRoomQuery.VISIBLE);
         parametros.put("ahora", java.time.LocalDateTime.now(clock));
 
         if (distrito != null && !distrito.isBlank()) {

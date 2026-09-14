@@ -45,6 +45,53 @@ class SqlServerIT {
     @Autowired com.roommatch.service.PropietarioService propietarios;
     @Autowired com.roommatch.service.HabitacionService habitaciones;
     @Autowired com.roommatch.service.MatchService matches;
+    @Autowired com.roommatch.service.PublicacionRoomieService publicaciones;
+    @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void publicationPagesUseBoundedQueriesForTenTwentyAndFiftyCards() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int visitor = addUser(jdbc); addProfile(jdbc, visitor);
+        var ownerRequest = new com.roommatch.dto.PropietarioRequest(); ownerRequest.setTipoPropietario("persona");
+        propietarios.convertirmeEnPropietario(visitor, ownerRequest);
+        var roomRequest = new com.roommatch.dto.HabitacionRequest();
+        roomRequest.setTitulo("Referencia pública"); roomRequest.setDescripcion("Habitación para prueba de consultas");
+        roomRequest.setDistrito("Lima"); roomRequest.setPrecio(new java.math.BigDecimal("500"));
+        int room = habitaciones.crearHabitacion(visitor, roomRequest).getIdHabitacion();
+        for (int i = 0; i < 50; i++) {
+            int author = addUser(jdbc); addProfile(jdbc, author);
+            jdbc.update("INSERT INTO publicacion_roomie(id_usuario,tipo_publicacion,titulo,descripcion,distrito,tipo_vinculacion_vivienda,id_habitacion) "
+                    + "VALUES(?,'busco_compartir','Prueba batch','Prueba de 50 publicaciones','BatchDistrict',?,?)", author, i % 2 == 0 ? "roommatch" : null, i % 2 == 0 ? room : null);
+        }
+        var statistics = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        for (int size : new int[]{10, 20, 50}) {
+            statistics.clear();
+            var page = publicaciones.listarPublicaciones(visitor, null, "BatchDistrict", null, null, org.springframework.data.domain.PageRequest.of(0, size));
+            long queries = statistics.getPrepareStatementCount();
+            System.out.printf("PUBLICATION_QUERIES size=%d queries=%d%n", size, queries);
+            assertThat(page.getContent()).hasSize(size);
+            assertThat(queries).isLessThanOrEqualTo(4);
+            assertThat(page.getContent()).allSatisfy(p -> assertThat(p.getPorcentajeCompatibilidad()).isEqualByComparingTo("100"));
+        }
+        statistics.setStatisticsEnabled(false);
+    }
+
+    @Test
+    void logicalDeletePreservesImagesAndHidesThemFromVisitors() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc);
+        var request = new com.roommatch.dto.PublicacionRoomieRequest();
+        request.setTipoPublicacion("busco_roomie"); request.setTitulo("Historial"); request.setDescripcion("Conservar imágenes"); request.setDistrito("Lima");
+        int id = publicaciones.crearPublicacion(user, request).getIdPublicacion();
+        jdbc.update("INSERT INTO imagen_publicacion(id_publicacion,url_imagen,orden,principal) VALUES(?,'https://example.invalid/test.jpg',1,1)", id);
+        publicaciones.eliminarPublicacion(user, id);
+        assertThat(jdbc.queryForObject("SELECT estado FROM publicacion_roomie WHERE id_publicacion=?", String.class, id)).isEqualTo("eliminada");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM imagen_publicacion WHERE id_publicacion=?", Integer.class, id)).isEqualTo(1);
+        assertThatThrownBy(() -> imagenesPublicacion.listarImagenesPorPublicacion(id, null)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        assertThat(imagenesPublicacion.listarImagenesPorPublicacion(id, user)).hasSize(1);
+    }
 
     @Test
     void realProjectionUsesCurrentPreferencesEvenWhenHistoricalMatchExists() {
