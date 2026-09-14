@@ -1,4 +1,6 @@
 export interface PerfilConvivenciaResponse {
+  version: number;
+
 
   /*
    * =========================================================

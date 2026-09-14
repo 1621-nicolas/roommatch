@@ -41,6 +41,7 @@ class SqlServerIT {
 
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
+    @Autowired com.roommatch.service.PerfilConvivenciaService perfiles;
     @Autowired com.roommatch.service.LeadHabitacionService leads;
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
     @Autowired com.roommatch.service.PropietarioService propietarios;
@@ -50,6 +51,23 @@ class SqlServerIT {
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
     @Autowired com.roommatch.service.ImagenHabitacionService imagenesHabitacion;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void descriptionPatchPreservesPreferencesAndRejectsStaleVersion() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc); addProfile(jdbc, user);
+        var before = perfiles.obtenerMiPerfil(user);
+        var after = perfiles.actualizarDescripcion(user, new com.roommatch.dto.PerfilDescripcionRequest("Descripción nueva", before.getVersion()));
+        assertThat(after.getVersion()).isGreaterThan(before.getVersion());
+        assertThat(after.getPresupuestoMin()).isEqualByComparingTo(before.getPresupuestoMin());
+        assertThat(after.getLimpieza()).isEqualTo(before.getLimpieza());
+        assertThatThrownBy(() -> perfiles.actualizarDescripcion(user, new com.roommatch.dto.PerfilDescripcionRequest("Borrador obsoleto", before.getVersion())))
+                .isInstanceOf(com.roommatch.exception.ConflictException.class);
+        var obsoleteFullUpdate = new com.roommatch.dto.PerfilConvivenciaRequest(); obsoleteFullUpdate.setVersion(before.getVersion());
+        assertThatThrownBy(() -> perfiles.actualizarMiPerfil(user, obsoleteFullUpdate)).isInstanceOf(com.roommatch.exception.ConflictException.class);
+        assertThat(perfiles.obtenerMiPerfil(user).getDescripcionPersonal()).isEqualTo("Descripción nueva");
+        assertThat(perfiles.actualizarDescripcion(user, new com.roommatch.dto.PerfilDescripcionRequest("", after.getVersion())).getDescripcionPersonal()).isNull();
+    }
 
     @Test
     void publicationGallerySerializesQuotaPrimaryAndOrdering() throws Exception {

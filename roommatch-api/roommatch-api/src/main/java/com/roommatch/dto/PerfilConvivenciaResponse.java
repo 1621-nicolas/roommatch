@@ -7,6 +7,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class PerfilConvivenciaResponse {
+    private long version;
+    public long getVersion() { return version; }
+
 
     private Integer idPerfil;
     private Integer idUsuario;
@@ -33,6 +36,7 @@ public class PerfilConvivenciaResponse {
         PerfilConvivenciaResponse response = new PerfilConvivenciaResponse();
 
         response.setIdPerfil(perfil.getIdPerfil());
+        response.version = perfil.getVersion();
 
         if (perfil.getUsuario() != null) {
             response.setIdUsuario(perfil.getUsuario().getIdUsuario());

@@ -58,6 +58,14 @@ public class PerfilConvivenciaController {
 
     }
 
+    @PatchMapping("/me/descripcion")
+    public ResponseEntity<ApiResponse<PerfilConvivenciaResponse>> actualizarDescripcion(
+            Authentication authentication,
+            @Valid @RequestBody com.roommatch.dto.PerfilDescripcionRequest request) {
+        Usuario usuario = (Usuario) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.success(perfilService.actualizarDescripcion(usuario.getIdUsuario(), request), "Descripción actualizada"));
+    }
+
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<PerfilConvivenciaResponse>> actualizarMiPerfil(
             Authentication authentication,

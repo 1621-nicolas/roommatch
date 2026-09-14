@@ -91,6 +91,7 @@ export class MiCuenta implements OnInit {
   descripcionPersonal = '';
 
   perfilExiste = false;
+  perfilVersion = 0;
 
 
   /*
@@ -319,6 +320,7 @@ export class MiCuenta implements OnInit {
         ) {
 
           this.perfilExiste = true;
+          this.perfilVersion = response.perfil.data.version;
 
 
           this.descripcionPersonal =
@@ -651,197 +653,36 @@ export class MiCuenta implements OnInit {
    * =========================================================
    */
   guardarDescripcion(): void {
-
+    if (this.guardandoPerfil) return;
     this.mensajeError = '';
-
     this.mensajeExito = '';
-
-
     if (!this.perfilExiste) {
-
-      this.mensajeError =
-        'Primero debes completar tu perfil de convivencia';
-
+      this.mensajeError = 'Primero debes completar tu perfil de convivencia';
       return;
-
     }
-
-
-    if (
-      !this.descripcionPersonal.trim()
-    ) {
-
-      this.mensajeError =
-        'Escribe una descripción sobre ti';
-
+    if (this.descripcionPersonal.length > 500) {
+      this.mensajeError = 'La descripción debe tener hasta 500 caracteres';
       return;
-
     }
-
-
     this.guardandoPerfil = true;
-
-
-    this.perfilService
-      .obtenerMiPerfil()
+    this.perfilService.actualizarDescripcion(this.descripcionPersonal, this.perfilVersion)
+      .pipe(finalize(() => {this.guardandoPerfil = false;}))
       .subscribe({
-
         next: response => {
-
-          if (
-            response.status !== 'success' ||
-            !response.data
-          ) {
-
-            this.guardandoPerfil = false;
-
-
-            this.mensajeError =
-              'No se pudo consultar tu perfil';
-
+          if (response.status !== 'success' || !response.data) {
+            this.mensajeError = response.message || 'No se pudo actualizar la descripción';
             return;
-
           }
-
-
-          const perfil =
-            response.data;
-
-
-          this.perfilService
-            .actualizarPerfil({
-
-              presupuestoMin:
-                perfil.presupuestoMin,
-
-              presupuestoMax:
-                perfil.presupuestoMax,
-
-              distritoPreferido:
-                perfil.distritoPreferido,
-
-              fechaMudanza:
-                perfil.fechaMudanza,
-
-              limpieza:
-                perfil.limpieza,
-
-              ruido:
-                perfil.ruido,
-
-              sociabilidad:
-                perfil.sociabilidad,
-
-              horario:
-                perfil.horario,
-
-              visitas:
-                perfil.visitas,
-
-              mascotas:
-                perfil.mascotas,
-
-              fumar:
-                perfil.fumar,
-
-              alcohol:
-                perfil.alcohol,
-
-              gastos:
-                perfil.gastos,
-
-              convivencia:
-                perfil.convivencia,
-
-              descripcionPersonal:
-                this.descripcionPersonal.trim()
-
-            })
-            .pipe(
-
-              finalize(() => {
-
-                this.guardandoPerfil = false;
-
-              })
-
-            )
-            .subscribe({
-
-              next: updateResponse => {
-
-                if (
-                  updateResponse.status !==
-                  'success'
-                ) {
-
-                  this.mensajeError =
-                    updateResponse.message ||
-                    'No se pudo actualizar la descripción';
-
-                  return;
-
-                }
-
-
-                this.descripcionPersonal =
-                  updateResponse
-                    .data
-                    ?.descripcionPersonal
-
-                  ?? this.descripcionPersonal;
-
-
-                this.mensajeExito =
-                  'Tu descripción pública fue actualizada correctamente';
-
-              },
-
-
-              error: error => {
-
-                this.mensajeError =
-                  this.obtenerMensajeError(
-
-                    error,
-
-                    'No se pudo actualizar la descripción'
-
-                  );
-
-              }
-
-            });
-
+          this.perfilVersion = response.data.version;
+          this.descripcionPersonal = response.data.descripcionPersonal ?? '';
+          this.mensajeExito = 'Tu descripción pública fue actualizada';
         },
-
-
         error: error => {
-
-          this.guardandoPerfil = false;
-
-
-          this.mensajeError =
-            this.obtenerMensajeError(
-
-              error,
-
-              'No se pudo consultar tu perfil'
-
-            );
-
+          this.mensajeError = this.obtenerMensajeError(error, 'No se pudo actualizar la descripción');
         }
-
       });
-
   }
 
-
-  /*
-   * =========================================================
-   * GUARDAR CONTACTO
-   * =========================================================
-   */
   guardarContacto(): void {
 
     this.mensajeError = '';

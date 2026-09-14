@@ -67,3 +67,9 @@ Cada anuncio admite hasta cinco imágenes. Se inserta en una posición de 1 a ca
 Producción acepta URLs HTTPS absolutas de hasta 255 caracteres codificados, sin credenciales, controles ni fragmentos. Desarrollo permite además HTTP local. No se descarga la URL en el servidor: no hay validación de existencia ni SSRF por fetch del backend. La disponibilidad, cambios de contenido y seguimiento por el proveedor externo siguen siendo limitaciones; la interfaz debe presentar alternativa si falla la carga. No se incorpora almacenamiento externo administrado para este alcance.
 
 Las imágenes públicas obedecen la visibilidad del anuncio y la política de URL. El propietario puede consultar las suyas, incluso archivadas, para conservar historial; un anuncio archivado no permite modificar su galería. Las URLs antiguas incompatibles no se borran ni se reescriben suponiendo un host HTTPS equivalente.
+
+## Edición de preferencias y descripción
+
+El GET del perfil devuelve `version`. El PUT completo y el PATCH `/api/perfil/me/descripcion` envían esa versión: si otro guardado ya la cambió, se devuelve 409 y se conserva el borrador para que el usuario recargue y compare. Hibernate también comprueba la versión en el UPDATE para cerrar la carrera entre lectura y escritura. Los clientes anteriores deben actualizarse para enviar este campo; omitirlo produce 400, no un overwrite silencioso.
+
+El PATCH acepta únicamente descripción y versión; permite vaciar la descripción y no modifica presupuesto ni hábitos. Las preferencias categóricas aceptan los valores reales del formulario; no se convierten silenciosamente valores desconocidos de perfiles históricos. Los presupuestos respetan DECIMAL(10,2). Los nuevos timestamps del perfil se escriben en UTC; no se reinterpretan timestamps históricos sin conocer su zona original.
