@@ -1,149 +1,84 @@
 package com.roommatch.service;
 
-import com.roommatch.exception.ResourceNotFoundException;
-
+import com.roommatch.dto.*;
+import com.roommatch.model.*;
+import com.roommatch.repository.*;
 import com.roommatch.exception.ConflictException;
-
-import com.roommatch.dto.ImagenPublicacionRequest;
-import com.roommatch.dto.ImagenPublicacionResponse;
-import com.roommatch.model.ImagenPublicacion;
-import com.roommatch.model.PublicacionRoomie;
-import com.roommatch.repository.ImagenPublicacionRepository;
-import com.roommatch.repository.PublicacionRoomieRepository;
+import com.roommatch.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class ImagenPublicacionService {
+    private final ImagenPublicacionRepository images;
+    private final PublicacionRoomieRepository parents;
+    private final ImageUrlPolicy urls;
 
-    private final ImagenPublicacionRepository imagenRepository;
-    private final PublicacionRoomieRepository publicacionRepository;
 
-    public ImagenPublicacionService(
-            ImagenPublicacionRepository imagenRepository,
-            PublicacionRoomieRepository publicacionRepository
-    ) {
-        this.imagenRepository = imagenRepository;
-        this.publicacionRepository = publicacionRepository;
+    public ImagenPublicacionService(ImagenPublicacionRepository images, PublicacionRoomieRepository parents, ImageUrlPolicy urls) {
+        this.images = images; this.parents = parents; this.urls = urls;
     }
 
     @Transactional
-    public ImagenPublicacionResponse agregarImagen(
-            Integer idUsuario,
-            Integer idPublicacion,
-            ImagenPublicacionRequest request
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Integer publicacionId = requerirId(idPublicacion, "idPublicacion");
-        Objects.requireNonNull(request, "request");
-
-        PublicacionRoomie publicacion = publicacionRepository
-                .findByIdPublicacionAndUsuarioIdUsuario(publicacionId, usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Publicación no encontrada o no te pertenece"
-                ));
-
-        if ("eliminada".equals(publicacion.getEstado())) throw new ConflictException("La publicación fue eliminada");
-        long cantidadImagenes = imagenRepository.countByPublicacionIdPublicacion(publicacionId);
-
-        if (cantidadImagenes >= 5) {
-            throw new ConflictException(
-                    "Solo puedes registrar hasta 5 imágenes por publicación"
-            );
+    public ImagenPublicacionResponse agregarImagen(Integer user, Integer id, ImagenPublicacionRequest request) {
+        PublicacionRoomie parent = editable(user, id);
+        String url = urls.validate(request.getUrlImagen());
+        List<ImagenPublicacion> rows = list(id);
+        int position = ImageUrlPolicy.position(request.getOrden(), rows.size());
+        // Descending shifts preserve the unique parent/order key after every statement.
+        for (int i = rows.size() - 1; i >= position - 1; i--) {
+            var row = rows.get(i); row.setOrden(row.getOrden() + 1); images.saveAndFlush(row);
         }
-
-        boolean esPrincipal = Boolean.TRUE.equals(request.getPrincipal());
-
-        if (esPrincipal) {
-            imagenRepository.desmarcarImagenesPrincipales(publicacionId);
-        }
-
-        ImagenPublicacion imagen = new ImagenPublicacion();
-        imagen.setPublicacion(publicacion);
-        imagen.setUrlImagen(request.getUrlImagen().trim());
-        imagen.setOrden(
-                request.getOrden() != null
-                        ? request.getOrden()
-                        : (int) cantidadImagenes + 1
-        );
-        imagen.setPrincipal(esPrincipal || cantidadImagenes == 0);
-
-        ImagenPublicacion guardada = imagenRepository.save(
-                Objects.requireNonNull(imagen)
-        );
-
-        return ImagenPublicacionResponse.fromEntity(guardada);
+        boolean principal = rows.isEmpty() || Boolean.TRUE.equals(request.getPrincipal());
+        if (principal) clearPrimary(rows);
+        ImagenPublicacion image = new ImagenPublicacion();
+        image.setPublicacion(parent); image.setUrlImagen(url); image.setOrden(position); image.setPrincipal(principal);
+        return ImagenPublicacionResponse.fromEntity(images.saveAndFlush(image));
     }
 
     @Transactional(readOnly = true)
-    public List<ImagenPublicacionResponse> listarImagenesPorPublicacion(Integer idPublicacion, Integer usuarioActual) {
-        Integer publicacionId = requerirId(idPublicacion, "idPublicacion");
-
-        PublicacionRoomie publicacion = publicacionRepository.findById(publicacionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada"));
-        boolean propia = publicacion.getUsuario().getIdUsuario().equals(usuarioActual);
-        if (!propia && (!"activa".equals(publicacion.getEstado()) || !"activo".equals(publicacion.getUsuario().getEstado())))
-            throw new ResourceNotFoundException("La publicación no está disponible");
-        return imagenRepository
-                .findByPublicacionIdPublicacionOrderByOrdenAsc(publicacionId)
-                .stream()
-                .map(ImagenPublicacionResponse::fromEntity)
-                .toList();
+    public List<ImagenPublicacionResponse> listarImagenesPorPublicacion(Integer id, Integer user) {
+        PublicacionRoomie parent = parents.findById(id).orElseThrow(() -> missing());
+        boolean own = parent.getUsuario().getIdUsuario().equals(user);
+        if (!own && !("activa".equals(parent.getEstado()) && "activo".equals(parent.getUsuario().getEstado()))) throw missing();
+        return list(id).stream().filter(i -> own || urls.allowed(i.getUrlImagen())).map(ImagenPublicacionResponse::fromEntity).toList();
     }
 
     @Transactional
-    public ImagenPublicacionResponse marcarComoPrincipal(
-            Integer idUsuario,
-            Integer idImagen
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Integer imagenId = requerirId(idImagen, "idImagen");
-
-        ImagenPublicacion imagen = imagenRepository
-                .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Imagen no encontrada o no te pertenece"
-                ));
-
-        Integer publicacionId = requerirId(
-                imagen.getPublicacion().getIdPublicacion(),
-                "idPublicacion"
-        );
-
-        imagenRepository.desmarcarImagenesPrincipales(publicacionId);
-        imagen.setPrincipal(true);
-
-        ImagenPublicacion actualizada = imagenRepository.save(
-                Objects.requireNonNull(imagen)
-        );
-
-        return ImagenPublicacionResponse.fromEntity(actualizada);
+    public ImagenPublicacionResponse marcarComoPrincipal(Integer user, Integer idImagen) {
+        int parentId = images.findOwnedParentId(idImagen, user).orElseThrow(() -> missing());
+        editable(user, parentId);
+        var rows = list(parentId);
+        var selected = rows.stream().filter(i -> i.getIdImagen().equals(idImagen)).findFirst().orElseThrow(() -> missing());
+        clearPrimary(rows);
+        selected.setPrincipal(true);
+        return ImagenPublicacionResponse.fromEntity(images.saveAndFlush(selected));
     }
 
     @Transactional
-    public void eliminarImagen(
-            Integer idUsuario,
-            Integer idImagen
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Integer imagenId = requerirId(idImagen, "idImagen");
-
-        ImagenPublicacion imagen = imagenRepository
-                .findByIdImagenAndPublicacionUsuarioIdUsuario(imagenId, usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Imagen no encontrada o no te pertenece"
-                ));
-
-        imagenRepository.delete(Objects.requireNonNull(imagen));
+    public void eliminarImagen(Integer user, Integer idImagen) {
+        int parentId = images.findOwnedParentId(idImagen, user).orElseThrow(() -> missing());
+        editable(user, parentId);
+        var rows = list(parentId);
+        var selected = rows.stream().filter(i -> i.getIdImagen().equals(idImagen)).findFirst().orElseThrow(() -> missing());
+        boolean primary = Boolean.TRUE.equals(selected.getPrincipal());
+        int oldPosition = selected.getOrden();
+        images.delete(selected); images.flush(); rows.remove(selected);
+        // Close the gap in ascending order; the preceding slot is free.
+        for (var row : rows) if (row.getOrden() > oldPosition) { row.setOrden(row.getOrden() - 1); images.saveAndFlush(row); }
+        if (primary && !rows.isEmpty()) { rows.get(0).setPrincipal(true); images.saveAndFlush(rows.get(0)); }
     }
 
-    private Integer requerirId(Integer id, String nombre) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException(nombre + " debe ser un identificador válido");
-        }
-        return id;
+    private PublicacionRoomie editable(Integer user, Integer id) {
+        PublicacionRoomie parent = parents.findByIdPublicacionAndUsuarioIdUsuario(id, user).orElseThrow(() -> missing());
+        if ("eliminada".equals(parent.getEstado())) throw new ConflictException("El anuncio fue archivado y conserva su historial");
+        return parent;
     }
+
+    private List<ImagenPublicacion> list(Integer id) { return images.findByPublicacionIdPublicacionOrderByOrdenAsc(id); }
+    private void clearPrimary(List<ImagenPublicacion> rows) {
+        for (var row : rows) if (Boolean.TRUE.equals(row.getPrincipal())) { row.setPrincipal(false); images.saveAndFlush(row); }
+    }
+    private ResourceNotFoundException missing() { return new ResourceNotFoundException("Imagen o anuncio no disponible o no te pertenece"); }
 }

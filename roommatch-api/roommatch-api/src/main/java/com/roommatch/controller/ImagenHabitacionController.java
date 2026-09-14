@@ -108,7 +108,7 @@ public class ImagenHabitacionController {
     public ResponseEntity<
             ApiResponse<List<ImagenHabitacionResponse>>
             > listarImagenes(
-
+            Authentication authentication,
             @PathVariable
             Integer idHabitacion
 
@@ -119,9 +119,8 @@ public class ImagenHabitacionController {
             List<ImagenHabitacionResponse> response =
 
                     imagenService
-                            .listarImagenesPorHabitacion(
-                                    idHabitacion
-                            );
+                            .listarImagenesPorHabitacion(idHabitacion,
+                                    authentication != null && authentication.getPrincipal() instanceof Usuario actor ? actor.getIdUsuario() : null);
 
 
             return ResponseEntity.ok(

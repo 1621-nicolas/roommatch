@@ -48,7 +48,59 @@ class SqlServerIT {
     @Autowired com.roommatch.service.MatchService matches;
     @Autowired com.roommatch.service.PublicacionRoomieService publicaciones;
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
+    @Autowired com.roommatch.service.ImagenHabitacionService imagenesHabitacion;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void publicationGallerySerializesQuotaPrimaryAndOrdering() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc), stranger = addUser(jdbc);
+        var publication = new com.roommatch.dto.PublicacionRoomieRequest();
+        publication.setTipoPublicacion("busco_roomie"); publication.setTitulo("Galería"); publication.setDescripcion("Imágenes"); publication.setDistrito("Lima");
+        int id = publicaciones.crearPublicacion(user, publication).getIdPublicacion();
+        var image = new com.roommatch.dto.ImagenPublicacionRequest(); image.setUrlImagen("https://example.test/image.jpg");
+        for (int i = 0; i < 4; i++) imagenesPublicacion.agregarImagen(user, id, image);
+        assertThat(race(() -> imagenesPublicacion.agregarImagen(user, id, image), () -> imagenesPublicacion.agregarImagen(user, id, image)))
+                .containsExactlyInAnyOrder("success", "conflict");
+        var rows = imagenesPublicacion.listarImagenesPorPublicacion(id, null);
+        assertThat(rows).hasSize(5);
+        int first = rows.get(0).getIdImagen(), second = rows.get(1).getIdImagen();
+        assertThat(race(() -> imagenesPublicacion.marcarComoPrincipal(user, first), () -> imagenesPublicacion.marcarComoPrincipal(user, second)))
+                .containsOnly("success");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM imagen_publicacion WHERE id_publicacion=? AND principal=1", Integer.class, id)).isEqualTo(1);
+        assertThatThrownBy(() -> imagenesPublicacion.eliminarImagen(stranger, first)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        int primary = imagenesPublicacion.listarImagenesPorPublicacion(id, user).stream().filter(r -> r.getPrincipal()).findFirst().orElseThrow().getIdImagen();
+        imagenesPublicacion.eliminarImagen(user, primary);
+        image.setOrden(1); image.setPrincipal(true);
+        imagenesPublicacion.agregarImagen(user, id, image);
+        assertThat(imagenesPublicacion.listarImagenesPorPublicacion(id, user)).extracting(com.roommatch.dto.ImagenPublicacionResponse::getOrden).containsExactly(1,2,3,4,5);
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO imagen_publicacion(id_publicacion,url_imagen,orden,principal) VALUES(?,'https://example.test/direct.jpg',6,0)", id))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void roomGalleryProtectsPrivateVisibilityAndConcurrentPrimarySelection() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc), stranger = addUser(jdbc);
+        var owner = new com.roommatch.dto.PropietarioRequest(); owner.setTipoPropietario("persona");
+        propietarios.convertirmeEnPropietario(user, owner);
+        var request = new com.roommatch.dto.HabitacionRequest(); request.setTitulo("Galería habitación");
+        request.setDescripcion("Privacidad"); request.setDistrito("Lima"); request.setPrecio(new java.math.BigDecimal("500"));
+        int id = habitaciones.crearHabitacion(user, request).getIdHabitacion();
+        var image = new com.roommatch.dto.ImagenHabitacionRequest(); image.setUrlImagen("https://example.test/room.jpg");
+        for (int i = 0; i < 4; i++) imagenesHabitacion.agregarImagen(user, id, image);
+        assertThat(race(() -> imagenesHabitacion.agregarImagen(user, id, image), () -> imagenesHabitacion.agregarImagen(user, id, image)))
+                .containsExactlyInAnyOrder("success", "conflict");
+        var rows = imagenesHabitacion.listarImagenesPorHabitacion(id, null);
+        int first = rows.get(0).getIdImagen(), second = rows.get(1).getIdImagen();
+        assertThat(race(() -> imagenesHabitacion.marcarComoPrincipal(user, first), () -> imagenesHabitacion.marcarComoPrincipal(user, second))).containsOnly("success");
+        imagenesHabitacion.eliminarImagen(user, first);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM imagen_habitacion WHERE id_habitacion=? AND principal=1", Integer.class, id)).isEqualTo(1);
+        assertThatThrownBy(() -> imagenesHabitacion.marcarComoPrincipal(stranger, second)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        habitaciones.pausarHabitacion(user, id);
+        assertThatThrownBy(() -> imagenesHabitacion.listarImagenesPorHabitacion(id, null)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        assertThat(imagenesHabitacion.listarImagenesPorHabitacion(id, user)).hasSize(4);
+    }
 
     @Test
     void inquiryEmailSurvivesDatabaseRoundTripAndIsScopedToOwner() {

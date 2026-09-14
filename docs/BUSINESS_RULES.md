@@ -59,3 +59,11 @@ Los cambios de política se concentran en configuración, pruebas y este documen
 ## Interés por una habitación y datos de contacto
 
 El interesado puede escribir un correo opcional para que el propietario responda. Ese valor se guarda con la consulta; nunca se obtiene implícitamente del correo de inicio de sesión, tampoco para consultas históricas. El formulario explica quién lo recibe antes de enviar. Las consultas conservan su historial; se mantiene una por usuario/habitación, protegida por `UQ_lead_unico`. No se agrega reenvío de leads en este cambio. Los propietarios gestionan sus propias consultas aunque su plan haya expirado, siempre que su cuenta de propietario esté activa. No se pueden enviar consultas a habitaciones retiradas, bloqueadas o de suscripción expirada.
+
+## Galerías y URLs externas
+
+Cada anuncio admite hasta cinco imágenes. Se inserta en una posición de 1 a cantidad + 1, desplazando las siguientes; eliminar cierra el hueco. La primera es principal y eliminar la principal elige la primera restante. Todas las mutaciones bloquean el anuncio padre antes de leer las imágenes. SQL Server respalda una sola principal y posiciones únicas 1–5 (también impiden más de cinco filas). V9 ordena datos existentes de forma estable y detiene la migración si ya hay más de cinco, para revisión sin borrar imágenes.
+
+Producción acepta URLs HTTPS absolutas de hasta 255 caracteres codificados, sin credenciales, controles ni fragmentos. Desarrollo permite además HTTP local. No se descarga la URL en el servidor: no hay validación de existencia ni SSRF por fetch del backend. La disponibilidad, cambios de contenido y seguimiento por el proveedor externo siguen siendo limitaciones; la interfaz debe presentar alternativa si falla la carga. No se incorpora almacenamiento externo administrado para este alcance.
+
+Las imágenes públicas obedecen la visibilidad del anuncio y la política de URL. El propietario puede consultar las suyas, incluso archivadas, para conservar historial; un anuncio archivado no permite modificar su galería. Las URLs antiguas incompatibles no se borran ni se reescriben suponiendo un host HTTPS equivalente.
