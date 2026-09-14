@@ -32,19 +32,22 @@ public class LeadHabitacionService {
     private final UsuarioRepository usuarioRepository;
     private final PropietarioRepository propietarioRepository;
     private final NotificacionRepository notificacionRepository;
+    private final PlanPolicy planPolicy;
 
     public LeadHabitacionService(
             LeadHabitacionRepository leadRepository,
             HabitacionRepository habitacionRepository,
             UsuarioRepository usuarioRepository,
             PropietarioRepository propietarioRepository,
-            NotificacionRepository notificacionRepository
+            NotificacionRepository notificacionRepository,
+            PlanPolicy planPolicy
     ) {
         this.leadRepository = leadRepository;
         this.habitacionRepository = habitacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.propietarioRepository = propietarioRepository;
         this.notificacionRepository = notificacionRepository;
+        this.planPolicy = planPolicy;
     }
 
     @Transactional
@@ -59,7 +62,7 @@ public class LeadHabitacionService {
         Habitacion habitacion = habitacionRepository.findById(idHabitacion)
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
 
-        if (!habitacion.getEstado().equalsIgnoreCase("activa")) {
+        if (!planPolicy.visible(habitacion)) {
             throw new ResourceNotFoundException("La habitación no está disponible");
         }
 
@@ -80,6 +83,7 @@ public class LeadHabitacionService {
         lead.setHabitacion(habitacion);
         lead.setUsuarioInteresado(usuarioInteresado);
         lead.setMensaje(request.getMensaje());
+        lead.setEmailContacto(request.getEmailContacto());
         lead.setEstado("pendiente");
 
         LeadHabitacion leadGuardado = leadRepository.save(lead);
@@ -100,6 +104,7 @@ public class LeadHabitacionService {
         return LeadHabitacionResponse.fromEntity(leadGuardado);
     }
 
+    @Transactional(readOnly = true)
     public List<LeadHabitacionResponse> listarMisIntereses(Integer idUsuarioInteresado) {
         return leadRepository
                 .findByUsuarioInteresadoIdUsuarioOrderByFechaLeadDesc(idUsuarioInteresado)
@@ -108,6 +113,7 @@ public class LeadHabitacionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public Page<LeadHabitacionResponse> listarLeadsPropietario(
             Integer idUsuarioPropietario,
             String estado,
@@ -116,6 +122,10 @@ public class LeadHabitacionService {
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuarioPropietario)
                 .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
 
+        planPolicy.exigirPropietarioActivo(propietario);
+        if (pageable.getPageSize() > 100 || pageable.getPageNumber() > 1000) throw new IllegalArgumentException("La página excede el límite permitido");
+        if (estado != null && !estado.isBlank()) validarEstadoLead(estado);
+        estado = estado == null || estado.isBlank() ? null : estado.toLowerCase(java.util.Locale.ROOT);
         return leadRepository
                 .listarLeadsDePropietario(
                         propietario.getIdPropietario(),
@@ -143,7 +153,10 @@ public class LeadHabitacionService {
                 )
                 .orElseThrow(() -> new ResourceNotFoundException("Lead no encontrado o no pertenece a tus habitaciones"));
 
-        lead.setEstado(nuevoEstado.toLowerCase());
+        planPolicy.exigirPropietarioActivo(propietario);
+        nuevoEstado = nuevoEstado.toLowerCase(java.util.Locale.ROOT);
+        if (nuevoEstado.equals(lead.getEstado())) return LeadHabitacionResponse.fromEntity(lead);
+        lead.setEstado(nuevoEstado);
 
         LeadHabitacion leadActualizado = leadRepository.save(lead);
 
@@ -172,7 +185,7 @@ public class LeadHabitacionService {
                 "rechazado"
         );
 
-        if (estado == null || !estadosPermitidos.contains(estado.toLowerCase())) {
+        if (estado == null || !estadosPermitidos.contains(estado.toLowerCase(java.util.Locale.ROOT))) {
             throw new IllegalArgumentException("Estado de lead no válido");
         }
     }

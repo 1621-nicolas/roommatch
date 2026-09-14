@@ -494,6 +494,11 @@
               </p>
 
 
+              <label for="emailContacto">Correo para que te respondan (opcional)</label>
+              <input id="emailContacto" name="emailContacto" type="email" autocomplete="email"
+                [(ngModel)]="emailContacto" maxlength="150" aria-describedby="correoCompartido">
+              <p id="correoCompartido">Si lo completas, el propietario recibirá este correo junto con tu mensaje. Tu correo de cuenta no se comparte automáticamente.</p>
+
               <label for="mensajeInteres">
 
                 Mensaje
@@ -539,8 +544,7 @@
 
               <small class="privacy-note">
 
-                🔒 Tu información está protegida
-                por RoomMatch.
+                Comparte en el mensaje únicamente lo que quieras que vea el propietario.
 
               </small>
 

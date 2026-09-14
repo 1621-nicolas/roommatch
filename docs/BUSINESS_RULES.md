@@ -55,3 +55,7 @@ Los cambios de política se concentran en configuración, pruebas y este documen
 - La consulta de detalle pública admite visitantes. Solo el propietario puede modificar estados
   y contenido; la API comprueba su identidad. El listado carga autores y viviendas en un fetch
   y compatibilidades en lote, en vez de una consulta por tarjeta.
+
+## Interés por una habitación y datos de contacto
+
+El interesado puede escribir un correo opcional para que el propietario responda. Ese valor se guarda con la consulta; nunca se obtiene implícitamente del correo de inicio de sesión, tampoco para consultas históricas. El formulario explica quién lo recibe antes de enviar. Las consultas conservan su historial; se mantiene una por usuario/habitación, protegida por `UQ_lead_unico`. No se agrega reenvío de leads en este cambio. Los propietarios gestionan sus propias consultas aunque su plan haya expirado, siempre que su cuenta de propietario esté activa. No se pueden enviar consultas a habitaciones retiradas, bloqueadas o de suscripción expirada.

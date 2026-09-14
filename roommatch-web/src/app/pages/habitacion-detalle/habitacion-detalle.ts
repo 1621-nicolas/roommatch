@@ -71,6 +71,7 @@ export class HabitacionDetalle implements OnInit {
    * =========================================================
    */
   mensajeInteres = '';
+  emailContacto = '';
 
 
   /*
@@ -310,13 +311,17 @@ export class HabitacionDetalle implements OnInit {
     }
 
 
+    if (this.emailContacto.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.emailContacto.trim())) {
+      this.mensajeError = 'Revisa el correo de contacto o déjalo vacío.';
+      return;
+    }
     this.enviandoInteres = true;
 
 
     const request: LeadHabitacionRequest = {
 
-      mensaje
-
+      mensaje,
+      emailContacto: this.emailContacto.trim() || null
     };
 
 

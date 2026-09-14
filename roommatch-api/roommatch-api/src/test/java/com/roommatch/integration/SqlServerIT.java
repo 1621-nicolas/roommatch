@@ -41,6 +41,7 @@ class SqlServerIT {
 
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
+    @Autowired com.roommatch.service.LeadHabitacionService leads;
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
     @Autowired com.roommatch.service.PropietarioService propietarios;
     @Autowired com.roommatch.service.HabitacionService habitaciones;
@@ -48,6 +49,28 @@ class SqlServerIT {
     @Autowired com.roommatch.service.PublicacionRoomieService publicaciones;
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void inquiryEmailSurvivesDatabaseRoundTripAndIsScopedToOwner() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int ownerUser = addUser(jdbc), interested = addUser(jdbc), stranger = addUser(jdbc);
+        var ownerRequest = new com.roommatch.dto.PropietarioRequest(); ownerRequest.setTipoPropietario("persona");
+        propietarios.convertirmeEnPropietario(ownerUser, ownerRequest);
+        propietarios.convertirmeEnPropietario(stranger, ownerRequest);
+        var roomRequest = new com.roommatch.dto.HabitacionRequest();
+        roomRequest.setTitulo("Consulta privada"); roomRequest.setDescripcion("Prueba de consentimiento");
+        roomRequest.setDistrito("Lima"); roomRequest.setPrecio(new java.math.BigDecimal("500"));
+        int room = habitaciones.crearHabitacion(ownerUser, roomRequest).getIdHabitacion();
+        var request = new com.roommatch.dto.LeadHabitacionRequest();
+        request.setMensaje("Quisiera coordinar una visita"); request.setEmailContacto("chosen@example.test");
+        int id = leads.crearLead(interested, room, request).getIdLead();
+        assertThat(leads.listarLeadsPropietario(ownerUser, null, org.springframework.data.domain.PageRequest.of(0, 10)).getContent())
+                .singleElement().satisfies(row -> assertThat(row.getEmailInteresado()).isEqualTo("chosen@example.test"));
+        assertThatThrownBy(() -> leads.cambiarEstadoLead(stranger, id, "contactado"))
+                .isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        jdbc.update("UPDATE lead_habitacion SET email_contacto=NULL WHERE id_lead=?", id);
+        assertThat(leads.listarMisIntereses(interested)).singleElement().satisfies(row -> assertThat(row.getEmailInteresado()).isNull());
+    }
 
     @Test
     void publicationPagesUseBoundedQueriesForTenTwentyAndFiftyCards() {
