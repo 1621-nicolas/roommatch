@@ -28,6 +28,11 @@ public class AbuseProtectionFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         if (path.isBlank()) path = request.getRequestURI();
         try {
+            if ("GET".equals(request.getMethod()) && path.equals("/api/matches")) {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.getPrincipal() instanceof Usuario actor)
+                    limiter.check("match-reads:" + actor.getIdUsuario(), 20, Duration.ofMinutes(1));
+            }
             if (!java.util.Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod())) {
                 // Use the socket peer only; arbitrary X-Forwarded-For must never grant fresh quotas.
                 if (path.equals("/api/auth/login")) limiter.check("login-ip:" + request.getRemoteAddr(), loginLimit, Duration.ofMinutes(15));

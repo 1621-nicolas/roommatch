@@ -8,6 +8,19 @@ import java.time.LocalDateTime;
 public class MatchResponse {
 
     private Integer idMatch;
+    private int cobertura;
+    private String versionAlgoritmo;
+    private Boolean hayImporteComun;
+    private java.util.List<com.roommatch.matching.CompatibilityCalculator.Criterion> criterios = java.util.List.of();
+    public int getCobertura() { return cobertura; }
+    public void setCobertura(int cobertura) { this.cobertura = cobertura; }
+    public String getVersionAlgoritmo() { return versionAlgoritmo; }
+    public void setVersionAlgoritmo(String version) { this.versionAlgoritmo = version; }
+    public Boolean getHayImporteComun() { return hayImporteComun; }
+    public void setHayImporteComun(Boolean value) { this.hayImporteComun = value; }
+    public java.util.List<com.roommatch.matching.CompatibilityCalculator.Criterion> getCriterios() { return criterios; }
+    public void setCriterios(java.util.List<com.roommatch.matching.CompatibilityCalculator.Criterion> value) { this.criterios = value; }
+
     private Integer idUsuarioDestino;
     private String nombres;
     private String apellidos;

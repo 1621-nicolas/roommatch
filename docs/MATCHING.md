@@ -70,3 +70,40 @@ Las pruebas cubren los 25 pares ordinales, los 4.356 pares de intervalos inclusi
 entre 0 y 10 céntimos contra un oráculo independiente de conjuntos, fechas y año
 bisiesto, categorías parciales, simetría, límites monetarios, datos ausentes y el
 efecto exacto de alcohol, gastos y fecha de mudanza sobre el resultado.
+
+## Actualización y coste
+
+El servicio calcula desde perfiles actuales en cada consulta. No lee ni reescribe
+`match_resultado`: esa tabla se conserva como historial del algoritmo anterior.
+Modificar cualquiera de los dos perfiles afecta la siguiente consulta sin invalidación
+masiva ni trabajos programados. Una petición concurrente con una edición puede observar
+el estado previo a esa edición; no se reutiliza luego como caché.
+
+El ranking recorre una proyección plana de candidatos activos en un cursor JDBC de
+500 filas, sin cargar relaciones JPA ni guardar un resultado por pareja. La cola conserva
+los mejores `offset + size` resultados y después pagina: nunca ordena solo la página.
+Coste CPU `O(N log(offset+size))`, memoria de ranking `O(offset+size)` y dos consultas
+(origen y candidatos). La consulta de compatibilidad para hasta 100 autores usa una
+única carga batch con sus perfiles y el perfil del visitante. `idMatch` queda como
+metadato histórico nullable; la identidad estable de la tarjeta es `idUsuarioDestino`.
+
+GET devuelve páginas de hasta 100; POST `/calcular` se mantiene compatible con una lista
+limitada a los primeros 100. La interfaz actualiza con GET para no repetir un escaneo.
+GET admite 20 consultas de ranking por minuto y usuario en una instancia.
+
+Medición diagnóstica de CPU en GitHub Actions, Java 17, tras 10.000 cálculos de calentamiento,
+[run 34762856321](https://github.com/1621-nicolas/roommatch/actions/runs/34762856321):
+
+| Perfiles comparados | Tiempo del cálculo puro |
+|---:|---:|
+| 100 | 2,64 ms |
+| 1.000 | 25,04 ms |
+| 10.000 | 143,84 ms |
+| 100.000 | 1.001,52 ms |
+
+Es una muestra con dos perfiles, sin red, SQL ni usuarios concurrentes; no es un SLA ni
+un benchmark de producción. Para 100–10.000 perfiles, este diseño evita la complejidad de
+mantener cachés coherentes. Al acercarse a 100.000, medir p95 y carga concurrente con datos
+representativos antes de desplegar: evaluar ranking por lotes/versionado o preselección
+con filtros explícitos del usuario. No descartar silenciosamente distritos o presupuestos
+para acelerar el algoritmo ni introducir una infraestructura para millones de personas.

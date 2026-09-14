@@ -1,4 +1,6 @@
 <section class="matches-page">
+  <p class="container">El índice compara tus preferencias actuales. No garantiza una buena convivencia. Puedes revisar la cobertura y los criterios de cada persona.</p>
+
 
   <div class="matches-container">
 
@@ -162,7 +164,7 @@
 
         @for (
           match of matches;
-          track match.idMatch
+          track match.idUsuarioDestino
         ) {
 
           <article class="match-profile-card">
@@ -347,7 +349,16 @@
 
             </footer>
 
-          </article>
+          <details class="match-score-details">
+              <summary>Cómo se calcula · datos evaluables {{ match.cobertura }} de 100</summary>
+              <p>{{ match.versionAlgoritmo }} · {{ match.hayImporteComun === true ? 'Existe un importe común entre ambos presupuestos.' : 'Los presupuestos no comparten importes o faltan datos.' }}</p>
+              <ul>
+                @for (criterio of match.criterios; track criterio.id) {
+                  <li>{{ criterio.nombre }} · peso {{ criterio.peso }} · {{ criterio.puntuacion === null ? 'Sin datos' : (criterio.puntuacion * 100).toFixed(0) + ' % de semejanza' }}</li>
+                }
+              </ul>
+            </details>
+</article>
 
         } @empty {
 

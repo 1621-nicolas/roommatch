@@ -44,6 +44,32 @@ class SqlServerIT {
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
     @Autowired com.roommatch.service.PropietarioService propietarios;
     @Autowired com.roommatch.service.HabitacionService habitaciones;
+    @Autowired com.roommatch.service.MatchService matches;
+
+    @Test
+    void realProjectionUsesCurrentPreferencesEvenWhenHistoricalMatchExists() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int a = addUser(jdbc), b = addUser(jdbc);
+        addProfile(jdbc, a); addProfile(jdbc, b);
+        jdbc.update("INSERT INTO match_resultado(id_usuario_origen,id_usuario_destino,porcentaje) VALUES(?,?,0)", a, b);
+        assertThat(matches.obtenerCompatibilidadEntreUsuarios(a, b).orElseThrow().getPorcentaje()).isEqualByComparingTo("100");
+        jdbc.update("UPDATE perfil_convivencia SET limpieza=1 WHERE id_usuario=?", b);
+        assertThat(matches.obtenerCompatibilidadEntreUsuarios(a, b).orElseThrow().getPorcentaje()).isEqualByComparingTo("88");
+        assertThat(matches.listarMisMatches(a, java.math.BigDecimal.ZERO, org.springframework.data.domain.PageRequest.of(0, 10)).getContent())
+                .extracting(com.roommatch.dto.MatchResponse::getIdUsuarioDestino).contains(b);
+        jdbc.update("UPDATE usuario SET estado='suspendido' WHERE id_usuario=?", b);
+        assertThat(matches.obtenerCompatibilidadEntreUsuarios(a, b)).isEmpty();
+        assertThat(matches.listarMisMatches(a, java.math.BigDecimal.ZERO, org.springframework.data.domain.PageRequest.of(0, 10)).getContent())
+                .extracting(com.roommatch.dto.MatchResponse::getIdUsuarioDestino).doesNotContain(b);
+    }
+
+    private static void addProfile(JdbcTemplate jdbc, int user) {
+        jdbc.update("""
+            INSERT INTO perfil_convivencia(id_usuario,presupuesto_min,presupuesto_max,distrito_preferido,fecha_mudanza,
+                limpieza,ruido,sociabilidad,horario,visitas,mascotas,fumar,alcohol,gastos,convivencia)
+            VALUES(?,500,900,'Lima','2026-10-01',5,3,3,'mañana','moderadas','no','no','no','divididos','tranquila')
+            """, user);
+    }
 
     @Test
     void concurrentRoomCreationCannotExceedOneSlotPlan() throws Exception {
