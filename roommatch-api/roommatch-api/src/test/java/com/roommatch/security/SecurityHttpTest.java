@@ -15,6 +15,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class SecurityHttpTest {
     @Autowired MockMvc mvc;
+    @Autowired com.roommatch.service.ReporteService reports;
+
+    @Test @WithMockUser(roles = "USUARIO") void serviceMethodCannotBeCalledWithAForgedAdminId() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> reports.sancionarUsuario(99,1,"Intento sin permiso"))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
+    @Test @WithMockUser(roles = "USUARIO") void reportHistoryIsNotPublicToAnAuthenticatedUser() throws Exception {
+        mvc.perform(get("/api/reportes/admin/usuarios/1/historial")).andExpect(status().isForbidden());
+        mvc.perform(put("/api/reportes/admin/usuarios/1/sancionar").contentType("application/json").content("{\"motivo\":\"sin permiso\"}"))
+                .andExpect(status().isForbidden());
+    }
 
     @Test void privateRouteIs401Json() throws Exception {
         mvc.perform(get("/api/habitaciones/mis")).andExpect(status().isUnauthorized())

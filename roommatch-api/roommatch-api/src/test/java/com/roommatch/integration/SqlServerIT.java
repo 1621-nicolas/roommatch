@@ -41,6 +41,7 @@ class SqlServerIT {
 
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
+    @Autowired com.roommatch.service.ReporteService reportes;
     @Autowired com.roommatch.service.PerfilConvivenciaService perfiles;
     @Autowired com.roommatch.service.LeadHabitacionService leads;
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
@@ -51,6 +52,32 @@ class SqlServerIT {
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
     @Autowired com.roommatch.service.ImagenHabitacionService imagenesHabitacion;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(roles="ADMIN")
+    void reportQueueDeduplicatesAndConcurrentResolutionsPreserveAudit() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int reporter=addUser(jdbc), target=addUser(jdbc), admin=addUser(jdbc);
+        jdbc.update("UPDATE usuario SET id_rol=(SELECT id_rol FROM rol WHERE nombre_rol='ADMIN') WHERE id_usuario=?",admin);
+        var request = new com.roommatch.dto.ReporteRequest(); request.setMotivo("Prueba de moderación");
+        assertThat(race(() -> reportes.reportarUsuario(reporter,target,request), () -> reportes.reportarUsuario(reporter,target,request)))
+                .containsExactlyInAnyOrder("success","conflict");
+        int id=jdbc.queryForObject("SELECT id_reporte FROM reporte_usuario WHERE id_usuario_reportante=? AND id_usuario_reportado=?",Integer.class,reporter,target);
+        reportes.revisarReporteUsuario(admin,id,"revisado","Investigación iniciada");
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO reporte_usuario(id_usuario_reportante,id_usuario_reportado,motivo) VALUES(?,?,'Duplicado')",reporter,target))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(race(() -> reportes.revisarReporteUsuario(admin,id,"rechazado","Evidencia insuficiente"), () -> reportes.sancionarUsuario(admin,id,"Incidencia comprobada")))
+                .containsExactlyInAnyOrder("success","conflict");
+        var history=reportes.historialUsuario(admin,id,org.springframework.data.domain.PageRequest.of(0,10));
+        assertThat(history.getTotalElements()).isEqualTo(2);
+        assertThat(history.getContent()).allSatisfy(e -> {assertThat(e.idAdmin()).isEqualTo(admin);assertThat(e.motivo()).isNotBlank();});
+        String state=jdbc.queryForObject("SELECT estado FROM reporte_usuario WHERE id_reporte=?",String.class,id);
+        if ("sancionado".equals(state)) {
+            reportes.restaurarUsuario(admin,id,"Apelación revisada");
+            assertThat(jdbc.queryForObject("SELECT estado FROM usuario WHERE id_usuario=?",String.class,target)).isEqualTo("activo");
+            assertThat(reportes.historialUsuario(admin,id,org.springframework.data.domain.PageRequest.of(0,10)).getTotalElements()).isEqualTo(3);
+        }
+    }
 
     @Test
     void descriptionPatchPreservesPreferencesAndRejectsStaleVersion() {
@@ -280,7 +307,7 @@ class SqlServerIT {
     }
 
     private static java.util.List<String> race(Runnable first, Runnable second) throws Exception {
-        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        var executor = new org.springframework.security.concurrent.DelegatingSecurityContextExecutorService(java.util.concurrent.Executors.newFixedThreadPool(2));
         var start = new java.util.concurrent.CountDownLatch(1);
         try {
             var a = executor.submit(() -> outcome(first, start));

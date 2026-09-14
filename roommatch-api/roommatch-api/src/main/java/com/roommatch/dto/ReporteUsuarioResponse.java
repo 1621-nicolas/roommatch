@@ -5,6 +5,9 @@ import com.roommatch.model.ReporteUsuario;
 import java.time.LocalDateTime;
 
 public class ReporteUsuarioResponse {
+    private String estadoObjetivo;
+    public String getEstadoObjetivo() { return estadoObjetivo; }
+
 
     private Integer idReporte;
     private Integer idUsuarioReportante;
@@ -26,6 +29,7 @@ public class ReporteUsuarioResponse {
         response.setEstado(reporte.getEstado());
         response.setFechaReporte(reporte.getFechaReporte());
         response.setFechaRevision(reporte.getFechaRevision());
+        response.estadoObjetivo = reporte.getUsuarioReportado().getEstado();
 
         if (reporte.getUsuarioReportante() != null) {
             response.setIdUsuarioReportante(reporte.getUsuarioReportante().getIdUsuario());

@@ -73,3 +73,16 @@ Las imágenes públicas obedecen la visibilidad del anuncio y la política de UR
 El GET del perfil devuelve `version`. El PUT completo y el PATCH `/api/perfil/me/descripcion` envían esa versión: si otro guardado ya la cambió, se devuelve 409 y se conserva el borrador para que el usuario recargue y compare. Hibernate también comprueba la versión en el UPDATE para cerrar la carrera entre lectura y escritura. Los clientes anteriores deben actualizarse para enviar este campo; omitirlo produce 400, no un overwrite silencioso.
 
 El PATCH acepta únicamente descripción y versión; permite vaciar la descripción y no modifica presupuesto ni hábitos. Las preferencias categóricas aceptan los valores reales del formulario; no se convierten silenciosamente valores desconocidos de perfiles históricos. Los presupuestos respetan DECIMAL(10,2). Los nuevos timestamps del perfil se escriben en UTC; no se reinterpretan timestamps históricos sin conocer su zona original.
+
+## Moderación administrativa
+
+- Estados: pendiente → revisado (investigación); pendiente/revisado → rechazado o sancionado (resolución). No se vuelve a pendiente ni se cambia una resolución final; una nueva incidencia genera un nuevo reporte.
+- Solo un reporte abierto por reportante y objetivo; el lock del reportante y los índices únicos filtrados previenen carreras. V11 detiene migración ante duplicados existentes, sin borrarlos automáticamente.
+- Toda revisión, rechazo, sanción y restauración exige motivo (1–500 caracteres), registra administrador y fecha en `moderacion_evento` y conserva el reporte. El historial de registros antiguos puede estar vacío; no se inventan revisores ni motivos históricos.
+- La cuenta administrativa debe estar activa. URL y métodos de servicio exigen ADMIN. No se permite suspender cuentas ADMIN desde reportes, para evitar bloqueo administrativo accidental.
+- Sancionar un usuario suspende su acceso; sancionar una habitación retira su destacado y la bloquea. Una habitación archivada sigue archivada.
+- Restaurar desde un reporte sancionado cambia el estado global del objetivo: cuenta activa o habitación sin bloqueo. No borra reportes ni eventos de otras sanciones. La interfaz debe confirmar este alcance; el administrador debe revisar los antecedentes. La habitación no se publica automáticamente: conserva su estado y su reactivación vuelve a comprobar el plan.
+- Los endpoints administrativos de revisión/sanción ahora requieren cuerpo `{"motivo":"..."}`. Los nuevos endpoints `/restaurar` y `/historial` usan el mismo ID de reporte. Se mantiene el contrato paginado con un máximo de 100 filas.
+- `totalMatches` del dashboard es un conteo **histórico** de la tabla anterior, no un indicador de matches dinámicos actuales. Debe mostrarse con ese nombre explícito, no como actividad vigente.
+
+Los índices de colas corresponden al filtro por estado y orden fecha/ID de `listarReportes`; los del historial corresponden a consultas por un reporte y fecha. SQL Server permite el filtro `IN` utilizado aquí: [sintaxis oficial CREATE INDEX](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-index-transact-sql).
