@@ -107,3 +107,7 @@ mantener cachés coherentes. Al acercarse a 100.000, medir p95 y carga concurren
 representativos antes de desplegar: evaluar ranking por lotes/versionado o preselección
 con filtros explícitos del usuario. No descartar silenciosamente distritos o presupuestos
 para acelerar el algoritmo ni introducir una infraestructura para millones de personas.
+
+### Consultas de publicaciones verificadas
+
+En CI `34809333895`, SQL Server 2022 ejecutó **4 consultas** para cada página de 10, 20 y 50 publicaciones con referencias a habitaciones y compatibilidad: página, count, proyección batch de perfiles y visibilidad batch de habitaciones. La prueba `SqlServerIT` fija un máximo de 4 para detectar regresiones. Esto mide el acceso JPA del servicio, no el tiempo de red ni el lookup de autenticación del filtro.

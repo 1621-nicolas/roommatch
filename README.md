@@ -127,6 +127,8 @@ Angular se inicia normalmente en:
 http://localhost:4200
 ```
 
+La API del navegador usa `/api`. En desarrollo, `proxy.conf.json` reenvía estas peticiones a `http://localhost:8081`; reinicia `npm start` si cambias el proxy. En producción, sirve Angular y `/api` bajo el mismo origen mediante un reverse proxy. La configuración compilada se define en `src/environments/`. Consulta [despliegue y sesión](deployment/README.md).
+
 ## 5. Pruebas y compilación
 
 Backend:

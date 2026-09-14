@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config/api.config';
 import {
   Injectable
 } from '@angular/core';
@@ -66,7 +67,7 @@ export interface HabitacionPayload {
 export class HabitacionService {
 
   private readonly apiUrl =
-    'http://localhost:8081/api/habitaciones';
+    `${API_BASE_URL}/habitaciones`;
 
 
   constructor(
