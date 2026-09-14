@@ -1,148 +1,94 @@
-<section>
-  <h1>Reportes administrativos</h1>
-
-  <p>
-    Gestiona reportes de usuarios y habitaciones.
-  </p>
-
-  <div>
-    <button type="button">Reportes de usuarios</button>
-    <button type="button">Reportes de habitaciones</button>
+<section class="admin-page" [attr.aria-busy]="loading()">
+  <app-admin-nav />
+  <header class="admin-head">
+    <div><h1>Revisión de reportes</h1><p>Lee la incidencia y sus antecedentes antes de decidir. Todas las decisiones quedan registradas.</p></div>
+    <button type="button" (click)="load(page()?.number ?? 0)" [disabled]="loading() || saving()">Actualizar lista</button>
+  </header>
+  @if (success()) { <p class="admin-alert admin-success" role="status">{{ success() }}</p> }
+  <div class="admin-toolbar">
+    <div class="admin-type" role="group" aria-label="Tipo de reporte">
+      <button type="button" [attr.aria-pressed]="kind() === 'usuarios'" (click)="changeKind('usuarios')" [disabled]="saving()">Usuarios</button>
+      <button type="button" [attr.aria-pressed]="kind() === 'habitaciones'" (click)="changeKind('habitaciones')" [disabled]="saving()">Habitaciones</button>
+    </div>
+    <form class="admin-filter" (ngSubmit)="load()">
+      <div><label for="report-state">Estado del reporte</label>
+        <select id="report-state" name="state" [ngModel]="state()" (ngModelChange)="state.set($event)" [disabled]="saving()">
+          <option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="revisado">En revisión</option><option value="rechazado">Rechazado</option><option value="sancionado">Sancionado</option>
+        </select>
+      </div>
+      <button type="submit" [disabled]="saving() || loading()">Aplicar filtro</button>
+    </form>
   </div>
-
-  <hr>
-
-  <section>
-    <h2>Reportes de usuarios</h2>
-
-    <form>
-      <label for="estadoReporteUsuario">Filtrar por estado</label>
-
-      <select id="estadoReporteUsuario" name="estadoReporteUsuario">
-        <option value="">Todos</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="revisado">Revisado</option>
-        <option value="rechazado">Rechazado</option>
-        <option value="sancionado">Sancionado</option>
-      </select>
-
-      <button type="button">
-        Filtrar
-      </button>
+  @if (loading()) {
+    <p class="admin-loading" role="status">Cargando reportes…</p>
+  } @else if (error()) {
+    <div class="admin-alert" role="alert"><p>{{ error() }}</p><button type="button" (click)="load()">Reintentar</button></div>
+  } @else if (page(); as result) {
+    @if (result.content.length === 0) {
+      <app-empty-state title="No hay reportes con este filtro" message="Prueba otro estado o cambia entre usuarios y habitaciones." />
+    } @else {
+      <div class="admin-table-wrap" role="region" aria-label="Lista de reportes" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">Reporte</th><th scope="col">{{ kind() === 'usuarios' ? 'Usuario reportado' : 'Habitación' }}</th><th scope="col">Reportante</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
+          <tbody>
+            @for (report of result.content; track id(report)) {
+              <tr [class.row-selected]="selected() === report">
+                <td><strong>#{{ id(report) }} · {{ report.motivo }}</strong><small>{{ report.fechaReporte | date:'dd/MM/yyyy HH:mm' }}</small></td>
+                <td>{{ target(report) }}</td><td>{{ report.nombreReportante }}</td>
+                <td><span class="admin-state" [attr.data-state]="report.estado">{{ report.estado === 'revisado' ? 'En revisión' : report.estado }}</span></td>
+                <td><button type="button" (click)="select(report)" [attr.aria-label]="'Ver reporte ' + id(report)" aria-controls="report-details">Ver detalle</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination [page]="result.number" [totalPages]="result.totalPages" [totalElements]="result.totalElements" [loading]="loading()" (pageChange)="load($event)" />
+    }
+  }
+  @if (selected(); as report) {
+    <section class="admin-detail" id="report-details" #details tabindex="-1" aria-labelledby="detail-title">
+      <h2 id="detail-title">Reporte #{{ id(report) }}: {{ target(report) }}</h2>
+      <dl>
+        <dt>Reportante</dt><dd>{{ report.nombreReportante }}</dd>
+        <dt>Motivo</dt><dd>{{ report.motivo }}</dd>
+        <dt>Descripción</dt><dd class="description">{{ report.descripcion || 'El reportante no añadió una descripción.' }}</dd>
+        <dt>Estado del caso</dt><dd>{{ report.estado === 'revisado' ? 'En revisión' : report.estado }}</dd>
+        <dt>Estado del objetivo</dt><dd>{{ report.estadoObjetivo }}{{ report.habitacionBloqueada ? ' · Bloqueo administrativo' : '' }}</dd>
+        @if (report.fechaRevision) {<dt>Fecha de revisión</dt><dd>{{ report.fechaRevision | date:'dd/MM/yyyy HH:mm' }}</dd>}
+      </dl>
+      <div class="admin-actions">
+        @if (report.estado === 'pendiente') {<button type="button" (click)="prepare('revisado')">Marcar en revisión</button>}
+        @if (open(report)) {
+          <button type="button" (click)="prepare('rechazado')">Rechazar reporte</button>
+          <button type="button" class="danger" (click)="prepare('sancionado')">{{ kind() === 'usuarios' ? 'Suspender cuenta' : 'Bloquear habitación' }}</button>
+        }
+        @if (canRestore(report)) {<button type="button" (click)="prepare('restaurado')" [disabled]="historyLoading() || !!historyError()">{{ kind() === 'usuarios' ? 'Reactivar cuenta' : 'Retirar bloqueo' }}</button>}
+      </div>
+      <h2>Historial de decisiones</h2>
+      @if (historyLoading()) {
+        <p role="status">Cargando historial…</p>
+      } @else if (historyError()) {
+        <div class="admin-alert" role="alert"><p>{{ historyError() }}</p><button type="button" (click)="loadHistory()">Reintentar historial</button></div>
+      } @else if (history(); as log) {
+        @if (log.content.length === 0) {<p class="admin-note">No hay decisiones registradas. Los casos anteriores a la incorporación del historial pueden no tener antecedentes detallados.</p>}
+        <ol class="admin-history">
+          @for (event of log.content; track event.idEvento) {
+            <li><header><strong>{{ event.accion === 'revisado' ? 'En revisión' : event.accion }} · {{ event.administrador }}</strong><small>{{ event.fecha | date:'dd/MM/yyyy HH:mm' }}</small></header><p>{{ event.motivo }}</p></li>
+          }
+        </ol>
+        <app-pagination [page]="log.number" [totalPages]="log.totalPages" [totalElements]="log.totalElements" (pageChange)="loadHistory($event)" />
+      }
+    </section>
+  }
+  <dialog #decisionDialog class="admin-dialog" aria-labelledby="decision-title" aria-describedby="decision-effect" (cancel)="cancel($event)">
+    <form (ngSubmit)="confirm()">
+      <h2 id="decision-title">{{ actionTitle() }}</h2>
+      <p id="decision-effect">{{ actionEffect() }}</p>
+      <label for="decision-reason">Motivo de la decisión</label>
+      <textarea id="decision-reason" name="motivo" [(ngModel)]="motive" rows="4" maxlength="500" required autofocus [disabled]="saving()" aria-describedby="reason-hint"></textarea>
+      <small id="reason-hint">El motivo se guardará junto con tu identidad administrativa y la fecha.</small>
+      @if (actionError()) {<p class="admin-alert" role="alert">{{ actionError() }}</p>}
+      <footer><button type="button" (click)="cancel()" [disabled]="saving()">Cancelar</button><button type="submit" [class.danger]="decision()?.action === 'sancionado'" [class.primary]="decision()?.action !== 'sancionado'" [disabled]="saving() || !motive.trim()">{{ saving() ? 'Guardando…' : 'Confirmar decisión' }}</button></footer>
     </form>
-
-    <br>
-
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Reportante</th>
-          <th>Usuario reportado</th>
-          <th>Motivo</th>
-          <th>Descripción</th>
-          <th>Estado</th>
-          <th>Fecha</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>Ana Torres</td>
-          <td>Juan Pérez</td>
-          <td>Perfil sospechoso</td>
-          <td>Información poco confiable.</td>
-          <td>Pendiente</td>
-          <td>03/07/2026</td>
-          <td>
-            <button type="button">Revisar</button>
-            <button type="button">Rechazar</button>
-            <button type="button">Sancionar</button>
-          </td>
-        </tr>
-
-        <tr>
-          <td>Carlos Ramírez</td>
-          <td>María López</td>
-          <td>Comportamiento inadecuado</td>
-          <td>El usuario envió mensajes incómodos.</td>
-          <td>Revisado</td>
-          <td>02/07/2026</td>
-          <td>
-            <button type="button">Revisar</button>
-            <button type="button">Rechazar</button>
-            <button type="button">Sancionar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <hr>
-
-  <section>
-    <h2>Reportes de habitaciones</h2>
-
-    <form>
-      <label for="estadoReporteHabitacion">Filtrar por estado</label>
-
-      <select id="estadoReporteHabitacion" name="estadoReporteHabitacion">
-        <option value="">Todos</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="revisado">Revisado</option>
-        <option value="rechazado">Rechazado</option>
-        <option value="sancionado">Sancionado</option>
-      </select>
-
-      <button type="button">
-        Filtrar
-      </button>
-    </form>
-
-    <br>
-
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Reportante</th>
-          <th>Habitación</th>
-          <th>Motivo</th>
-          <th>Descripción</th>
-          <th>Estado</th>
-          <th>Fecha</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>Juan Pérez</td>
-          <td>Habitación amoblada cerca a UPN</td>
-          <td>Información engañosa</td>
-          <td>La habitación no coincide con la descripción.</td>
-          <td>Pendiente</td>
-          <td>03/07/2026</td>
-          <td>
-            <button type="button">Revisar</button>
-            <button type="button">Rechazar</button>
-            <button type="button">Sancionar habitación</button>
-          </td>
-        </tr>
-
-        <tr>
-          <td>Ana Torres</td>
-          <td>Habitación en San Miguel</td>
-          <td>Precio falso</td>
-          <td>El propietario cambió el precio al contactar.</td>
-          <td>Pendiente</td>
-          <td>03/07/2026</td>
-          <td>
-            <button type="button">Revisar</button>
-            <button type="button">Rechazar</button>
-            <button type="button">Sancionar habitación</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  </dialog>
 </section>
