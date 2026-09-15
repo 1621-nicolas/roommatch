@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
 class AbuseProtectionFilterTest {
-    private final AbuseProtectionFilter filter=new AbuseProtectionFilter(new RequestLimiter(Clock.systemUTC()),new SecurityErrorWriter(new ObjectMapper()));
+    private final AbuseProtectionFilter filter=new AbuseProtectionFilter(new RequestLimiter(Clock.systemUTC()),new SecurityErrorWriter(new ObjectMapper()),new ClientIpResolver(""));
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
     @Test void reportsUseActualEndpointAndReturnRetryAfter() throws Exception {
         var user=new Usuario(); user.setIdUsuario(1);
@@ -29,9 +29,24 @@ class AbuseProtectionFilterTest {
         for(int i=0;i<6;i++) {
             var req=new MockHttpServletRequest("POST","/api/auth/register");
             req.addHeader("X-Forwarded-For","192.0.2."+i);
+            req.addHeader("X-Real-IP","192.0.2."+i);
             var res=new MockHttpServletResponse();
             filter.doFilter(req,res,(a,b)->{});
             assertThat(res.getStatus()).isEqualTo(i<5?200:429);
+        }
+    }
+
+    @Test void trustedProxySeparatesClientsButStillLimitsRepeatedRequests() throws Exception {
+        var proxyFilter = new AbuseProtectionFilter(new RequestLimiter(Clock.systemUTC()), new SecurityErrorWriter(new ObjectMapper()), new ClientIpResolver("10.0.0.10"));
+        for (int i = 0; i < 6; i++) {
+            var req = new MockHttpServletRequest("POST", "/api/auth/register"); req.setRemoteAddr("10.0.0.10"); req.addHeader("X-Real-IP", "192.0.2." + i);
+            var res = new MockHttpServletResponse(); proxyFilter.doFilter(req, res, (a,b) -> {});
+            assertThat(res.getStatus()).isEqualTo(200);
+        }
+        for (int i = 0; i < 5; i++) {
+            var req = new MockHttpServletRequest("POST", "/api/auth/register"); req.setRemoteAddr("10.0.0.10"); req.addHeader("X-Real-IP", "192.0.2.0");
+            var res = new MockHttpServletResponse(); proxyFilter.doFilter(req, res, (a,b) -> {});
+            assertThat(res.getStatus()).isEqualTo(i < 4 ? 200 : 429);
         }
     }
 }

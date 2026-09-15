@@ -16,12 +16,13 @@ import java.time.Duration;
 public class AbuseProtectionFilter extends OncePerRequestFilter {
     private final RequestLimiter limiter;
     private final SecurityErrorWriter errors;
+    private final ClientIpResolver clientIps;
     @org.springframework.beans.factory.annotation.Value("${app.limits.login-per-ip:30}") private int loginLimit = 30;
     @org.springframework.beans.factory.annotation.Value("${app.limits.register-per-ip:5}") private int registerLimit = 5;
     @org.springframework.beans.factory.annotation.Value("${app.limits.requests-per-user:20}") private int requestLimit = 20;
     @org.springframework.beans.factory.annotation.Value("${app.limits.reports-per-user:10}") private int reportLimit = 10;
-    public AbuseProtectionFilter(RequestLimiter limiter, SecurityErrorWriter errors) {
-        this.limiter = limiter; this.errors = errors;
+    public AbuseProtectionFilter(RequestLimiter limiter, SecurityErrorWriter errors, ClientIpResolver clientIps) {
+        this.limiter = limiter; this.errors = errors; this.clientIps = clientIps;
     }
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -34,9 +35,8 @@ public class AbuseProtectionFilter extends OncePerRequestFilter {
                     limiter.check("match-reads:" + actor.getIdUsuario(), 20, Duration.ofMinutes(1));
             }
             if (!java.util.Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod())) {
-                // Use the socket peer only; arbitrary X-Forwarded-For must never grant fresh quotas.
-                if (path.equals("/api/auth/login")) limiter.check("login-ip:" + request.getRemoteAddr(), loginLimit, Duration.ofMinutes(15));
-                if (path.equals("/api/auth/register")) limiter.check("register-ip:" + request.getRemoteAddr(), registerLimit, Duration.ofHours(1));
+                if (path.equals("/api/auth/login")) limiter.check("login-ip:" + clientIps.resolve(request), loginLimit, Duration.ofMinutes(15));
+                if (path.equals("/api/auth/register")) limiter.check("register-ip:" + clientIps.resolve(request), registerLimit, Duration.ofHours(1));
                 var auth = SecurityContextHolder.getContext().getAuthentication();
                 if (auth != null && auth.getPrincipal() instanceof Usuario user) {
                     String actor = user.getIdUsuario().toString();

@@ -37,12 +37,14 @@ public class SecurityConfig {
             @Value("${app.cors.allowed-origins:http://localhost:4200}") String allowedOriginsProperty,
             @Value("${springdoc.api-docs.enabled:false}") boolean docsEnabled,
             SecurityErrorWriter errors,
-            AbuseProtectionFilter abuseProtectionFilter
+            AbuseProtectionFilter abuseProtectionFilter,
+            org.springframework.core.env.Environment environment
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.allowedOriginsProperty = allowedOriginsProperty;
         this.errors = errors;
-        this.docsEnabled = docsEnabled;
+        this.docsEnabled = docsEnabled && environment.acceptsProfiles(
+                org.springframework.core.env.Profiles.of("development & !production & !test"));
         this.abuseProtectionFilter = abuseProtectionFilter;
     }
 
