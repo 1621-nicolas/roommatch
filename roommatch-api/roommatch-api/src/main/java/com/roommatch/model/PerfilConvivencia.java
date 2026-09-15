@@ -33,6 +33,10 @@ import java.time.LocalDateTime;
         )
 })
 public class PerfilConvivencia {
+    @Version
+    private long version;
+    public long getVersion() { return version; }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,10 +47,10 @@ public class PerfilConvivencia {
     @JoinColumn(name = "id_usuario", nullable = false, unique = true)
     private Usuario usuario;
 
-    @Column(name = "presupuesto_min", nullable = false)
+    @Column(name = "presupuesto_min", nullable = false, precision = 10, scale = 2)
     private BigDecimal presupuestoMin;
 
-    @Column(name = "presupuesto_max", nullable = false)
+    @Column(name = "presupuesto_max", nullable = false, precision = 10, scale = 2)
     private BigDecimal presupuestoMax;
 
     @Column(name = "distrito_preferido", nullable = false, length = 100)
@@ -96,13 +100,13 @@ public class PerfilConvivencia {
 
     @PrePersist
     public void prePersist() {
-        this.fechaActualizacion = LocalDateTime.now();
+        this.fechaActualizacion = LocalDateTime.now(java.time.Clock.systemUTC());
         this.perfilCompleto = true;
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.fechaActualizacion = LocalDateTime.now();
+        this.fechaActualizacion = LocalDateTime.now(java.time.Clock.systemUTC());
     }
 
     public Integer getIdPerfil() {

@@ -16,6 +16,8 @@ public class ImagenPublicacionRequest {
     private String urlImagen;
 
 
+    @jakarta.validation.constraints.Min(1)
+    @jakarta.validation.constraints.Max(5)
     private Integer orden;
 
 

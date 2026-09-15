@@ -2,7 +2,8 @@
 # application-local.properties está ignorado por Git y NO debe versionarse.
 
 spring.datasource.password=CAMBIA_ESTA_CONTRASENA
-jwt.secret=CAMBIA_ESTA_CLAVE_POR_UNA_DE_32_CARACTERES_O_MAS
+# Solo se carga con el perfil development. Vacío genera una clave temporal.
+jwt.secret=
 
 # Opcional si tu SQL Server usa valores diferentes.
 # spring.datasource.username=sa

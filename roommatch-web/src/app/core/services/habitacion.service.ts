@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config/api.config';
 import {
   Injectable
 } from '@angular/core';
@@ -66,7 +67,7 @@ export interface HabitacionPayload {
 export class HabitacionService {
 
   private readonly apiUrl =
-    'http://localhost:8081/api/habitaciones';
+    `${API_BASE_URL}/habitaciones`;
 
 
   constructor(
@@ -363,5 +364,12 @@ export class HabitacionService {
         params
       }
     );
+  }
+  alquilar(id: number): Observable<ApiResponse<HabitacionResponse>> {
+    return this.http.put<ApiResponse<HabitacionResponse>>(`${this.apiUrl}/${id}/alquilar`, {});
+  }
+
+  archivar(id: number): Observable<ApiResponse<HabitacionResponse>> {
+    return this.http.delete<ApiResponse<HabitacionResponse>>(`${this.apiUrl}/${id}`);
   }
 }

@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import {
   Component,
   EventEmitter,
@@ -271,7 +272,7 @@ export class ImageManagerModal implements OnChanges {
     if (!this.esUrlValida(url)) {
 
       this.mensajeError =
-        'Ingresa una URL válida que comience con http:// o https://';
+        'Ingresa una URL HTTPS válida, sin credenciales, de hasta 255 caracteres';
 
       return;
     }
@@ -648,28 +649,13 @@ export class ImageManagerModal implements OnChanges {
    * =========================================================
    */
 
-  private esUrlValida(
-    url: string
-  ): boolean {
-
+  private esUrlValida(url: string): boolean {
     try {
-
-      const urlValidada =
-        new URL(url);
-
-
-      return (
-
-        urlValidada.protocol === 'http:' ||
-
-        urlValidada.protocol === 'https:'
-
-      );
-
-    } catch {
-
-      return false;
-    }
+      const parsed = new URL(url);
+      return url.length <= 255 && !/[\s\x00-\x1f\x7f]/.test(url)
+        && !parsed.username && !parsed.password && !parsed.hash
+        && (parsed.protocol === 'https:' || !environment.production && parsed.protocol === 'http:');
+    } catch { return false; }
   }
 
 

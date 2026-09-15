@@ -105,15 +105,15 @@
               type="password"
               id="registerPassword"
               name="registerPassword"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Una frase de al menos 15 caracteres"
               autocomplete="new-password"
-              minlength="6"
+              minlength="15"
               required
               [(ngModel)]="registroData.password"
             >
           </div>
           <small class="password-help">
-            Usa una contraseña de al menos 6 caracteres.
+            Usa una frase de al menos 15 caracteres. Máximo 72 bytes; puedes pegar desde tu gestor de contraseñas.
           </small>
         </div>
 

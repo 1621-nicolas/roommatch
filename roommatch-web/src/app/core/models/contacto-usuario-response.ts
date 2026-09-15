@@ -1,4 +1,5 @@
 export interface ContactoUsuarioResponse {
+  version?: number | null;
   idContacto?: number;
   idUsuario?: number;
 

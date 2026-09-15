@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { RegistroRequest } from '../../../core/models/registro-request';
+import { passwordError } from '../../../core/validation/password-policy';
 
 @Component({
   selector: 'app-register',
@@ -54,8 +55,9 @@ export class Register {
       return;
     }
 
-    if (this.registroData.password.length < 6) {
-      this.mensajeError = 'La contraseña debe tener como mínimo 6 caracteres';
+    const passwordMessage = passwordError(this.registroData.password);
+    if (passwordMessage) {
+      this.mensajeError = passwordMessage;
       return;
     }
 

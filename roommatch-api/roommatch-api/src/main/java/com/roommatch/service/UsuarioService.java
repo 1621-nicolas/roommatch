@@ -1,5 +1,7 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
 import com.roommatch.dto.ActualizarUsuarioRequest;
 import com.roommatch.dto.UsuarioResponse;
 import com.roommatch.model.Usuario;
@@ -24,7 +26,7 @@ public class UsuarioService {
 
         Usuario usuario = usuarioRepository
                 .findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         return UsuarioResponse.fromEntity(usuario);
     }
@@ -39,7 +41,7 @@ public class UsuarioService {
 
         Usuario usuario = usuarioRepository
                 .findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         usuario.setNombres(request.getNombres().trim());
         usuario.setApellidos(request.getApellidos().trim());

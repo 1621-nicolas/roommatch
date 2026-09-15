@@ -26,8 +26,12 @@
         Entra para encontrar roomies compatibles y habitaciones que se ajusten a tu estilo de vida.
       </p>
 
+      @if (sesionVencida) {
+        <p class="auth-notice" role="status">Tu sesión terminó. Vuelve a ingresar para continuar.</p>
+      }
+
       @if (mensajeError) {
-        <div class="auth-error">
+        <div class="auth-error" role="alert">
           {{ mensajeError }}
         </div>
       }
@@ -44,6 +48,8 @@
               type="email"
               id="email"
               name="email"
+              autocomplete="username"
+              required
               placeholder="tu@email.com"
               [(ngModel)]="loginData.email"
             >
@@ -63,6 +69,8 @@
               type="password"
               id="password"
               name="password"
+              autocomplete="current-password"
+              required
               placeholder="••••••••"
               [(ngModel)]="loginData.password"
             >

@@ -11,13 +11,20 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class PerfilConvivenciaRequest {
+    @Min(0)
+    private Long version;
+    public Long getVersion() { return version; }
+    public void setVersion(Long value) { version = value; }
+
 
     @NotNull(message = "El presupuesto mínimo es obligatorio")
     @DecimalMin(value = "0.0", message = "El presupuesto mínimo no puede ser negativo")
+    @jakarta.validation.constraints.Digits(integer = 8, fraction = 2)
     private BigDecimal presupuestoMin;
 
     @NotNull(message = "El presupuesto máximo es obligatorio")
     @DecimalMin(value = "0.0", message = "El presupuesto máximo no puede ser negativo")
+    @jakarta.validation.constraints.Digits(integer = 8, fraction = 2)
     private BigDecimal presupuestoMax;
 
     @NotBlank(message = "El distrito preferido es obligatorio")

@@ -1,4 +1,5 @@
 export interface ContactoUsuarioRequest {
+  version?: number | null;
   telefono: string | null;
   whatsapp: string | null;
   instagram: string | null;

@@ -6,6 +6,11 @@ import java.time.LocalDateTime;
 
 public class ContactoUsuarioResponse {
 
+    private Long version;
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
     private Integer idContacto;
     private Integer idUsuario;
     private String nombreUsuario;
@@ -28,6 +33,7 @@ public class ContactoUsuarioResponse {
         ContactoUsuarioResponse response = new ContactoUsuarioResponse();
 
         response.setIdContacto(contacto.getIdContacto());
+        response.setVersion(aplicarPrivacidad ? null : contacto.getVersion());
 
         if (contacto.getUsuario() != null) {
             response.setIdUsuario(contacto.getUsuario().getIdUsuario());

@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.LeadHabitacionRequest;
 import com.roommatch.dto.LeadHabitacionResponse;
 import com.roommatch.model.Habitacion;
@@ -28,19 +32,22 @@ public class LeadHabitacionService {
     private final UsuarioRepository usuarioRepository;
     private final PropietarioRepository propietarioRepository;
     private final NotificacionRepository notificacionRepository;
+    private final PlanPolicy planPolicy;
 
     public LeadHabitacionService(
             LeadHabitacionRepository leadRepository,
             HabitacionRepository habitacionRepository,
             UsuarioRepository usuarioRepository,
             PropietarioRepository propietarioRepository,
-            NotificacionRepository notificacionRepository
+            NotificacionRepository notificacionRepository,
+            PlanPolicy planPolicy
     ) {
         this.leadRepository = leadRepository;
         this.habitacionRepository = habitacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.propietarioRepository = propietarioRepository;
         this.notificacionRepository = notificacionRepository;
+        this.planPolicy = planPolicy;
     }
 
     @Transactional
@@ -50,13 +57,13 @@ public class LeadHabitacionService {
             LeadHabitacionRequest request
     ) {
         Usuario usuarioInteresado = usuarioRepository.findById(idUsuarioInteresado)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario interesado no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario interesado no encontrado"));
 
         Habitacion habitacion = habitacionRepository.findById(idHabitacion)
-                .orElseThrow(() -> new IllegalArgumentException("Habitación no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
 
-        if (!habitacion.getEstado().equalsIgnoreCase("activa")) {
-            throw new IllegalArgumentException("La habitación no está disponible");
+        if (!planPolicy.visible(habitacion)) {
+            throw new ResourceNotFoundException("La habitación no está disponible");
         }
 
         Integer idUsuarioPropietario = habitacion.getPropietario().getUsuario().getIdUsuario();
@@ -69,13 +76,14 @@ public class LeadHabitacionService {
                 idHabitacion,
                 idUsuarioInteresado
         )) {
-            throw new IllegalArgumentException("Ya enviaste interés por esta habitación");
+            throw new ConflictException("Ya enviaste interés por esta habitación");
         }
 
         LeadHabitacion lead = new LeadHabitacion();
         lead.setHabitacion(habitacion);
         lead.setUsuarioInteresado(usuarioInteresado);
         lead.setMensaje(request.getMensaje());
+        lead.setEmailContacto(request.getEmailContacto());
         lead.setEstado("pendiente");
 
         LeadHabitacion leadGuardado = leadRepository.save(lead);
@@ -96,6 +104,7 @@ public class LeadHabitacionService {
         return LeadHabitacionResponse.fromEntity(leadGuardado);
     }
 
+    @Transactional(readOnly = true)
     public List<LeadHabitacionResponse> listarMisIntereses(Integer idUsuarioInteresado) {
         return leadRepository
                 .findByUsuarioInteresadoIdUsuarioOrderByFechaLeadDesc(idUsuarioInteresado)
@@ -104,14 +113,19 @@ public class LeadHabitacionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public Page<LeadHabitacionResponse> listarLeadsPropietario(
             Integer idUsuarioPropietario,
             String estado,
             Pageable pageable
     ) {
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuarioPropietario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
 
+        planPolicy.exigirPropietarioActivo(propietario);
+        if (pageable.getPageSize() > 100 || pageable.getPageNumber() > 1000) throw new IllegalArgumentException("La página excede el límite permitido");
+        if (estado != null && !estado.isBlank()) validarEstadoLead(estado);
+        estado = estado == null || estado.isBlank() ? null : estado.toLowerCase(java.util.Locale.ROOT);
         return leadRepository
                 .listarLeadsDePropietario(
                         propietario.getIdPropietario(),
@@ -130,16 +144,19 @@ public class LeadHabitacionService {
         validarEstadoLead(nuevoEstado);
 
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(idUsuarioPropietario)
-                .orElseThrow(() -> new IllegalArgumentException("No tienes perfil de propietario"));
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
 
         LeadHabitacion lead = leadRepository
                 .findByIdLeadAndHabitacionPropietarioIdPropietario(
                         idLead,
                         propietario.getIdPropietario()
                 )
-                .orElseThrow(() -> new IllegalArgumentException("Lead no encontrado o no pertenece a tus habitaciones"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lead no encontrado o no pertenece a tus habitaciones"));
 
-        lead.setEstado(nuevoEstado.toLowerCase());
+        planPolicy.exigirPropietarioActivo(propietario);
+        nuevoEstado = nuevoEstado.toLowerCase(java.util.Locale.ROOT);
+        if (nuevoEstado.equals(lead.getEstado())) return LeadHabitacionResponse.fromEntity(lead);
+        lead.setEstado(nuevoEstado);
 
         LeadHabitacion leadActualizado = leadRepository.save(lead);
 
@@ -168,7 +185,7 @@ public class LeadHabitacionService {
                 "rechazado"
         );
 
-        if (estado == null || !estadosPermitidos.contains(estado.toLowerCase())) {
+        if (estado == null || !estadosPermitidos.contains(estado.toLowerCase(java.util.Locale.ROOT))) {
             throw new IllegalArgumentException("Estado de lead no válido");
         }
     }

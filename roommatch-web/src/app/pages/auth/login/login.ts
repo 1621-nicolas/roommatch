@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models/login-request';
@@ -18,11 +18,13 @@ export class Login {
 
   cargando = false;
   mensajeError = '';
+  readonly sesionVencida: boolean;
 
   constructor(
     private authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    route: ActivatedRoute
+  ) { this.sesionVencida = route.snapshot.queryParamMap.get('reason') === 'session-expired'; }
 
   iniciarSesion(): void {
     this.mensajeError = '';

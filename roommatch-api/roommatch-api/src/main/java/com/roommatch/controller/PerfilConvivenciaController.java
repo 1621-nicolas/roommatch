@@ -25,7 +25,7 @@ public class PerfilConvivenciaController {
             Authentication authentication,
             @Valid @RequestBody PerfilConvivenciaRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             PerfilConvivenciaResponse response = perfilService.crearPerfil(
@@ -37,18 +37,14 @@ public class PerfilConvivenciaController {
                     ApiResponse.success(response, "Perfil de convivencia registrado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PerfilConvivenciaResponse>> obtenerMiPerfil(
             Authentication authentication
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             PerfilConvivenciaResponse response = perfilService.obtenerMiPerfil(
@@ -59,11 +55,15 @@ public class PerfilConvivenciaController {
                     ApiResponse.success(response, "Perfil obtenido correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
+    }
+
+    @PatchMapping("/me/descripcion")
+    public ResponseEntity<ApiResponse<PerfilConvivenciaResponse>> actualizarDescripcion(
+            Authentication authentication,
+            @Valid @RequestBody com.roommatch.dto.PerfilDescripcionRequest request) {
+        Usuario usuario = (Usuario) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.success(perfilService.actualizarDescripcion(usuario.getIdUsuario(), request), "Descripción actualizada"));
     }
 
     @PutMapping("/me")
@@ -71,7 +71,7 @@ public class PerfilConvivenciaController {
             Authentication authentication,
             @Valid @RequestBody PerfilConvivenciaRequest request
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             PerfilConvivenciaResponse response = perfilService.actualizarMiPerfil(
@@ -83,11 +83,7 @@ public class PerfilConvivenciaController {
                     ApiResponse.success(response, "Perfil actualizado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
     @GetMapping("/buscar/distrito")
 public ResponseEntity<ApiResponse<List<PerfilConvivenciaResponse>>> buscarPorDistrito(

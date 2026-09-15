@@ -24,9 +24,11 @@ public class HabitacionRequest {
 
     @NotNull(message = "El precio es obligatorio")
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor que 0")
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal precio;
 
     @DecimalMin(value = "0.1", message = "El área debe ser mayor que 0")
+    @Digits(integer = 4, fraction = 2)
     private BigDecimal areaM2;
 
     private Boolean amoblado;
