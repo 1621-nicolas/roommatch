@@ -361,6 +361,8 @@ export class MiCuenta implements OnInit {
 
           this.contactoData = {
 
+            version: contacto.version,
+
             telefono:
               contacto.telefono ?? null,
 
@@ -715,6 +717,8 @@ export class MiCuenta implements OnInit {
           this.contactoData.facebook
         ),
 
+      version: this.contactoData.version ?? null,
+
       emailContacto:
         this.normalizarTexto(
           this.contactoData.emailContacto
@@ -793,6 +797,8 @@ export class MiCuenta implements OnInit {
            * la respuesta real de la API.
            */
           this.contactoData = {
+
+            version: contacto.version,
 
             telefono:
               contacto.telefono ?? null,

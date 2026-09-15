@@ -42,6 +42,7 @@ class SqlServerIT {
     @Autowired DataSource dataSource;
     @Autowired Flyway flyway;
     @Autowired com.roommatch.service.ReporteService reportes;
+    @Autowired com.roommatch.service.ContactoUsuarioService contactos;
     @Autowired com.roommatch.service.PerfilConvivenciaService perfiles;
     @Autowired com.roommatch.service.LeadHabitacionService leads;
     @Autowired com.roommatch.service.SolicitudContactoService solicitudes;
@@ -52,6 +53,68 @@ class SqlServerIT {
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
     @Autowired com.roommatch.service.ImagenHabitacionService imagenesHabitacion;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void contactPagesAreBilateralPrivateAndUseAtMostThreeQueries() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int owner = addUser(jdbc), stranger = addUser(jdbc);
+        var others = new java.util.ArrayList<Integer>();
+        for (int i = 0; i < 51; i++) {
+            int other = addUser(jdbc); others.add(other);
+            int a = i % 2 == 0 ? owner : other, b = i % 2 == 0 ? other : owner;
+            jdbc.update("INSERT INTO solicitud_contacto(id_usuario_emisor,id_usuario_receptor,estado) VALUES(?,?,'aceptada')", a, b);
+            int request = jdbc.queryForObject("SELECT id_solicitud FROM solicitud_contacto WHERE id_usuario_emisor=? AND id_usuario_receptor=?", Integer.class, a, b);
+            jdbc.update("INSERT INTO contacto_roomie(id_solicitud,id_usuario_a,id_usuario_b) VALUES(?,?,?)", request, a, b);
+            if (i < 50) jdbc.update("INSERT INTO contacto_usuario(id_usuario,telefono,whatsapp,email_contacto,mostrar_whatsapp) VALUES(?,'999888777','51999888777','private@example.test',1)", other);
+        }
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        try {
+            for (int size : new int[]{10, 20, 50}) {
+                stats.clear();
+                var page = contactos.listarDesbloqueados(owner, 0, size);
+                long queries = stats.getPrepareStatementCount();
+                System.out.printf("CONTACT_QUERIES size=%d queries=%d%n", size, queries);
+                assertThat(queries).isLessThanOrEqualTo(3);
+                assertThat(page.getContent()).hasSize(size);
+                assertThat(page.getTotalElements()).isEqualTo(51);
+                assertThat(page.getContent()).allSatisfy(row -> {
+                    assertThat(others).contains(row.idUsuario());
+                    if (row.contacto() != null) {
+                        assertThat(row.contacto().getTelefono()).isNull();
+                        assertThat(row.contacto().getEmailContacto()).isNull();
+                        assertThat(row.contacto().getWhatsapp()).isEqualTo("51999888777");
+                    }
+                });
+            }
+        } finally { stats.setStatisticsEnabled(false); }
+        assertThat(contactos.listarDesbloqueados(stranger, 0, 20)).isEmpty();
+        for (int other : others.subList(0, 2)) {
+            assertThat(contactos.listarDesbloqueados(other, 0, 20).getContent()).singleElement()
+                    .satisfies(row -> assertThat(row.idUsuario()).isEqualTo(owner));
+            assertThat(contactos.verContactoDesbloqueado(owner, other).getTelefono()).isNull();
+            assertThat(contactos.verContactoDesbloqueado(other, other).getTelefono()).isEqualTo("999888777");
+            assertThatThrownBy(() -> contactos.verContactoDesbloqueado(stranger, other)).isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        }
+    }
+
+    @Test
+    void concurrentContactCreationAndStaleEditsCannotReopenPrivacy() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int user = addUser(jdbc);
+        var create = new com.roommatch.dto.ContactoUsuarioRequest(); create.setEmailContacto("chosen@example.test");
+        assertThat(race(() -> contactos.guardarOModificarMiContacto(user, create), () -> contactos.guardarOModificarMiContacto(user, create)))
+                .containsExactlyInAnyOrder("success", "conflict");
+        var before = contactos.obtenerMiContacto(user);
+        assertThat(before.getMostrarEmail()).isFalse();
+        var edit = new com.roommatch.dto.ContactoUsuarioRequest(); edit.setVersion(before.getVersion()); edit.setMostrarWhatsapp(true);
+        var saved = contactos.guardarOModificarMiContacto(user, edit);
+        assertThat(saved.getVersion()).isGreaterThan(before.getVersion());
+        edit.setMostrarEmail(true);
+        assertThatThrownBy(() -> contactos.guardarOModificarMiContacto(user, edit)).isInstanceOf(com.roommatch.exception.ConflictException.class);
+        assertThat(contactos.obtenerMiContacto(user).getMostrarEmail()).isFalse();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM contacto_usuario WHERE id_usuario=?", Integer.class, user)).isEqualTo(1);
+    }
 
     @Test
     @org.springframework.security.test.context.support.WithMockUser(roles="ADMIN")
@@ -356,6 +419,7 @@ class SqlServerIT {
             connection.createStatement().execute("INSERT INTO rol(nombre_rol) VALUES ('USUARIO')");
             connection.createStatement().execute("INSERT INTO usuario(id_rol,nombres,apellidos,email,password_hash,edad) "
                     + "VALUES(1,'Conservar','Historial','legacy@example.invalid','unused',25)");
+            connection.createStatement().execute("INSERT INTO contacto_usuario(id_usuario,email_contacto) VALUES(1,'legacy-contact@example.invalid')");
         }
         Flyway upgrade = Flyway.configure().dataSource(url("roommatch_legacy"), SQL.getUsername(), SQL.getPassword())
                 .baselineOnMigrate(false).cleanDisabled(true).baselineVersion("1").load();
@@ -368,6 +432,10 @@ class SqlServerIT {
             assertThat(rows.next()).isTrue();
             assertThat(rows.getString(1)).isEqualTo("Conservar");
             assertThat(rows.next()).isFalse();
+            var contact = connection.createStatement().executeQuery("SELECT mostrar_email,email_contacto FROM contacto_usuario WHERE id_usuario=1");
+            assertThat(contact.next()).isTrue();
+            assertThat(contact.getBoolean(1)).isTrue();
+            assertThat(contact.getString(2)).isEqualTo("legacy-contact@example.invalid");
         }
     }
 
