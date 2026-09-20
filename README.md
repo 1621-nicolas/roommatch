@@ -151,6 +151,26 @@ npm test -- --watch=false
 
 El repositorio incluye GitHub Actions para validar ambas partes automáticamente.
 
+CI incluye integración con SQL Server mediante Testcontainers y `npm audit
+--audit-level=high`, además del build y las pruebas frontend. Un resultado de
+CI no sustituye las pruebas de navegador ni la validación del despliegue.
+
+## Auditoría y estado del proyecto
+
+La implementación está en la rama `audit/roommatch-hardening`, con el
+[PR #4 en borrador](https://github.com/1621-nicolas/roommatch/pull/4). No está
+declarada lista para producción. Consulta el [estado actual y pendientes](docs/IMPLEMENTATION_STATUS.md).
+
+- [Auditoría y evidencia del baseline](ROOMMATCH_AUDIT.md)
+- [Arquitectura y matriz de consistencia del baseline](ROOMMATCH_ARCHITECTURE.md)
+- [Seguridad y riesgos pendientes](ROOMMATCH_SECURITY.md)
+- [Plan de pruebas y ejecución](ROOMMATCH_TEST_PLAN.md)
+- [Roadmap por sprints](ROOMMATCH_ROADMAP.md)
+
+Los contratos actuales de [matching](docs/MATCHING.md),
+[reglas de negocio](docs/BUSINESS_RULES.md), [contactos](docs/CONTACTS.md)
+y [administración](docs/ADMIN.md) documentan los cambios posteriores al baseline.
+
 ## Seguridad
 
 - Las contraseñas de usuarios se almacenan con BCrypt.
