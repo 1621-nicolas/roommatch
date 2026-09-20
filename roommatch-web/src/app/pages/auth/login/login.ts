@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
+import { Subscription, finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -8,9 +9,13 @@ import { LoginRequest } from '../../../core/models/login-request';
 @Component({
   selector: 'app-login',
   imports: [FormsModule, RouterLink],
-  templateUrl: './login.html'
+  templateUrl: './login.html',
+  styleUrl: '../auth-form.css'
 })
-export class Login {
+export class Login implements OnDestroy {
+  private request?: Subscription;
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  readonly registroExitoso: boolean;
   loginData: LoginRequest = {
     email: '',
     password: ''
@@ -24,9 +29,12 @@ export class Login {
     private authService: AuthService,
     private router: Router,
     route: ActivatedRoute
-  ) { this.sesionVencida = route.snapshot.queryParamMap.get('reason') === 'session-expired'; }
+  ) { this.sesionVencida = route.snapshot.queryParamMap.get('reason') === 'session-expired'; this.registroExitoso = router.getCurrentNavigation()?.extras.state?.['registroExitoso'] === true; }
+
+  ngOnDestroy(): void { this.request?.unsubscribe(); }
 
   iniciarSesion(): void {
+    if (this.cargando) return;
     this.mensajeError = '';
 
     if (!this.loginData.email || !this.loginData.password) {
@@ -36,7 +44,7 @@ export class Login {
 
     this.cargando = true;
 
-    this.authService.login(this.loginData).subscribe({
+    this.request = this.authService.login({...this.loginData, email: this.loginData.email.trim().toLowerCase()}).pipe(finalize(() => { this.cargando = false; this.changeDetector.markForCheck(); })).subscribe({
       next: response => {
         this.cargando = false;
 

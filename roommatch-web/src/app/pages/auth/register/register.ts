@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
+import { Subscription, finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -12,9 +13,12 @@ import { passwordError } from '../../../core/validation/password-policy';
     FormsModule,
     RouterLink
   ],
-  templateUrl: './register.html'
+  templateUrl: './register.html',
+  styleUrl: '../auth-form.css'
 })
-export class Register {
+export class Register implements OnDestroy {
+  private request?: Subscription;
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   registroData: RegistroRequest = {
     nombres: '',
@@ -32,7 +36,10 @@ export class Register {
     private router: Router
   ) {}
 
+  ngOnDestroy(): void { this.request?.unsubscribe(); }
+
   crearCuenta(): void {
+    if (this.cargando) return;
     this.mensajeError = '';
 
     if (
@@ -45,12 +52,12 @@ export class Register {
       return;
     }
 
-    if (!Number.isInteger(this.registroData.edad) || this.registroData.edad < 18) {
-      this.mensajeError = 'Debes tener al menos 18 años';
+    if (!Number.isInteger(this.registroData.edad) || this.registroData.edad < 18 || this.registroData.edad > 120) {
+      this.mensajeError = 'Ingresa una edad entre 18 y 120 años';
       return;
     }
 
-    if (!this.emailValido(this.registroData.email)) {
+    if (!this.emailValido(this.registroData.email.trim())) {
       this.mensajeError = 'Ingresa un correo electrónico válido';
       return;
     }
@@ -71,7 +78,7 @@ export class Register {
       password: this.registroData.password
     };
 
-    this.authService.registrar(request).subscribe({
+    this.request = this.authService.registrar(request).pipe(finalize(() => { this.cargando = false; this.changeDetector.markForCheck(); })).subscribe({
       next: response => {
         this.cargando = false;
 
@@ -94,8 +101,8 @@ export class Register {
         this.cargando = false;
 
         if (error.error?.data) {
-          const errores = Object.values(error.error.data) as string[];
-          this.mensajeError = errores.join('. ');
+          const errores = typeof error.error.data === 'object' ? Object.values(error.error.data).filter((value): value is string => typeof value === 'string') : []; 
+          this.mensajeError = errores.join('. ') || 'No se pudo crear la cuenta. Revisa los datos e inténtalo otra vez.';
           return;
         }
 
