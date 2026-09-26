@@ -15,9 +15,11 @@ import java.util.Objects;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final ImageUrlPolicy imageUrlPolicy;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, ImageUrlPolicy imageUrlPolicy) {
         this.usuarioRepository = usuarioRepository;
+        this.imageUrlPolicy = imageUrlPolicy;
     }
 
     @Transactional(readOnly = true)
@@ -43,12 +45,15 @@ public class UsuarioService {
                 .findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
+        String foto = normalizarTexto(request.getFoto());
+        if (foto != null) foto = imageUrlPolicy.validate(foto);
+
         usuario.setNombres(request.getNombres().trim());
         usuario.setApellidos(request.getApellidos().trim());
         usuario.setEdad(request.getEdad());
         usuario.setOcupacion(normalizarTexto(request.getOcupacion()));
         usuario.setUniversidad(normalizarTexto(request.getUniversidad()));
-        usuario.setFoto(normalizarTexto(request.getFoto()));
+        usuario.setFoto(foto);
 
         Usuario actualizado = usuarioRepository.save(Objects.requireNonNull(usuario));
         return UsuarioResponse.fromEntity(actualizado);
