@@ -22,7 +22,7 @@ class PublicacionRoomieServiceTest {
     final HabitacionRepository habitaciones = mock(HabitacionRepository.class);
     final MatchService matches = mock(MatchService.class);
     final PlanPolicy policy = mock(PlanPolicy.class);
-    final PublicacionRoomieService service = new PublicacionRoomieService(publicaciones, usuarios, matches, habitaciones, policy, Clock.systemUTC());
+    final PublicacionRoomieService service = new PublicacionRoomieService(publicaciones, usuarios, matches, habitaciones, policy, Clock.systemUTC(), mock(ImagePreviewService.class));
 
     @Test
     void logicalDeletePreservesRowAndCannotBeReactivated() {

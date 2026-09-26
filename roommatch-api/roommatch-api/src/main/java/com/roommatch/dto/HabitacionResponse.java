@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 public class HabitacionResponse {
 
     private Integer idHabitacion;
+    private String imagenPrincipal;
+    public String getImagenPrincipal() { return imagenPrincipal; }
+    public void setImagenPrincipal(String imagenPrincipal) { this.imagenPrincipal = imagenPrincipal; }
     private Boolean bloqueada;
     public Boolean getBloqueada() { return bloqueada; }
     public void setBloqueada(Boolean bloqueada) { this.bloqueada = bloqueada; }

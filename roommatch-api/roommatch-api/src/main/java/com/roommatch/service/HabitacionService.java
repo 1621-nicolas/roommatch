@@ -24,11 +24,12 @@ public class HabitacionService {
     private final PropietarioRepository propietarioRepository;
     private final PlanPolicy policy;
     private final HabitacionBusquedaRepository busqueda;
+    private final ImagePreviewService previews;
 
     public HabitacionService(HabitacionRepository habitaciones, PropietarioRepository propietarios,
-            PlanPolicy policy, HabitacionBusquedaRepository busqueda) {
+            PlanPolicy policy, HabitacionBusquedaRepository busqueda, ImagePreviewService previews) {
         this.habitacionRepository = habitaciones; this.propietarioRepository = propietarios;
-        this.policy = policy; this.busqueda = busqueda;
+        this.policy = policy; this.busqueda = busqueda; this.previews = previews;
     }
 
     @Transactional
@@ -40,28 +41,26 @@ public class HabitacionService {
         Habitacion habitacion = new Habitacion();
         habitacion.setPropietario(propietario);
         copiarDatos(request, habitacion);
-        return HabitacionResponse.fromEntity(habitacionRepository.saveAndFlush(habitacion));
+        return response(habitacionRepository.saveAndFlush(habitacion));
     }
 
     public Page<HabitacionResponse> listarHabitacionesPublicas(String distrito, BigDecimal minimo, BigDecimal maximo,
             Boolean amoblado, Boolean banoPrivado, Boolean mascotas, Pageable pageable) {
         if (minimo != null && maximo != null && maximo.compareTo(minimo) < 0) throw new IllegalArgumentException("El precio máximo no puede ser menor que el mínimo");
-        return busqueda.buscarHabitacionesAvanzado(distrito, minimo, maximo, amoblado, banoPrivado, mascotas, pageable)
-                .map(HabitacionResponse::fromEntity);
+        return responses(busqueda.buscarHabitacionesAvanzado(distrito, minimo, maximo, amoblado, banoPrivado, mascotas, pageable));
     }
 
     public HabitacionResponse obtenerHabitacionPorId(Integer id) {
         Habitacion habitacion = habitacionRepository.findById(requerirId(id, "idHabitacion"))
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
         if (!policy.visible(habitacion)) throw new ResourceNotFoundException("La habitación no está disponible");
-        return HabitacionResponse.fromEntity(habitacion);
+        return response(habitacion);
     }
 
     public Page<HabitacionResponse> listarMisHabitaciones(Integer usuario, Pageable pageable) {
         Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuario)
                 .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
-        return habitacionRepository.findByPropietarioIdPropietarioOrderByFechaPublicacionDesc(propietario.getIdPropietario(), pageable)
-                .map(HabitacionResponse::fromEntity);
+        return responses(habitacionRepository.findByPropietarioIdPropietarioOrderByFechaPublicacionDesc(propietario.getIdPropietario(), pageable));
     }
 
     @Transactional
@@ -75,7 +74,7 @@ public class HabitacionService {
         }
         // Content edits and removing a highlight remain possible after expiration.
         copiarDatos(request, habitacion);
-        return HabitacionResponse.fromEntity(habitacionRepository.saveAndFlush(habitacion));
+        return response(habitacionRepository.saveAndFlush(habitacion));
     }
 
     @Transactional
@@ -90,7 +89,7 @@ public class HabitacionService {
     private HabitacionResponse cambiarEstado(Integer usuario, Integer id, String estado) {
         Propietario propietario = propietarioParaEscritura(usuario);
         Habitacion habitacion = propia(propietario, id);
-        if (estado.equals(habitacion.getEstado())) return HabitacionResponse.fromEntity(habitacion);
+        if (estado.equals(habitacion.getEstado())) return response(habitacion);
         if ("eliminada".equals(habitacion.getEstado())) throw new ConflictException("La habitación está archivada");
         if ("activa".equals(estado)) {
             if (Boolean.TRUE.equals(habitacion.getBloqueada())) throw new AccessDeniedException("La habitación está bloqueada por moderación");
@@ -103,7 +102,20 @@ public class HabitacionService {
         }
         if ("eliminada".equals(estado) || "alquilada".equals(estado)) habitacion.setDestacada(false);
         habitacion.setEstado(estado);
-        return HabitacionResponse.fromEntity(habitacionRepository.saveAndFlush(habitacion));
+        return response(habitacionRepository.saveAndFlush(habitacion));
+    }
+
+    private Page<HabitacionResponse> responses(Page<Habitacion> page) {
+        var images = previews.rooms(page.getContent().stream().map(Habitacion::getIdHabitacion).toList());
+        return page.map(room -> {
+            var dto = HabitacionResponse.fromEntity(room);
+            dto.setImagenPrincipal(images.get(room.getIdHabitacion()));
+            return dto;
+        });
+    }
+
+    private HabitacionResponse response(Habitacion room) {
+        return responses(new org.springframework.data.domain.PageImpl<>(java.util.List.of(room))).getContent().get(0);
     }
 
     private Propietario propietarioParaEscritura(Integer usuario) {

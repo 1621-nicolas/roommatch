@@ -21,7 +21,7 @@ class OwnerPlanRulesTest {
     final PlanPropietarioRepository plans = mock(PlanPropietarioRepository.class);
     final Clock clock = Clock.fixed(Instant.parse("2026-09-01T12:00:00Z"), ZoneOffset.UTC);
     final PlanPolicy policy = new PlanPolicy(subs, rooms, clock);
-    final HabitacionService service = new HabitacionService(rooms, owners, policy, mock(HabitacionBusquedaRepository.class));
+    final HabitacionService service = new HabitacionService(rooms, owners, policy, mock(HabitacionBusquedaRepository.class), mock(ImagePreviewService.class));
     final PlanPropietarioService planService = new PlanPropietarioService(plans, owners, subs, mock(NotificacionRepository.class), rooms, policy, clock);
     final Propietario owner = new Propietario();
     final PlanPropietario plan = new PlanPropietario();

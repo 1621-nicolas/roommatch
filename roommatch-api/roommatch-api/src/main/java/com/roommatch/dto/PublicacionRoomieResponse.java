@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 
 
 public class PublicacionRoomieResponse {
+    private String imagenPrincipal;
+    public String getImagenPrincipal() { return imagenPrincipal; }
+    public void setImagenPrincipal(String imagenPrincipal) { this.imagenPrincipal = imagenPrincipal; }
 
     private Integer idPublicacion;
     private Boolean viviendaReferenciaDisponible;

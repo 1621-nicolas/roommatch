@@ -27,11 +27,12 @@ public class PublicacionRoomieService {
     private final MatchService matches;
     private final PlanPolicy planPolicy;
     private final Clock clock;
+    private final ImagePreviewService previews;
 
     public PublicacionRoomieService(PublicacionRoomieRepository publicaciones, UsuarioRepository usuarios,
-            MatchService matches, HabitacionRepository habitaciones, PlanPolicy planPolicy, Clock clock) {
+            MatchService matches, HabitacionRepository habitaciones, PlanPolicy planPolicy, Clock clock, ImagePreviewService previews) {
         this.publicaciones = publicaciones; this.usuarios = usuarios; this.matches = matches;
-        this.habitaciones = habitaciones; this.planPolicy = planPolicy; this.clock = clock;
+        this.habitaciones = habitaciones; this.planPolicy = planPolicy; this.clock = clock; this.previews = previews;
     }
 
     @Transactional
@@ -111,6 +112,7 @@ public class PublicacionRoomieService {
 
     private Page<PublicacionRoomieResponse> responses(Page<PublicacionRoomie> page, Integer actual) {
         List<PublicacionRoomie> rows = page.getContent();
+        Map<Integer, String> images = previews.publications(rows.stream().map(PublicacionRoomie::getIdPublicacion).toList());
         Map<Integer, CompatibilidadCalculada> compatibility = matches.obtenerCompatibilidades(actual,
                 rows.stream().map(p -> p.getUsuario().getIdUsuario()).toList());
         Set<Integer> linkedIds = rows.stream().map(PublicacionRoomie::getHabitacion).filter(Objects::nonNull)
@@ -119,6 +121,7 @@ public class PublicacionRoomieService {
         return page.map(publicacion -> {
             PublicacionRoomieResponse dto = PublicacionRoomieResponse.fromEntity(publicacion,
                     compatibility.get(publicacion.getUsuario().getIdUsuario()), actual);
+            dto.setImagenPrincipal(images.get(publicacion.getIdPublicacion()));
             boolean disponible = publicacion.getHabitacion() != null && visible.contains(publicacion.getHabitacion().getIdHabitacion());
             dto.setViviendaReferenciaDisponible(disponible);
             if (publicacion.getHabitacion() != null && !disponible) {

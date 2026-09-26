@@ -233,6 +233,51 @@ class SqlServerIT {
     }
 
     @Test
+    void publicRoomThumbnailsAreBatchedAndRespectVisibilityAndLegacyUrlPolicy() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        var ids = new java.util.ArrayList<Integer>();
+        var expected = new java.util.HashMap<Integer, String>();
+        for (int i = 0; i < 51; i++) {
+            int user = addUser(jdbc);
+            var owner = new com.roommatch.dto.PropietarioRequest(); owner.setTipoPropietario("persona");
+            propietarios.convertirmeEnPropietario(user, owner);
+            var request = new com.roommatch.dto.HabitacionRequest();
+            request.setTitulo("Fotos " + i); request.setDescripcion("Habitación con galería");
+            request.setDistrito("GalleryBatch"); request.setPrecio(new java.math.BigDecimal("600"));
+            int id = habitaciones.crearHabitacion(user, request).getIdHabitacion(); ids.add(id);
+            if (i % 3 != 2) {
+                String primary = i % 3 == 0 ? "https://images.example/primary.jpg" : "javascript:alert(1)";
+                jdbc.update("INSERT INTO imagen_habitacion(id_habitacion,url_imagen,orden,principal) VALUES(?,?,1,0)", id, "https://images.example/secondary.jpg");
+                jdbc.update("INSERT INTO imagen_habitacion(id_habitacion,url_imagen,orden,principal) VALUES(?,?,2,1)", id, primary);
+                expected.put(id, i % 3 == 0 ? primary : "https://images.example/secondary.jpg");
+            }
+        }
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        try {
+            for (int size : new int[]{10, 20, 50}) {
+                stats.clear();
+                var page = habitaciones.listarHabitacionesPublicas("GalleryBatch", null, null, null, null, null, org.springframework.data.domain.PageRequest.of(0, size));
+                long queries = stats.getPrepareStatementCount();
+                System.out.printf("ROOM_IMAGE_QUERIES size=%d queries=%d%n", size, queries);
+                assertThat(queries).isLessThanOrEqualTo(3);
+                assertThat(page.getTotalElements()).isEqualTo(51);
+                assertThat(page.getContent()).hasSize(size).allSatisfy(row ->
+                        assertThat(row.getImagenPrincipal()).isEqualTo(expected.get(row.getIdHabitacion())));
+            }
+        } finally { stats.setStatisticsEnabled(false); }
+        jdbc.update("UPDATE habitacion SET estado='pausada' WHERE id_habitacion=?", ids.get(0));
+        jdbc.update("UPDATE habitacion SET bloqueada=1 WHERE id_habitacion=?", ids.get(1));
+        for (int id : ids.subList(0, 2)) {
+            assertThatThrownBy(() -> habitaciones.obtenerHabitacionPorId(id)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+            assertThatThrownBy(() -> imagenesHabitacion.listarImagenesPorHabitacion(id, null)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        }
+        var page = habitaciones.listarHabitacionesPublicas("GalleryBatch", null, null, null, null, null, org.springframework.data.domain.PageRequest.of(0, 100));
+        assertThat(page.getTotalElements()).isEqualTo(49);
+        assertThat(page.getContent()).noneSatisfy(row -> assertThat(ids.subList(0, 2)).contains(row.getIdHabitacion()));
+    }
+
+    @Test
     void publicationPagesUseBoundedQueriesForTenTwentyAndFiftyCards() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         int visitor = addUser(jdbc); addProfile(jdbc, visitor);
@@ -246,6 +291,8 @@ class SqlServerIT {
             int author = addUser(jdbc); addProfile(jdbc, author);
             jdbc.update("INSERT INTO publicacion_roomie(id_usuario,tipo_publicacion,titulo,descripcion,distrito,tipo_vinculacion_vivienda,id_habitacion) "
                     + "VALUES(?,'busco_compartir','Prueba batch','Prueba de 50 publicaciones','BatchDistrict',?,?)", author, i % 2 == 0 ? "roommatch" : null, i % 2 == 0 ? room : null);
+            int id = jdbc.queryForObject("SELECT id_publicacion FROM publicacion_roomie WHERE id_usuario=?", Integer.class, author);
+            jdbc.update("INSERT INTO imagen_publicacion(id_publicacion,url_imagen,orden,principal) VALUES(?,'https://images.example/publication.jpg',1,1)", id);
         }
         var statistics = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
         statistics.setStatisticsEnabled(true);
@@ -255,8 +302,9 @@ class SqlServerIT {
             long queries = statistics.getPrepareStatementCount();
             System.out.printf("PUBLICATION_QUERIES size=%d queries=%d%n", size, queries);
             assertThat(page.getContent()).hasSize(size);
-            assertThat(queries).isLessThanOrEqualTo(4);
+            assertThat(queries).isLessThanOrEqualTo(5);
             assertThat(page.getContent()).allSatisfy(p -> assertThat(p.getPorcentajeCompatibilidad()).isEqualByComparingTo("100"));
+            assertThat(page.getContent()).allSatisfy(p -> assertThat(p.getImagenPrincipal()).isEqualTo("https://images.example/publication.jpg"));
         }
         statistics.setStatisticsEnabled(false);
     }

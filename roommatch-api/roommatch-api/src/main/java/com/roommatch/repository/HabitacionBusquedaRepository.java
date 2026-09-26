@@ -74,7 +74,7 @@ public class HabitacionBusquedaRepository {
 
         String jpql = """
                 SELECT h
-                FROM Habitacion h JOIN FETCH h.propietario p JOIN FETCH p.usuario
+                FROM Habitacion h JOIN FETCH h.propietario p JOIN FETCH p.usuario u JOIN FETCH u.rol
                 """ + where + """
                 ORDER BY h.destacada DESC, h.fechaPublicacion DESC, h.idHabitacion DESC
                 """;
