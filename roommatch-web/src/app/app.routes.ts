@@ -1,85 +1,62 @@
 import { Routes } from '@angular/router';
 
-import { Home } from './pages/home/home';
-import { Login } from './pages/auth/login/login';
-import { Register } from './pages/auth/register/register';
-import { MiCuenta } from './pages/mi-cuenta/mi-cuenta';
-import { Perfil } from './pages/perfil/perfil';
-import { Matches } from './pages/matches/matches';
-import { Favoritos } from './pages/favoritos/favoritos';
-import { Solicitudes } from './pages/solicitudes/solicitudes';
-import { Contactos } from './pages/contactos/contactos';
-import { Notificaciones } from './pages/notificaciones/notificaciones';
-import { Habitaciones } from './pages/habitaciones/habitaciones';
-import { HabitacionDetalle } from './pages/habitacion-detalle/habitacion-detalle';
-import { PropietarioPanel } from './pages/propietario/propietario-panel/propietario-panel';
-import { Planes } from './pages/propietario/propietario-planes/propietario-planes';
-import { MisHabitaciones } from './pages/propietario/mis-habitaciones/mis-habitaciones';
-import { Interesados } from './pages/propietario/leads/interesados';
-import { PropietarioRegistro } from './pages/propietario/propietario-registro/propietario-registro';
-import { PublicacionesList } from './pages/publicaciones-roomie/publicaciones-list/publicaciones-list';
-import { PublicacionesDetail } from './pages/publicaciones-roomie/publicaciones-detail/publicaciones-detail';
-import { MisPublicaciones } from './pages/publicaciones-roomie/mis-publicaciones/mis-publicaciones';
-import { Dashboard } from './pages/admin/dashboard/dashboard';
-import { Reportes } from './pages/admin/reportes/reportes';
-
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { propietarioGuard } from './core/guards/propietario.guard';
 
 export const routes: Routes = [
-  { path: '', component: Home },
-  { path: 'login', component: Login },
-  { path: 'register', component: Register },
+  { path: '', loadComponent: () => import('./pages/home/home').then(module => module.Home) },
+  { path: 'login', loadComponent: () => import('./pages/auth/login/login').then(module => module.Login) },
+  { path: 'register', loadComponent: () => import('./pages/auth/register/register').then(module => module.Register) },
 
-  { path: 'habitaciones', component: Habitaciones },
-  { path: 'habitaciones/:idHabitacion', component: HabitacionDetalle },
-  { path: 'publicaciones-roomie', component: PublicacionesList },
-  { path: 'publicaciones-roomie/:id', component: PublicacionesDetail },
+  { path: 'habitaciones', loadComponent: () => import('./pages/habitaciones/habitaciones').then(module => module.Habitaciones) },
+  { path: 'habitaciones/:idHabitacion', loadComponent: () => import('./pages/habitacion-detalle/habitacion-detalle').then(module => module.HabitacionDetalle) },
+  { path: 'publicaciones-roomie', loadComponent: () => import('./pages/publicaciones-roomie/publicaciones-list/publicaciones-list').then(module => module.PublicacionesList) },
+  { path: 'publicaciones-roomie/:id', loadComponent: () => import('./pages/publicaciones-roomie/publicaciones-detail/publicaciones-detail').then(module => module.PublicacionesDetail) },
 
-  { path: 'mi-cuenta', component: MiCuenta, canActivate: [authGuard] },
-  { path: 'perfil', component: Perfil, canActivate: [authGuard] },
-  { path: 'matches', component: Matches, canActivate: [authGuard] },
-  { path: 'favoritos', component: Favoritos, canActivate: [authGuard] },
-  { path: 'solicitudes', component: Solicitudes, canActivate: [authGuard] },
-  { path: 'contactos', component: Contactos, canActivate: [authGuard] },
-  { path: 'notificaciones', component: Notificaciones, canActivate: [authGuard] },
-  { path: 'mis-publicaciones', component: MisPublicaciones, canActivate: [authGuard] },
+  { path: 'mi-cuenta', loadComponent: () => import('./pages/mi-cuenta/mi-cuenta').then(module => module.MiCuenta), canActivate: [authGuard] },
+  { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil').then(module => module.Perfil), canActivate: [authGuard] },
+  { path: 'matches', loadComponent: () => import('./pages/matches/matches').then(module => module.Matches), canActivate: [authGuard] },
+  { path: 'favoritos', loadComponent: () => import('./pages/favoritos/favoritos').then(module => module.Favoritos), canActivate: [authGuard] },
+  { path: 'solicitudes', loadComponent: () => import('./pages/solicitudes/solicitudes').then(module => module.Solicitudes), canActivate: [authGuard] },
+  { path: 'contactos', loadComponent: () => import('./pages/contactos/contactos').then(module => module.Contactos), canActivate: [authGuard] },
+  { path: 'notificaciones', loadComponent: () => import('./pages/notificaciones/notificaciones').then(module => module.Notificaciones), canActivate: [authGuard] },
+  { path: 'mis-publicaciones', loadComponent: () => import('./pages/publicaciones-roomie/mis-publicaciones/mis-publicaciones').then(module => module.MisPublicaciones), canActivate: [authGuard] },
 
   {
     path: 'propietario/registro',
-    component: PropietarioRegistro,
+    loadComponent: () => import('./pages/propietario/propietario-registro/propietario-registro').then(module => module.PropietarioRegistro),
     canActivate: [authGuard]
   },
   {
     path: 'propietario',
-    component: PropietarioPanel,
+    loadComponent: () => import('./pages/propietario/propietario-panel/propietario-panel').then(module => module.PropietarioPanel),
     canActivate: [propietarioGuard]
   },
   {
     path: 'propietario/planes',
-    component: Planes,
+    loadComponent: () => import('./pages/propietario/propietario-planes/propietario-planes').then(module => module.Planes),
     canActivate: [propietarioGuard]
   },
   {
     path: 'propietario/habitaciones',
-    component: MisHabitaciones,
+    loadComponent: () => import('./pages/propietario/mis-habitaciones/mis-habitaciones').then(module => module.MisHabitaciones),
     canActivate: [propietarioGuard]
   },
   {
     path: 'propietario/leads',
-    component: Interesados,
+    loadComponent: () => import('./pages/propietario/leads/interesados').then(module => module.Interesados),
     canActivate: [propietarioGuard]
   },
 
   {
     path: 'admin/dashboard',
-    component: Dashboard,
+    loadComponent: () => import('./pages/admin/dashboard/dashboard').then(module => module.Dashboard),
     canActivate: [adminGuard]
   },
   {
     path: 'admin/reportes',
-    component: Reportes,
+    loadComponent: () => import('./pages/admin/reportes/reportes').then(module => module.Reportes),
     canActivate: [adminGuard]
   },
 

@@ -35,17 +35,11 @@ roommatch/
 
 ## 1. Base de datos
 
-El archivo `Base de datos_Roommatch.sql` recrea `roommatch_db` desde cero.
+Crea una base vacía `roommatch_db` y configura la conexión del backend. Flyway ejecuta las migraciones versionadas de `roommatch-api/roommatch-api/src/main/resources/db/migration`, incluidos los roles y el plan `Gratis`.
 
-> ADVERTENCIA: el script elimina `roommatch_db` si ya existe. No debe ejecutarse sobre una base con información que necesites conservar.
+Para una base existente sigue el [procedimiento de baseline y actualización](database/README.md). El baseline es explícito: arrancar contra una base antigua sin historial Flyway falla, sin borrar sus datos.
 
-Para una instalación nueva:
-
-1. Ejecuta `Base de datos_Roommatch.sql` en SQL Server.
-2. Ejecuta los scripts de `database/migrations/` en orden.
-3. Ejecuta `database/seed_required_data.sql`.
-
-El seed agrega los roles `USUARIO`, `PROPIETARIO`, `ADMIN` y el plan inicial `Gratis` que necesita el backend.
+`Base de datos_Roommatch.sql` se conserva como bootstrap histórico **destructivo y exclusivo de desarrollo**. No es un mecanismo de actualización.
 
 ## 2. Configuración local del backend
 
@@ -69,7 +63,7 @@ como:
 application-local.properties
 ```
 
-Luego configura tus credenciales locales de SQL Server y una clave JWT de al menos 32 caracteres.
+Luego configura tus credenciales locales de SQL Server. En el perfil `development`, dejar `jwt.secret` vacío genera una clave temporal que cambia al reiniciar. Para conservar sesiones locales puedes definir una clave aleatoria propia de al menos 32 bytes.
 
 `application-local.properties` está ignorado por Git.
 
@@ -84,17 +78,18 @@ roommatch-api/roommatch-api
 Windows PowerShell:
 
 ```powershell
-.\mvnw spring-boot:run
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=development"
 ```
 
 Linux/macOS:
 
 ```bash
-chmod +x mvnw
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=development
 ```
 
-Por defecto la API se inicia en:
+Sin un perfil explícito se utiliza `production`: requiere `JWT_SECRET`, `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`; la URL SQL debe incluir `encrypt=true;trustServerCertificate=false`. Swagger queda deshabilitado. No se importa el archivo local en producción. Los tokens nuevos usan identidad numérica, issuer/audience y vencen por defecto en dos horas; las sesiones anteriores deben iniciar sesión de nuevo.
+
+En desarrollo la API se inicia en:
 
 ```text
 http://localhost:8081
@@ -132,13 +127,17 @@ Angular se inicia normalmente en:
 http://localhost:4200
 ```
 
+La API del navegador usa `/api`. En desarrollo, `proxy.conf.json` reenvía estas peticiones a `http://localhost:8081`; reinicia `npm start` si cambias el proxy. En producción, sirve Angular y `/api` bajo el mismo origen mediante un reverse proxy. La configuración compilada se define en `src/environments/`. Consulta [despliegue y sesión](deployment/README.md).
+
 ## 5. Pruebas y compilación
 
 Backend:
 
 ```powershell
 cd roommatch-api\roommatch-api
-.\mvnw clean test
+.\mvnw clean verify
+# Con Docker, incluye migraciones e integración sobre SQL Server 2022:
+.\mvnw clean verify -Psqlserver
 ```
 
 Frontend:
@@ -147,9 +146,30 @@ Frontend:
 cd roommatch-web
 npm ci
 npm run build
+npm test -- --watch=false
 ```
 
 El repositorio incluye GitHub Actions para validar ambas partes automáticamente.
+
+CI incluye integración con SQL Server mediante Testcontainers y `npm audit
+--audit-level=high`, además del build y las pruebas frontend. Un resultado de
+CI no sustituye las pruebas de navegador ni la validación del despliegue.
+
+## Auditoría y estado del proyecto
+
+La implementación está en la rama `audit/roommatch-hardening`, con el
+[PR #4 en borrador](https://github.com/1621-nicolas/roommatch/pull/4). No está
+declarada lista para producción. Consulta el [estado actual y pendientes](docs/IMPLEMENTATION_STATUS.md).
+
+- [Auditoría y evidencia del baseline](ROOMMATCH_AUDIT.md)
+- [Arquitectura y matriz de consistencia del baseline](ROOMMATCH_ARCHITECTURE.md)
+- [Seguridad y riesgos pendientes](ROOMMATCH_SECURITY.md)
+- [Plan de pruebas y ejecución](ROOMMATCH_TEST_PLAN.md)
+- [Roadmap por sprints](ROOMMATCH_ROADMAP.md)
+
+Los contratos actuales de [matching](docs/MATCHING.md),
+[reglas de negocio](docs/BUSINESS_RULES.md), [contactos](docs/CONTACTS.md)
+y [administración](docs/ADMIN.md) documentan los cambios posteriores al baseline.
 
 ## Seguridad
 

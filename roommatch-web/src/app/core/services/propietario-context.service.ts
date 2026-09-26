@@ -1,147 +1,48 @@
-import {
-  Injectable
-} from '@angular/core';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, defer, finalize, map, takeUntil } from 'rxjs';
+import { PropietarioService } from './propietario.service';
+import { PropietarioResponse } from '../models/propietario-response';
 
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  map,
-  of,
-  tap
-} from 'rxjs';
-
-import {
-  PropietarioService
-} from './propietario.service';
-
-import {
-  PropietarioResponse
-} from '../models/propietario-response';
-
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({providedIn: 'root'})
 export class PropietarioContextService {
+  private readonly propietarioSubject = new BehaviorSubject<PropietarioResponse | null>(null);
+  private readonly cargandoSubject = new BehaviorSubject(false);
+  private readonly verificadoSubject = new BehaviorSubject(false);
+  private readonly reset = new Subject<void>();
+  private generation = 0;
+  readonly propietario$ = this.propietarioSubject.asObservable();
+  readonly cargando$ = this.cargandoSubject.asObservable();
+  readonly verificado$ = this.verificadoSubject.asObservable();
 
-  private readonly propietarioSubject =
-    new BehaviorSubject<
-      PropietarioResponse | null
-    >(null);
+  constructor(private propietarioService: PropietarioService) {}
 
-  private readonly cargandoSubject =
-    new BehaviorSubject<boolean>(false);
-
-  private readonly verificadoSubject =
-    new BehaviorSubject<boolean>(false);
-
-
-  propietario$ =
-    this.propietarioSubject.asObservable();
-
-  cargando$ =
-    this.cargandoSubject.asObservable();
-
-  verificado$ =
-    this.verificadoSubject.asObservable();
-
-
-  constructor(
-    private propietarioService:
-      PropietarioService
-  ) {}
-
-
-  verificarPropietario():
-    Observable<boolean> {
-
-    this.cargandoSubject.next(true);
-
-    return this.propietarioService
-      .obtenerMiPerfil()
-      .pipe(
-
-        tap(response => {
-
-          if (
-            response.status === 'success' &&
-            response.data
-          ) {
-
-            this.propietarioSubject.next(
-              response.data
-            );
-
-          } else {
-
-            this.propietarioSubject.next(
-              null
-            );
-          }
-
-          this.verificadoSubject.next(true);
-
-          this.cargandoSubject.next(false);
-
-        }),
-
+  verificarPropietario(): Observable<boolean> {
+    return defer(() => {
+      const generation = this.generation;
+      this.cargandoSubject.next(true);
+      return this.propietarioService.obtenerMiPerfil().pipe(
+        takeUntil(this.reset),
         map(response => {
-
-          return (
-            response.status === 'success' &&
-            response.data !== null
-          );
-        }),
-
-        catchError(() => {
-
-          this.propietarioSubject.next(null);
-
+          // The API deliberately returns success/null for a user without this capability.
+          // An error response must not turn an existing owner into a new registration prompt.
+          if (response?.status !== 'success' || response.data === undefined) throw new Error('No se pudo verificar el perfil de propietario.');
+          this.propietarioSubject.next(response.data);
           this.verificadoSubject.next(true);
-
-          this.cargandoSubject.next(false);
-
-          return of(false);
-        })
-
+          return response.data !== null;
+        }),
+        finalize(() => { if (generation === this.generation) this.cargandoSubject.next(false); })
       );
+    });
   }
 
-
-  obtenerPropietarioActual():
-    PropietarioResponse | null {
-
-    return this.propietarioSubject.value;
+  obtenerPropietarioActual(): PropietarioResponse | null { return this.propietarioSubject.value; }
+  esPropietario(): boolean { return this.propietarioSubject.value !== null; }
+  establecerPropietario(propietario: PropietarioResponse): void {
+    this.generation++; this.reset.next(); this.cargandoSubject.next(false);
+    this.propietarioSubject.next(propietario); this.verificadoSubject.next(true);
   }
-
-
-  esPropietario(): boolean {
-
-    return (
-      this.propietarioSubject.value !== null
-    );
-  }
-
-
-  establecerPropietario(
-    propietario: PropietarioResponse
-  ): void {
-
-    this.propietarioSubject.next(
-      propietario
-    );
-
-    this.verificadoSubject.next(true);
-  }
-
-
   limpiar(): void {
-
-    this.propietarioSubject.next(null);
-
-    this.cargandoSubject.next(false);
-
-    this.verificadoSubject.next(false);
+    this.generation++; this.reset.next();
+    this.propietarioSubject.next(null); this.cargandoSubject.next(false); this.verificadoSubject.next(false);
   }
 }

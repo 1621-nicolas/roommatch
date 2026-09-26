@@ -1,10 +1,13 @@
 export interface MatchResponse {
-  idMatch: number;
+  idMatch: number | null;
+  cobertura: number;
+  versionAlgoritmo: string;
+  hayImporteComun: boolean | null;
+  criterios: {id: string; nombre: string; peso: number; puntuacion: number | null}[];
   idUsuarioDestino: number;
 
   nombres: string;
   apellidos: string;
-  email: string;
 
   edad: number | null;
   ocupacion: string | null;

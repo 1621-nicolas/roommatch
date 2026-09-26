@@ -316,16 +316,18 @@
                     </label>
 
                     <input
-                      type="text"
+                      type="url"
                       id="accountFoto"
                       name="accountFoto"
+                      maxlength="255"
+                      aria-describedby="account-photo-help"
                       placeholder="https://..."
                       [(ngModel)]="usuarioData.foto"
                     >
 
-                    <small>
-                      Por ahora usaremos una URL.
-                      Después podemos implementar carga de imágenes.
+                    <small id="account-photo-help">
+                      Pega una URL HTTPS de una imagen, sin credenciales y de hasta 255 caracteres.
+                      Déjala vacía para quitar la foto. El proveedor de la imagen puede registrar las visitas.
                     </small>
 
                   </div>

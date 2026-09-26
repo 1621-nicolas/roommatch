@@ -2,292 +2,132 @@ package com.roommatch.service;
 
 import com.roommatch.dto.HabitacionRequest;
 import com.roommatch.dto.HabitacionResponse;
+import com.roommatch.exception.ResourceNotFoundException;
+import com.roommatch.exception.ConflictException;
 import com.roommatch.model.Habitacion;
 import com.roommatch.model.Propietario;
-import com.roommatch.model.SuscripcionPropietario;
-import com.roommatch.repository.HabitacionBusquedaRepository;
 import com.roommatch.repository.HabitacionRepository;
 import com.roommatch.repository.PropietarioRepository;
-import com.roommatch.repository.SuscripcionPropietarioRepository;
-import com.roommatch.util.ApiConstants;
+import com.roommatch.repository.HabitacionBusquedaRepository;
+import java.math.BigDecimal;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-
 @Service
+@Transactional(readOnly = true)
 public class HabitacionService {
-
     private final HabitacionRepository habitacionRepository;
     private final PropietarioRepository propietarioRepository;
-    private final SuscripcionPropietarioRepository suscripcionRepository;
-    private final HabitacionBusquedaRepository habitacionBusquedaRepository;
+    private final PlanPolicy policy;
+    private final HabitacionBusquedaRepository busqueda;
+    private final ImagePreviewService previews;
 
-    public HabitacionService(
-            HabitacionRepository habitacionRepository,
-            PropietarioRepository propietarioRepository,
-            SuscripcionPropietarioRepository suscripcionRepository,
-            HabitacionBusquedaRepository habitacionBusquedaRepository
-    ) {
-        this.habitacionRepository = habitacionRepository;
-        this.propietarioRepository = propietarioRepository;
-        this.suscripcionRepository = suscripcionRepository;
-        this.habitacionBusquedaRepository = habitacionBusquedaRepository;
+    public HabitacionService(HabitacionRepository habitaciones, PropietarioRepository propietarios,
+            PlanPolicy policy, HabitacionBusquedaRepository busqueda, ImagePreviewService previews) {
+        this.habitacionRepository = habitaciones; this.propietarioRepository = propietarios;
+        this.policy = policy; this.busqueda = busqueda; this.previews = previews;
     }
 
     @Transactional
-    public HabitacionResponse crearHabitacion(
-            Integer idUsuario,
-            HabitacionRequest request
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Objects.requireNonNull(request, "request");
-
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Primero debes convertirte en propietario"
-                ));
-
-        Integer propietarioId = requerirId(
-                propietario.getIdPropietario(),
-                "idPropietario"
-        );
-
-        SuscripcionPropietario suscripcion = suscripcionRepository
-                .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-                        propietarioId,
-                        ApiConstants.ESTADO_ACTIVO
-                )
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No tienes una suscripción activa"
-                ));
-
-        long habitacionesActivas = habitacionRepository
-                .countByPropietarioIdPropietarioAndEstadoIn(
-                        propietarioId,
-                        List.of(ApiConstants.ESTADO_ACTIVA, ApiConstants.ESTADO_PAUSADA)
-                );
-
-        Integer limitePlan = Objects.requireNonNull(
-                suscripcion.getPlan().getLimiteHabitaciones(),
-                "El plan no tiene límite de habitaciones configurado"
-        );
-
-        if (habitacionesActivas >= limitePlan) {
-            throw new IllegalArgumentException(
-                    "Tu plan actual solo permite publicar " + limitePlan + " habitación(es)"
-            );
-        }
-
-        boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
-
-        if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException(
-                    "Tu plan actual no permite destacar habitaciones"
-            );
-        }
-
+    public HabitacionResponse crearHabitacion(Integer usuario, HabitacionRequest request) {
+        Propietario propietario = propietarioParaEscritura(usuario);
+        var plan = policy.vigente(propietario).getPlan();
+        policy.comprobarCupo(propietario, plan, 1);
+        policy.comprobarDestacada(Boolean.TRUE.equals(request.getDestacada()), plan);
         Habitacion habitacion = new Habitacion();
         habitacion.setPropietario(propietario);
         copiarDatos(request, habitacion);
-        habitacion.setEstado(ApiConstants.ESTADO_ACTIVA);
-
-        Habitacion guardada = habitacionRepository.save(
-                Objects.requireNonNull(habitacion)
-        );
-
-        return HabitacionResponse.fromEntity(guardada);
+        return response(habitacionRepository.saveAndFlush(habitacion));
     }
 
-    @Transactional(readOnly = true)
-    public Page<HabitacionResponse> listarHabitacionesPublicas(
-            String distrito,
-            BigDecimal precioMin,
-            BigDecimal precioMax,
-            Boolean amoblado,
-            Boolean banoPrivado,
-            Boolean permiteMascotas,
-            Pageable pageable
-    ) {
-        Objects.requireNonNull(pageable, "pageable");
-
-        if (precioMin != null && precioMax != null && precioMax.compareTo(precioMin) < 0) {
-            throw new IllegalArgumentException(
-                    "El precio máximo no puede ser menor que el precio mínimo"
-            );
-        }
-
-        return habitacionBusquedaRepository.buscarHabitacionesAvanzado(
-                distrito,
-                precioMin,
-                precioMax,
-                amoblado,
-                banoPrivado,
-                permiteMascotas,
-                pageable
-        ).map(HabitacionResponse::fromEntity);
+    public Page<HabitacionResponse> listarHabitacionesPublicas(String distrito, BigDecimal minimo, BigDecimal maximo,
+            Boolean amoblado, Boolean banoPrivado, Boolean mascotas, Pageable pageable) {
+        if (minimo != null && maximo != null && maximo.compareTo(minimo) < 0) throw new IllegalArgumentException("El precio máximo no puede ser menor que el mínimo");
+        return responses(busqueda.buscarHabitacionesAvanzado(distrito, minimo, maximo, amoblado, banoPrivado, mascotas, pageable));
     }
 
-    @Transactional(readOnly = true)
-    public HabitacionResponse obtenerHabitacionPorId(Integer idHabitacion) {
-        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
-
-        Habitacion habitacion = habitacionRepository.findById(habitacionId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Habitación no encontrada"
-                ));
-
-        if (!ApiConstants.ESTADO_ACTIVA.equalsIgnoreCase(habitacion.getEstado())) {
-            throw new IllegalArgumentException("La habitación no está disponible");
-        }
-
-        return HabitacionResponse.fromEntity(habitacion);
+    public HabitacionResponse obtenerHabitacionPorId(Integer id) {
+        Habitacion habitacion = habitacionRepository.findById(requerirId(id, "idHabitacion"))
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
+        if (!policy.visible(habitacion)) throw new ResourceNotFoundException("La habitación no está disponible");
+        return response(habitacion);
     }
 
-    @Transactional(readOnly = true)
-    public Page<HabitacionResponse> listarMisHabitaciones(
-            Integer idUsuario,
-            Pageable pageable
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Objects.requireNonNull(pageable, "pageable");
-
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No tienes perfil de propietario"
-                ));
-
-        Integer propietarioId = requerirId(
-                propietario.getIdPropietario(),
-                "idPropietario"
-        );
-
-        return habitacionRepository
-                .findByPropietarioIdPropietarioOrderByFechaPublicacionDesc(
-                        propietarioId,
-                        pageable
-                )
-                .map(HabitacionResponse::fromEntity);
+    public Page<HabitacionResponse> listarMisHabitaciones(Integer usuario, Pageable pageable) {
+        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuario)
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
+        return responses(habitacionRepository.findByPropietarioIdPropietarioOrderByFechaPublicacionDesc(propietario.getIdPropietario(), pageable));
     }
 
     @Transactional
-    public HabitacionResponse actualizarHabitacion(
-            Integer idUsuario,
-            Integer idHabitacion,
-            HabitacionRequest request
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
-        Objects.requireNonNull(request, "request");
-
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No tienes perfil de propietario"
-                ));
-
-        Integer propietarioId = requerirId(
-                propietario.getIdPropietario(),
-                "idPropietario"
-        );
-
-        Habitacion habitacion = habitacionRepository
-                .findByIdHabitacionAndPropietarioIdPropietario(
-                        habitacionId,
-                        propietarioId
-                )
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Habitación no encontrada o no te pertenece"
-                ));
-
-        SuscripcionPropietario suscripcion = suscripcionRepository
-                .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-                        propietarioId,
-                        ApiConstants.ESTADO_ACTIVO
-                )
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No tienes una suscripción activa"
-                ));
-
-        boolean deseaDestacar = Boolean.TRUE.equals(request.getDestacada());
-
-        if (deseaDestacar && !Boolean.TRUE.equals(suscripcion.getPlan().getPermiteDestacar())) {
-            throw new IllegalArgumentException(
-                    "Tu plan actual no permite destacar habitaciones"
-            );
+    public HabitacionResponse actualizarHabitacion(Integer usuario, Integer id, HabitacionRequest request) {
+        Propietario propietario = propietarioParaEscritura(usuario);
+        Habitacion habitacion = propia(propietario, id);
+        if ("eliminada".equals(habitacion.getEstado())) throw new ConflictException("La habitación está archivada");
+        if (Boolean.TRUE.equals(request.getDestacada())) {
+            if (Boolean.TRUE.equals(habitacion.getBloqueada())) throw new AccessDeniedException("La habitación está bloqueada por moderación");
+            policy.comprobarDestacada(true, policy.vigente(propietario).getPlan());
         }
-
+        // Content edits and removing a highlight remain possible after expiration.
         copiarDatos(request, habitacion);
-
-        Habitacion actualizada = habitacionRepository.save(
-                Objects.requireNonNull(habitacion)
-        );
-
-        return HabitacionResponse.fromEntity(actualizada);
+        return response(habitacionRepository.saveAndFlush(habitacion));
     }
 
     @Transactional
-    public HabitacionResponse pausarHabitacion(
-            Integer idUsuario,
-            Integer idHabitacion
-    ) {
-        return cambiarEstado(
-                idUsuario,
-                idHabitacion,
-                ApiConstants.ESTADO_PAUSADA,
-                "Habitación no encontrada o no te pertenece"
-        );
-    }
-
+    public HabitacionResponse pausarHabitacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "pausada"); }
     @Transactional
-    public HabitacionResponse activarHabitacion(
-            Integer idUsuario,
-            Integer idHabitacion
-    ) {
-        return cambiarEstado(
-                idUsuario,
-                idHabitacion,
-                ApiConstants.ESTADO_ACTIVA,
-                "Habitación no encontrada o no te pertenece"
-        );
-    }
+    public HabitacionResponse activarHabitacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "activa"); }
+    @Transactional
+    public HabitacionResponse alquilarHabitacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "alquilada"); }
+    @Transactional
+    public HabitacionResponse archivarHabitacion(Integer usuario, Integer id) { return cambiarEstado(usuario, id, "eliminada"); }
 
-    private HabitacionResponse cambiarEstado(
-            Integer idUsuario,
-            Integer idHabitacion,
-            String estado,
-            String mensajeNoEncontrada
-    ) {
-        Integer usuarioId = requerirId(idUsuario, "idUsuario");
-        Integer habitacionId = requerirId(idHabitacion, "idHabitacion");
-
-        Propietario propietario = propietarioRepository.findByUsuarioIdUsuario(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No tienes perfil de propietario"
-                ));
-
-        Integer propietarioId = requerirId(
-                propietario.getIdPropietario(),
-                "idPropietario"
-        );
-
-        Habitacion habitacion = habitacionRepository
-                .findByIdHabitacionAndPropietarioIdPropietario(
-                        habitacionId,
-                        propietarioId
-                )
-                .orElseThrow(() -> new IllegalArgumentException(mensajeNoEncontrada));
-
+    private HabitacionResponse cambiarEstado(Integer usuario, Integer id, String estado) {
+        Propietario propietario = propietarioParaEscritura(usuario);
+        Habitacion habitacion = propia(propietario, id);
+        if (estado.equals(habitacion.getEstado())) return response(habitacion);
+        if ("eliminada".equals(habitacion.getEstado())) throw new ConflictException("La habitación está archivada");
+        if ("activa".equals(estado)) {
+            if (Boolean.TRUE.equals(habitacion.getBloqueada())) throw new AccessDeniedException("La habitación está bloqueada por moderación");
+            var plan = policy.vigente(propietario).getPlan();
+            int adicionales = PlanPolicy.ESTADOS_CON_CUPO.contains(habitacion.getEstado()) ? 0 : 1;
+            policy.comprobarCupo(propietario, plan, adicionales);
+            policy.comprobarDestacada(Boolean.TRUE.equals(habitacion.getDestacada()), plan);
+        } else if ("pausada".equals(estado) && !"activa".equals(habitacion.getEstado())) {
+            throw new ConflictException("Solo puedes pausar una habitación activa");
+        }
+        if ("eliminada".equals(estado) || "alquilada".equals(estado)) habitacion.setDestacada(false);
         habitacion.setEstado(estado);
+        return response(habitacionRepository.saveAndFlush(habitacion));
+    }
 
-        Habitacion actualizada = habitacionRepository.save(
-                Objects.requireNonNull(habitacion)
-        );
+    private Page<HabitacionResponse> responses(Page<Habitacion> page) {
+        var images = previews.rooms(page.getContent().stream().map(Habitacion::getIdHabitacion).toList());
+        return page.map(room -> {
+            var dto = HabitacionResponse.fromEntity(room);
+            dto.setImagenPrincipal(images.get(room.getIdHabitacion()));
+            return dto;
+        });
+    }
 
-        return HabitacionResponse.fromEntity(actualizada);
+    private HabitacionResponse response(Habitacion room) {
+        return responses(new org.springframework.data.domain.PageImpl<>(java.util.List.of(room))).getContent().get(0);
+    }
+
+    private Propietario propietarioParaEscritura(Integer usuario) {
+        Propietario propietario = propietarioRepository.lockByUsuarioId(requerirId(usuario, "idUsuario"))
+                .orElseThrow(() -> new AccessDeniedException("Primero debes convertirte en propietario"));
+        policy.exigirPropietarioActivo(propietario);
+        return propietario;
+    }
+
+    private Habitacion propia(Propietario propietario, Integer id) {
+        return habitacionRepository.findByIdHabitacionAndPropietarioIdPropietario(requerirId(id, "idHabitacion"), propietario.getIdPropietario())
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada o no te pertenece"));
     }
 
     private void copiarDatos(HabitacionRequest request, Habitacion habitacion) {

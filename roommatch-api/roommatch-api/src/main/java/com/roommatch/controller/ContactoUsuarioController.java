@@ -17,6 +17,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/contactos")
 public class ContactoUsuarioController {
 
+    @GetMapping("/desbloqueados")
+    public ApiResponse<org.springframework.data.domain.Page<com.roommatch.dto.ContactoDesbloqueadoResponse>> listarDesbloqueados(
+            Authentication authentication, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Usuario usuario = (Usuario) authentication.getPrincipal();
+        return ApiResponse.success(contactoService.listarDesbloqueados(usuario.getIdUsuario(), page, size),
+                "Contactos desbloqueados obtenidos correctamente");
+    }
+
     private final ContactoUsuarioService contactoService;
 
 
@@ -47,7 +56,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -77,20 +86,7 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -113,7 +109,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -143,20 +139,7 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -244,7 +227,7 @@ public class ContactoUsuarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -274,19 +257,6 @@ public class ContactoUsuarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 }

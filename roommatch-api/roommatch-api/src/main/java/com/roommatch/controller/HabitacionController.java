@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -163,6 +164,16 @@ public class HabitacionController {
         return ResponseEntity.ok(
                 ApiResponse.success(response, "Habitación activada correctamente")
         );
+    }
+
+    @PutMapping("/{idHabitacion}/alquilar")
+    public ResponseEntity<ApiResponse<HabitacionResponse>> alquilarHabitacion(Authentication authentication, @PathVariable @Min(1) Integer idHabitacion) {
+        return ResponseEntity.ok(ApiResponse.success(habitacionService.alquilarHabitacion(usuarioAutenticado(authentication).getIdUsuario(), idHabitacion), "Habitación marcada como alquilada"));
+    }
+
+    @DeleteMapping("/{idHabitacion}")
+    public ResponseEntity<ApiResponse<HabitacionResponse>> archivarHabitacion(Authentication authentication, @PathVariable @Min(1) Integer idHabitacion) {
+        return ResponseEntity.ok(ApiResponse.success(habitacionService.archivarHabitacion(usuarioAutenticado(authentication).getIdUsuario(), idHabitacion), "Habitación archivada"));
     }
 
     private Usuario usuarioAutenticado(Authentication authentication) {

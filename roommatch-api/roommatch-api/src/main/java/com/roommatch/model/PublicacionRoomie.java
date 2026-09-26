@@ -157,6 +157,10 @@ public class PublicacionRoomie {
      * =========================================================
      */
 
+    @jakarta.persistence.Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @PrePersist
     public void prePersist() {
 

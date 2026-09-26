@@ -2,343 +2,84 @@ package com.roommatch.service;
 
 import com.roommatch.dto.MiPlanResponse;
 import com.roommatch.dto.PlanPropietarioResponse;
-
+import com.roommatch.exception.ConflictException;
+import com.roommatch.exception.ResourceNotFoundException;
 import com.roommatch.model.Notificacion;
-import com.roommatch.model.PlanPropietario;
-import com.roommatch.model.Propietario;
 import com.roommatch.model.SuscripcionPropietario;
-
-import com.roommatch.repository.NotificacionRepository;
-import com.roommatch.repository.PlanPropietarioRepository;
-import com.roommatch.repository.PropietarioRepository;
-import com.roommatch.repository.SuscripcionPropietarioRepository;
-
+import com.roommatch.repository.*;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-
 @Service
+@Transactional(readOnly = true)
 public class PlanPropietarioService {
+    private final PlanPropietarioRepository planes;
+    private final PropietarioRepository propietarios;
+    private final SuscripcionPropietarioRepository suscripciones;
+    private final NotificacionRepository notificaciones;
+    private final HabitacionRepository habitaciones;
+    private final PlanPolicy policy;
+    private final Clock clock;
 
-    private final PlanPropietarioRepository planRepository;
-
-    private final PropietarioRepository propietarioRepository;
-
-    private final SuscripcionPropietarioRepository suscripcionRepository;
-
-    private final NotificacionRepository notificacionRepository;
-
-
-    public PlanPropietarioService(
-            PlanPropietarioRepository planRepository,
-            PropietarioRepository propietarioRepository,
-            SuscripcionPropietarioRepository suscripcionRepository,
-            NotificacionRepository notificacionRepository
-    ) {
-
-        this.planRepository =
-                planRepository;
-
-        this.propietarioRepository =
-                propietarioRepository;
-
-        this.suscripcionRepository =
-                suscripcionRepository;
-
-        this.notificacionRepository =
-                notificacionRepository;
+    public PlanPropietarioService(PlanPropietarioRepository planes, PropietarioRepository propietarios,
+            SuscripcionPropietarioRepository suscripciones, NotificacionRepository notificaciones,
+            HabitacionRepository habitaciones, PlanPolicy policy, Clock clock) {
+        this.planes = planes; this.propietarios = propietarios; this.suscripciones = suscripciones;
+        this.notificaciones = notificaciones; this.habitaciones = habitaciones; this.policy = policy; this.clock = clock;
     }
 
-
-    /*
-     * =========================================================
-     * LISTAR PLANES ACTIVOS
-     * =========================================================
-     */
-
-    @Transactional(readOnly = true)
     public List<PlanPropietarioResponse> listarPlanesActivos() {
-
-        return planRepository
-                .findByEstadoOrderByPrecioMensualAsc(
-                        "activo"
-                )
-                .stream()
-                .map(
-                        PlanPropietarioResponse::fromEntity
-                )
-                .toList();
+        return planes.findByEstadoOrderByPrecioMensualAsc("activo").stream().map(PlanPropietarioResponse::fromEntity).toList();
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER MI PLAN
-     * =========================================================
-     */
-
-    @Transactional(readOnly = true)
-    public MiPlanResponse obtenerMiPlan(
-            Integer idUsuario
-    ) {
-
-        Propietario propietario =
-
-                propietarioRepository
-                        .findByUsuarioIdUsuario(
-                                idUsuario
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No tienes perfil de propietario"
-                                        )
-                        );
-
-
-        SuscripcionPropietario suscripcion =
-
-                suscripcionRepository
-                        .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-
-                                propietario.getIdPropietario(),
-
-                                "activo"
-
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No tienes una suscripción activa"
-                                        )
-                        );
-
-
-        return MiPlanResponse.fromEntity(
-                suscripcion
-        );
+    public MiPlanResponse obtenerMiPlan(Integer usuario) {
+        var propietario = propietarios.findByUsuarioIdUsuario(usuario).orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
+        var suscripcion = suscripciones.findFirstByPropietarioIdPropietarioOrderByFechaInicioDesc(propietario.getIdPropietario())
+                .orElseThrow(() -> new ResourceNotFoundException("No tienes una suscripción"));
+        var response = MiPlanResponse.fromEntity(suscripcion);
+        if (!suscripcion.vigente(LocalDateTime.now(clock))) {
+            response.setEstadoSuscripcion("activo".equals(suscripcion.getEstado()) ? "vencido" : suscripcion.getEstado());
+            response.setPermiteDestacar(false);
+            response.setPermiteEstadisticas(false);
+        }
+        return response;
     }
-
-
-    /*
-     * =========================================================
-     * CAMBIAR PLAN
-     * =========================================================
-     */
 
     @Transactional
-    public MiPlanResponse cambiarPlan(
-            Integer idUsuario,
-            Integer idPlanNuevo
-    ) {
-
-        /*
-         * =====================================================
-         * OBTENER PROPIETARIO
-         * =====================================================
-         */
-
-        Propietario propietario =
-
-                propietarioRepository
-                        .findByUsuarioIdUsuario(
-                                idUsuario
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No tienes perfil de propietario"
-                                        )
-                        );
-
-
-        /*
-         * =====================================================
-         * BUSCAR NUEVO PLAN
-         * =====================================================
-         */
-
-        PlanPropietario nuevoPlan =
-
-                planRepository
-                        .findById(
-                                idPlanNuevo
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "Plan no encontrado"
-                                        )
-                        );
-
-
-        if (
-                !"activo".equalsIgnoreCase(
-                        nuevoPlan.getEstado()
-                )
-        ) {
-
-            throw new IllegalArgumentException(
-                    "El plan seleccionado no está activo"
-            );
+    public MiPlanResponse cambiarPlan(Integer usuario, Integer planId) {
+        var propietario = propietarios.lockByUsuarioId(usuario).orElseThrow(() -> new ResourceNotFoundException("No tienes perfil de propietario"));
+        policy.exigirPropietarioActivo(propietario);
+        var nuevo = planes.findById(planId).orElseThrow(() -> new ResourceNotFoundException("Plan no encontrado"));
+        if (!"activo".equals(nuevo.getEstado())) throw new ConflictException("El plan seleccionado no está activo");
+        policy.comprobarCupo(propietario, nuevo, 0);
+        if (!Boolean.TRUE.equals(nuevo.getPermiteDestacar())
+                && habitaciones.countByPropietarioIdPropietarioAndDestacadaTrueAndEstadoNot(propietario.getIdPropietario(), "eliminada") > 0) {
+            throw new ConflictException("Quita el destacado de tus habitaciones antes de cambiar a un plan sin esa opción");
         }
-
-
-        /*
-         * =====================================================
-         * OBTENER SUSCRIPCIÓN ACTUAL
-         * =====================================================
-         */
-
-        SuscripcionPropietario suscripcionActual =
-
-                suscripcionRepository
-                        .findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(
-
-                                propietario.getIdPropietario(),
-
-                                "activo"
-
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "No tienes una suscripción activa"
-                                        )
-                        );
-
-
-        /*
-         * =====================================================
-         * VALIDAR MISMO PLAN
-         * =====================================================
-         */
-
-        if (
-                suscripcionActual.getPlan() != null &&
-                suscripcionActual
-                        .getPlan()
-                        .getIdPlan()
-                        .equals(
-                                nuevoPlan.getIdPlan()
-                        )
-        ) {
-
-            throw new IllegalArgumentException(
-                    "Ya tienes activo el plan " +
-                            nuevoPlan.getNombrePlan()
-            );
-        }
-
-
-        /*
-         * =====================================================
-         * CANCELAR SUSCRIPCIÓN ACTUAL
-         * =====================================================
-         */
-
-        suscripcionActual.setEstado(
-                "cancelado"
-        );
-
-        suscripcionActual.setFechaFin(
-                LocalDateTime.now()
-        );
-
-
-        suscripcionRepository.save(
-                suscripcionActual
-        );
-
-
-        /*
-         * =====================================================
-         * CREAR NUEVA SUSCRIPCIÓN
-         * =====================================================
-         */
-
-        SuscripcionPropietario nuevaSuscripcion =
-                new SuscripcionPropietario();
-
-
-        nuevaSuscripcion.setPropietario(
-                propietario
-        );
-
-        nuevaSuscripcion.setPlan(
-                nuevoPlan
-        );
-
-        nuevaSuscripcion.setEstado(
-                "activo"
-        );
-
-
-        SuscripcionPropietario suscripcionGuardada =
-
-                suscripcionRepository.save(
-                        nuevaSuscripcion
-                );
-
-
-        /*
-         * =====================================================
-         * NOTIFICACIÓN
-         * =====================================================
-         */
-
-        Notificacion notificacion =
-                new Notificacion();
-
-
-        notificacion.setUsuario(
-                propietario.getUsuario()
-        );
-
-        notificacion.setTitulo(
-                "Plan actualizado"
-        );
-
-        notificacion.setMensaje(
-
-                "Tu plan cambió correctamente a " +
-
-                nuevoPlan.getNombrePlan() +
-
-                "."
-
-        );
-
-        notificacion.setTipo(
-                "sistema"
-        );
-
-        notificacion.setUrlDestino(
-                "/propietario/planes"
-        );
-
-
-        notificacionRepository.save(
-                notificacion
-        );
-
-
-        /*
-         * =====================================================
-         * RESPUESTA
-         * =====================================================
-         */
-
-        return MiPlanResponse.fromEntity(
-                suscripcionGuardada
-        );
+        LocalDateTime ahora = LocalDateTime.now(clock);
+        var actual = suscripciones.findFirstByPropietarioIdPropietarioAndEstadoOrderByFechaInicioDesc(propietario.getIdPropietario(), "activo");
+        actual.ifPresent(anterior -> {
+            if (anterior.vigente(ahora) && anterior.getPlan().getIdPlan().equals(nuevo.getIdPlan())) throw new ConflictException("Ya tienes activo ese plan");
+            anterior.setEstado(anterior.vigente(ahora) ? "cancelado" : "vencido");
+            anterior.setFechaFin(ahora);
+            // Flush releases the filtered unique slot before inserting the new subscription.
+            suscripciones.saveAndFlush(anterior);
+        });
+        SuscripcionPropietario siguiente = new SuscripcionPropietario();
+        siguiente.setPropietario(propietario);
+        siguiente.setPlan(nuevo);
+        siguiente.setFechaInicio(ahora);
+        siguiente = suscripciones.saveAndFlush(siguiente);
+        Notificacion notificacion = new Notificacion();
+        notificacion.setUsuario(propietario.getUsuario());
+        notificacion.setTitulo("Plan actualizado");
+        notificacion.setMensaje("Tu plan cambió a " + nuevo.getNombrePlan() + ".");
+        notificacion.setTipo("sistema");
+        notificacion.setUrlDestino("/propietario/planes");
+        notificaciones.save(notificacion);
+        return MiPlanResponse.fromEntity(siguiente);
     }
 }

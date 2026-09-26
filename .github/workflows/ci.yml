@@ -9,6 +9,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: roommatch-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     name: Backend Java 17
@@ -27,11 +34,18 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Enable Maven Wrapper
-        run: chmod +x mvnw
+      - name: Verify backend
+        run: ./mvnw --batch-mode clean verify -Psqlserver
 
-      - name: Run backend tests
-        run: ./mvnw --batch-mode clean test
+      - name: Save test reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: backend-test-reports
+          path: |
+            roommatch-api/roommatch-api/target/surefire-reports/
+            roommatch-api/roommatch-api/target/failsafe-reports/
+          retention-days: 14
 
   frontend:
     name: Frontend Angular
@@ -53,5 +67,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
       - name: Build frontend
         run: npm run build
+
+      - name: Test frontend
+        run: npm test -- --watch=false

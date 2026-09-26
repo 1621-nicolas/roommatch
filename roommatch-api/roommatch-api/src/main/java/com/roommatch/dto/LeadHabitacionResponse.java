@@ -51,7 +51,8 @@ public class LeadHabitacionResponse {
                     lead.getUsuarioInteresado().getNombres() + " " +
                     lead.getUsuarioInteresado().getApellidos()
             );
-            response.setEmailInteresado(lead.getUsuarioInteresado().getEmail());
+            // Only the address explicitly shared for this inquiry, never the account email.
+            response.setEmailInteresado(lead.getEmailContacto());
         }
 
         return response;

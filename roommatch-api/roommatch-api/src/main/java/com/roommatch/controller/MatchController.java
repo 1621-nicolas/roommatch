@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
@@ -28,7 +29,7 @@ public class MatchController {
     public ResponseEntity<ApiResponse<List<MatchResponse>>> calcularMatches(
             Authentication authentication
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             List<MatchResponse> matches = matchService.calcularMatches(
@@ -39,18 +40,14 @@ public class MatchController {
                     ApiResponse.success(matches, "Matches calculados correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<MatchResponse>>> listarMisMatches(
             Authentication authentication,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(1000) int page,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size,
             @RequestParam(defaultValue = "0") BigDecimal porcentajeMinimo
     ) {
         Usuario usuario = (Usuario) authentication.getPrincipal();

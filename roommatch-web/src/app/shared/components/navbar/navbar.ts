@@ -1,380 +1,63 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit
-} from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, finalize, Subscription } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
+import { PropietarioContextService } from '../../../core/services/propietario-context.service';
+import { PropietarioResponse } from '../../../core/models/propietario-response';
 
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive
-} from '@angular/router';
-
-import {
-  filter,
-  Subscription
-} from 'rxjs';
-
-import {
-  AuthService
-} from '../../../core/services/auth.service';
-
-import {
-  PropietarioContextService
-} from '../../../core/services/propietario-context.service';
-
-import {
-  PropietarioResponse
-} from '../../../core/models/propietario-response';
-
-
-@Component({
-  selector: 'app-navbar',
-
-  imports: [
-    RouterLink,
-    RouterLinkActive
-  ],
-
-  templateUrl: './navbar.html',
-})
-export class Navbar
-  implements OnInit, OnDestroy {
-
-  propietario:
-    PropietarioResponse | null = null;
-
+@Component({selector: 'app-navbar', imports: [RouterLink, RouterLinkActive], templateUrl: './navbar.html', styleUrl: './navbar.css'})
+export class Navbar implements OnInit, OnDestroy {
+  propietario: PropietarioResponse | null = null;
   estadoPropietarioVerificado = false;
-
   verificandoPropietario = false;
-
+  errorPropietario = false;
   menuUsuarioAbierto = false;
+  menuMovilAbierto = false;
+  private readonly subscriptions = new Subscription();
+  private readonly element = inject(ElementRef<HTMLElement>);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  @ViewChild('accountTrigger') accountTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('mobileTrigger') mobileTrigger?: ElementRef<HTMLButtonElement>;
 
-
-  private readonly subscriptions =
-    new Subscription();
-
-
-  constructor(
-    public authService:
-      AuthService,
-
-    private propietarioContext:
-      PropietarioContextService,
-
-    private router:
-      Router
-  ) {}
-
+  constructor(public authService: AuthService, private propietarioContext: PropietarioContextService, private router: Router) {}
 
   ngOnInit(): void {
-
-    /*
-     * =====================================================
-     * ESCUCHAR PERFIL DE PROPIETARIO
-     * =====================================================
-     */
-
-    this.subscriptions.add(
-
-      this.propietarioContext
-        .propietario$
-        .subscribe(
-          propietario => {
-
-            this.propietario =
-              propietario;
-          }
-        )
-
-    );
-
-
-    /*
-     * =====================================================
-     * ESCUCHAR SI YA SE VERIFICÓ EL ESTADO
-     * =====================================================
-     */
-
-    this.subscriptions.add(
-
-      this.propietarioContext
-        .verificado$
-        .subscribe(
-          verificado => {
-
-            this.estadoPropietarioVerificado =
-              verificado;
-          }
-        )
-
-    );
-
-
-    /*
-     * =====================================================
-     * VERIFICAR SESIÓN ACTUAL
-     * =====================================================
-     */
-
+    this.subscriptions.add(this.propietarioContext.propietario$.subscribe(value => { this.propietario = value; this.changeDetector.markForCheck(); }));
+    this.subscriptions.add(this.propietarioContext.verificado$.subscribe(value => { this.estadoPropietarioVerificado = value; this.changeDetector.markForCheck(); }));
     this.sincronizarEstadoPropietario();
-
-
-    /*
-     * =====================================================
-     * DETECTAR LOGIN O CAMBIO DE RUTA
-     * =====================================================
-     */
-
-    this.subscriptions.add(
-
-      this.router.events
-        .pipe(
-
-          filter(
-            evento =>
-              evento instanceof NavigationEnd
-          )
-
-        )
-        .subscribe(() => {
-
-          this.sincronizarEstadoPropietario();
-
-          this.cerrarMenuUsuario();
-
-        })
-
-    );
+    this.subscriptions.add(this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(() => {
+      this.sincronizarEstadoPropietario(); this.cerrarMenus(); this.changeDetector.markForCheck();
+    }));
   }
+  ngOnDestroy(): void { this.subscriptions.unsubscribe(); }
 
-
-  ngOnDestroy(): void {
-
-    this.subscriptions.unsubscribe();
+  sincronizarEstadoPropietario(): void {
+    if (!this.authService.getUsuario()) { this.propietarioContext.limpiar(); this.errorPropietario = false; return; }
+    if (this.estadoPropietarioVerificado || this.verificandoPropietario) return;
+    this.verificandoPropietario = true; this.errorPropietario = false;
+    this.subscriptions.add(this.propietarioContext.verificarPropietario().pipe(finalize(() => {
+      this.verificandoPropietario = false; this.changeDetector.markForCheck();
+    })).subscribe({error: () => this.errorPropietario = true}));
   }
-
-
-  /*
-   * =====================================================
-   * ESTADO PROPIETARIO
-   * =====================================================
-   */
-
-  private sincronizarEstadoPropietario():
-    void {
-
-    const usuario =
-      this.authService.getUsuario();
-
-
-    /*
-     * NO HAY SESIÓN
-     */
-
-    if (!usuario) {
-
-      if (
-        this.propietario !== null ||
-        this.estadoPropietarioVerificado
-      ) {
-
-        this.propietarioContext
-          .limpiar();
-      }
-
-      return;
-    }
-
-
-    /*
-     * YA SE VERIFICÓ
-     */
-
-    if (
-      this.estadoPropietarioVerificado
-    ) {
-
-      return;
-    }
-
-
-    /*
-     * EVITAR PETICIONES DUPLICADAS
-     */
-
-    if (
-      this.verificandoPropietario
-    ) {
-
-      return;
-    }
-
-
-    this.verificandoPropietario = true;
-
-
-    this.propietarioContext
-      .verificarPropietario()
-      .subscribe({
-
-        next: () => {
-
-          this.verificandoPropietario =
-            false;
-        },
-
-        error: () => {
-
-          this.verificandoPropietario =
-            false;
-        }
-
-      });
-  }
-
-
-  esPropietario(): boolean {
-
-    return this.propietario !== null;
-  }
-
-
-  /*
-   * =====================================================
-   * MENÚ USUARIO
-   * =====================================================
-   */
-
+  esPropietario(): boolean { return this.propietario !== null; }
   toggleMenuUsuario(): void {
-
-    this.menuUsuarioAbierto =
-      !this.menuUsuarioAbierto;
-
-
-    /*
-     * VERIFICAR CUANDO EL USUARIO
-     * ABRE EL MENÚ
-     */
-
-    if (
-      this.menuUsuarioAbierto
-    ) {
-
-      this.sincronizarEstadoPropietario();
-    }
+    this.menuUsuarioAbierto = !this.menuUsuarioAbierto; this.menuMovilAbierto = false;
+    if (this.menuUsuarioAbierto) this.sincronizarEstadoPropietario();
   }
-
-
-  cerrarMenuUsuario(): void {
-
-    this.menuUsuarioAbierto = false;
+  toggleMenuMovil(): void { this.menuMovilAbierto = !this.menuMovilAbierto; this.menuUsuarioAbierto = false; }
+  cerrarMenus(): void { this.menuUsuarioAbierto = false; this.menuMovilAbierto = false; }
+  @HostListener('document:click', ['$event']) outsideClick(event: MouseEvent): void {
+    if (event.target instanceof Node && !this.element.nativeElement.contains(event.target)) this.cerrarMenus();
   }
-
-
-  /*
-   * =====================================================
-   * DATOS DEL USUARIO
-   * =====================================================
-   */
-
-  obtenerIniciales(): string {
-
-    const usuario =
-      this.authService.getUsuario();
-
-
-    if (!usuario) {
-
-      return 'RM';
-    }
-
-
-    const nombre =
-      usuario.nombres
-        ?.charAt(0) ?? '';
-
-
-    const apellido =
-      usuario.apellidos
-        ?.charAt(0) ?? '';
-
-
-    return (
-      nombre + apellido
-    ).toUpperCase();
+  @HostListener('keydown.escape', ['$event']) escape(event: Event): void {
+    if (this.menuUsuarioAbierto) { this.menuUsuarioAbierto = false; this.accountTrigger?.nativeElement.focus(); event.preventDefault(); }
+    else if (this.menuMovilAbierto) { this.menuMovilAbierto = false; this.mobileTrigger?.nativeElement.focus(); event.preventDefault(); }
   }
-
-
-  obtenerNombreCompleto(): string {
-
-    const usuario =
-      this.authService.getUsuario();
-
-
-    if (!usuario) {
-
-      return 'RoomMatch';
-    }
-
-
-    return [
-      usuario.nombres,
-      usuario.apellidos
-    ]
-      .filter(
-        valor =>
-          valor &&
-          valor.trim() !== ''
-      )
-      .join(' ');
+  closeAccountOnFocusExit(event: FocusEvent): void {
+    if (event.relatedTarget instanceof Node && !(event.currentTarget as HTMLElement).contains(event.relatedTarget)) this.menuUsuarioAbierto = false;
   }
-
-
-  obtenerEmail(): string {
-
-    const usuario =
-      this.authService.getUsuario();
-
-
-    return usuario?.email ?? '';
-  }
-
-
-  /*
-   * =====================================================
-   * CERRAR SESIÓN
-   * =====================================================
-   */
-
-  cerrarSesion(): void {
-
-    this.cerrarMenuUsuario();
-
-
-    /*
-     * LIMPIAR ESTADO PROPIETARIO
-     */
-
-    this.propietarioContext
-      .limpiar();
-
-
-    /*
-     * CERRAR SESIÓN
-     */
-
-    this.authService
-      .cerrarSesion();
-
-
-    /*
-     * VOLVER AL INICIO
-     */
-
-    this.router.navigate([
-      '/'
-    ]);
-  }
+  obtenerIniciales(): string { const u = this.authService.getUsuario(); return u ? `${u.nombres?.charAt(0) ?? ''}${u.apellidos?.charAt(0) ?? ''}`.toUpperCase() : 'RM'; }
+  obtenerNombreCompleto(): string { const u = this.authService.getUsuario(); return u ? [u.nombres, u.apellidos].filter(Boolean).join(' ') : 'RoomMatch'; }
+  obtenerEmail(): string { return this.authService.getUsuario()?.email ?? ''; }
+  cerrarSesion(): void { this.cerrarMenus(); this.propietarioContext.limpiar(); this.authService.cerrarSesion(); this.router.navigate(['/']); }
 }

@@ -832,6 +832,7 @@ export class Solicitudes implements OnInit {
     }
 
 
+    if (estado === 'cancelada') return 'Cancelada';
     return estado;
 
   }
@@ -989,4 +990,38 @@ export class Solicitudes implements OnInit {
 
   }
 
+
+  cancelarSolicitud(solicitud: SolicitudContactoResponse): void {
+    if (this.accionandoId !== null || !window.confirm('¿Cancelar esta solicitud de contacto?')) return;
+    this.accionandoId = solicitud.idSolicitud;
+    this.mensajeError = '';
+    this.solicitudService.cancelarSolicitud(solicitud.idSolicitud).subscribe({
+      next: response => {
+        this.accionandoId = null;
+        this.solicitudesEnviadas = this.solicitudesEnviadas.map(item => item.idSolicitud === solicitud.idSolicitud ? response.data : item);
+        this.mensajeExito = 'Solicitud cancelada. Tu contacto sigue privado.';
+      },
+      error: error => {
+        this.accionandoId = null;
+        this.mensajeError = error.error?.message || 'No se pudo cancelar la solicitud. Vuelve a cargar para comprobar su estado.';
+      }
+    });
+  }
+
+  reenviarSolicitud(solicitud: SolicitudContactoResponse): void {
+    if (this.accionandoId !== null || !window.confirm('¿Enviar una nueva solicitud con tu mensaje anterior?')) return;
+    this.accionandoId = solicitud.idSolicitud;
+    this.mensajeError = '';
+    this.solicitudService.enviarSolicitud(solicitud.idUsuarioReceptor, {mensaje: solicitud.mensaje || ''}).subscribe({
+      next: response => {
+        this.accionandoId = null;
+        this.solicitudesEnviadas = [response.data, ...this.solicitudesEnviadas];
+        this.mensajeExito = 'Nueva solicitud enviada. El intento anterior permanece en tu historial.';
+      },
+      error: error => {
+        this.accionandoId = null;
+        this.mensajeError = error.error?.message || 'No se pudo volver a enviar la solicitud.';
+      }
+    });
+  }
 }

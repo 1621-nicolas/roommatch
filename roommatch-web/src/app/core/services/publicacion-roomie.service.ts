@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config/api.config';
 import {
   Injectable
 } from '@angular/core';
@@ -35,7 +36,7 @@ export class PublicacionRoomieService {
 
 
   private readonly apiUrl =
-    'http://localhost:8081/api/publicaciones-roomie';
+    `${API_BASE_URL}/publicaciones-roomie`;
 
 
   constructor(

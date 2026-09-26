@@ -43,10 +43,11 @@ public class ImagenPublicacionController {
 
     @GetMapping("/{idPublicacion}/imagenes")
     public ResponseEntity<ApiResponse<List<ImagenPublicacionResponse>>> listarImagenes(
-            @PathVariable Integer idPublicacion
+            @PathVariable Integer idPublicacion, Authentication authentication
     ) {
+        Integer usuarioActual = authentication != null && authentication.getPrincipal() instanceof Usuario usuario ? usuario.getIdUsuario() : null;
         List<ImagenPublicacionResponse> imagenes =
-                imagenService.listarImagenesPorPublicacion(idPublicacion);
+                imagenService.listarImagenesPorPublicacion(idPublicacion, usuarioActual);
 
         return ResponseEntity.ok(
                 ApiResponse.success(imagenes, "Imágenes de publicación obtenidas correctamente")

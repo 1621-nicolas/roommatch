@@ -19,6 +19,9 @@ import java.util.Objects;
 @Repository
 public class HabitacionBusquedaRepository {
 
+    private final java.time.Clock clock;
+    public HabitacionBusquedaRepository(java.time.Clock clock) { this.clock = clock; }
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -36,8 +39,8 @@ public class HabitacionBusquedaRepository {
         StringBuilder where = new StringBuilder();
         Map<String, Object> parametros = new HashMap<>();
 
-        where.append(" WHERE h.estado = :estado ");
-        parametros.put("estado", ApiConstants.ESTADO_ACTIVA);
+        where.append(" WHERE " + PublicRoomQuery.VISIBLE);
+        parametros.put("ahora", java.time.LocalDateTime.now(clock));
 
         if (distrito != null && !distrito.isBlank()) {
             where.append(" AND LOWER(h.distrito) LIKE LOWER(:distrito) ");
@@ -71,9 +74,9 @@ public class HabitacionBusquedaRepository {
 
         String jpql = """
                 SELECT h
-                FROM Habitacion h
+                FROM Habitacion h JOIN FETCH h.propietario p JOIN FETCH p.usuario u JOIN FETCH u.rol
                 """ + where + """
-                ORDER BY h.destacada DESC, h.fechaPublicacion DESC
+                ORDER BY h.destacada DESC, h.fechaPublicacion DESC, h.idHabitacion DESC
                 """;
 
         TypedQuery<Habitacion> query = entityManager.createQuery(jpql, Habitacion.class);

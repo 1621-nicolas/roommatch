@@ -1,5 +1,7 @@
 package com.roommatch.controller;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+
 import com.roommatch.dto.ApiResponse;
 import com.roommatch.dto.PublicacionRoomieRequest;
 import com.roommatch.dto.PublicacionRoomieResponse;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/api/publicaciones-roomie")
 public class PublicacionRoomieController {
@@ -127,10 +130,10 @@ public ResponseEntity<
         BigDecimal presupuestoMax,
 
         @RequestParam(defaultValue = "0")
-        int page,
+        @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(10000) int page,
 
         @RequestParam(defaultValue = "6")
-        int size
+        @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size
 
 ) {
 
@@ -237,11 +240,7 @@ public ResponseEntity<
 
     ) {
 
-        Integer idUsuario = obtenerIdUsuarioAutenticado(
-
-                authentication
-
-        );
+        Integer idUsuario = authentication != null && authentication.getPrincipal() instanceof Usuario usuario ? usuario.getIdUsuario() : null;
 
 
         PublicacionRoomieResponse response =
@@ -286,10 +285,10 @@ public ResponseEntity<
             Authentication authentication,
 
             @RequestParam(defaultValue = "0")
-            int page,
+            @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(10000) int page,
 
             @RequestParam(defaultValue = "6")
-            int size
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size
 
     ) {
 
@@ -629,7 +628,7 @@ public ResponseEntity<
 
         ) {
 
-            throw new IllegalArgumentException(
+            throw new AuthenticationCredentialsNotFoundException(
 
                     "Usuario no autenticado"
 

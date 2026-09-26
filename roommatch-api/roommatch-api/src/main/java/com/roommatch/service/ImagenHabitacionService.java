@@ -1,473 +1,85 @@
 package com.roommatch.service;
 
-import com.roommatch.dto.ImagenHabitacionRequest;
-import com.roommatch.dto.ImagenHabitacionResponse;
-
-import com.roommatch.model.Habitacion;
-import com.roommatch.model.ImagenHabitacion;
-import com.roommatch.model.Propietario;
-
-import com.roommatch.repository.HabitacionRepository;
-import com.roommatch.repository.ImagenHabitacionRepository;
-import com.roommatch.repository.PropietarioRepository;
-
+import com.roommatch.dto.*;
+import com.roommatch.model.*;
+import com.roommatch.repository.*;
+import com.roommatch.exception.ConflictException;
+import com.roommatch.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 
 @Service
 public class ImagenHabitacionService {
+    private final ImagenHabitacionRepository images;
+    private final HabitacionRepository parents;
+    private final ImageUrlPolicy urls;
+    private final PlanPolicy planPolicy;
 
-    private final ImagenHabitacionRepository imagenRepository;
-
-    private final HabitacionRepository habitacionRepository;
-
-    private final PropietarioRepository propietarioRepository;
-
-
-    public ImagenHabitacionService(
-            ImagenHabitacionRepository imagenRepository,
-            HabitacionRepository habitacionRepository,
-            PropietarioRepository propietarioRepository
-    ) {
-
-        this.imagenRepository =
-                imagenRepository;
-
-        this.habitacionRepository =
-                habitacionRepository;
-
-        this.propietarioRepository =
-                propietarioRepository;
+    public ImagenHabitacionService(ImagenHabitacionRepository images, HabitacionRepository parents, ImageUrlPolicy urls, PlanPolicy planPolicy) {
+        this.images = images; this.parents = parents; this.urls = urls; this.planPolicy = planPolicy;
     }
-
-
-    /*
-     * =========================================================
-     * AGREGAR IMAGEN
-     * =========================================================
-     */
 
     @Transactional
-    public ImagenHabitacionResponse agregarImagen(
-            Integer idUsuario,
-            Integer idHabitacion,
-            ImagenHabitacionRequest request
-    ) {
-
-        Propietario propietario =
-                obtenerPropietario(
-                        idUsuario
-                );
-
-
-        Habitacion habitacion =
-                obtenerHabitacionPropietario(
-                        idHabitacion,
-                        propietario.getIdPropietario()
-                );
-
-
-        long cantidadImagenes =
-                imagenRepository
-                        .countByHabitacionIdHabitacion(
-                                idHabitacion
-                        );
-
-
-        /*
-         * Máximo 5 imágenes.
-         */
-
-        if (cantidadImagenes >= 5) {
-
-            throw new IllegalArgumentException(
-                    "Solo puedes registrar hasta 5 imágenes por habitación"
-            );
+    public ImagenHabitacionResponse agregarImagen(Integer user, Integer id, ImagenHabitacionRequest request) {
+        Habitacion parent = editable(user, id);
+        String url = urls.validate(request.getUrlImagen());
+        List<ImagenHabitacion> rows = list(id);
+        int position = ImageUrlPolicy.position(request.getOrden(), rows.size());
+        // Descending shifts preserve the unique parent/order key after every statement.
+        for (int i = rows.size() - 1; i >= position - 1; i--) {
+            var row = rows.get(i); row.setOrden(row.getOrden() + 1); images.saveAndFlush(row);
         }
-
-
-        /*
-         * Validar URL.
-         */
-
-        if (
-                request.getUrlImagen() == null ||
-                request.getUrlImagen()
-                        .trim()
-                        .isEmpty()
-        ) {
-
-            throw new IllegalArgumentException(
-                    "La URL de la imagen es obligatoria"
-            );
-        }
-
-
-        boolean primeraImagen =
-                cantidadImagenes == 0;
-
-
-        boolean solicitarPrincipal =
-                Boolean.TRUE.equals(
-                        request.getPrincipal()
-                );
-
-
-        /*
-         * La primera imagen siempre será principal.
-         */
-
-        boolean esPrincipal =
-
-                primeraImagen ||
-
-                solicitarPrincipal;
-
-
-        /*
-         * Si será principal,
-         * quitamos principal a las demás.
-         */
-
-        if (esPrincipal) {
-
-            imagenRepository
-                    .desmarcarImagenesPrincipales(
-                            idHabitacion
-                    );
-        }
-
-
-        ImagenHabitacion imagen =
-                new ImagenHabitacion();
-
-
-        imagen.setHabitacion(
-                habitacion
-        );
-
-
-        imagen.setUrlImagen(
-
-                request
-                        .getUrlImagen()
-                        .trim()
-
-        );
-
-
-        imagen.setOrden(
-
-                request.getOrden() != null
-
-                        ? request.getOrden()
-
-                        : (int) cantidadImagenes + 1
-
-        );
-
-
-        imagen.setPrincipal(
-                esPrincipal
-        );
-
-
-        ImagenHabitacion imagenGuardada =
-
-                imagenRepository.save(
-                        imagen
-                );
-
-
-        return ImagenHabitacionResponse
-                .fromEntity(
-                        imagenGuardada
-                );
+        boolean principal = rows.isEmpty() || Boolean.TRUE.equals(request.getPrincipal());
+        if (principal) clearPrimary(rows);
+        ImagenHabitacion image = new ImagenHabitacion();
+        image.setHabitacion(parent); image.setUrlImagen(url); image.setOrden(position); image.setPrincipal(principal);
+        return ImagenHabitacionResponse.fromEntity(images.saveAndFlush(image));
     }
-
-
-    /*
-     * =========================================================
-     * LISTAR IMÁGENES
-     * =========================================================
-     */
 
     @Transactional(readOnly = true)
-    public List<ImagenHabitacionResponse>
-    listarImagenesPorHabitacion(
-            Integer idHabitacion
-    ) {
-
-        /*
-         * Validar que la habitación exista.
-         */
-
-        if (
-                !habitacionRepository
-                        .existsById(
-                                idHabitacion
-                        )
-        ) {
-
-            throw new IllegalArgumentException(
-                    "Habitación no encontrada"
-            );
-        }
-
-
-        return imagenRepository
-
-                .findByHabitacionIdHabitacionOrderByOrdenAsc(
-                        idHabitacion
-                )
-
-                .stream()
-
-                .map(
-                        ImagenHabitacionResponse::fromEntity
-                )
-
-                .toList();
+    public List<ImagenHabitacionResponse> listarImagenesPorHabitacion(Integer id, Integer user) {
+        Habitacion parent = parents.findById(id).orElseThrow(() -> missing());
+        boolean own = parent.getPropietario().getUsuario().getIdUsuario().equals(user);
+        if (!own && !(planPolicy.visible(parent))) throw missing();
+        return list(id).stream().filter(i -> own || urls.allowed(i.getUrlImagen())).map(ImagenHabitacionResponse::fromEntity).toList();
     }
-
-
-    /*
-     * =========================================================
-     * MARCAR COMO PRINCIPAL
-     * =========================================================
-     */
 
     @Transactional
-    public ImagenHabitacionResponse marcarComoPrincipal(
-            Integer idUsuario,
-            Integer idImagen
-    ) {
-
-        Propietario propietario =
-                obtenerPropietario(
-                        idUsuario
-                );
-
-
-        ImagenHabitacion imagen =
-
-                imagenRepository
-                        .findByIdImagenAndHabitacionPropietarioIdPropietario(
-
-                                idImagen,
-
-                                propietario.getIdPropietario()
-
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "Imagen no encontrada o no te pertenece"
-                                        )
-                        );
-
-
-        Integer idHabitacion =
-
-                imagen
-                        .getHabitacion()
-                        .getIdHabitacion();
-
-
-        /*
-         * Quitamos principal
-         * a todas las imágenes.
-         */
-
-        imagenRepository
-                .desmarcarImagenesPrincipales(
-                        idHabitacion
-                );
-
-
-        /*
-         * Marcamos la seleccionada.
-         */
-
-        imagen.setPrincipal(
-                true
-        );
-
-
-        ImagenHabitacion imagenActualizada =
-
-                imagenRepository.save(
-                        imagen
-                );
-
-
-        return ImagenHabitacionResponse
-                .fromEntity(
-                        imagenActualizada
-                );
+    public ImagenHabitacionResponse marcarComoPrincipal(Integer user, Integer idImagen) {
+        int parentId = images.findOwnedParentId(idImagen, user).orElseThrow(() -> missing());
+        editable(user, parentId);
+        var rows = list(parentId);
+        var selected = rows.stream().filter(i -> i.getIdImagen().equals(idImagen)).findFirst().orElseThrow(() -> missing());
+        clearPrimary(rows);
+        selected.setPrincipal(true);
+        return ImagenHabitacionResponse.fromEntity(images.saveAndFlush(selected));
     }
-
-
-    /*
-     * =========================================================
-     * ELIMINAR IMAGEN
-     * =========================================================
-     */
 
     @Transactional
-    public void eliminarImagen(
-            Integer idUsuario,
-            Integer idImagen
-    ) {
-
-        Propietario propietario =
-                obtenerPropietario(
-                        idUsuario
-                );
-
-
-        ImagenHabitacion imagen =
-
-                imagenRepository
-                        .findByIdImagenAndHabitacionPropietarioIdPropietario(
-
-                                idImagen,
-
-                                propietario.getIdPropietario()
-
-                        )
-                        .orElseThrow(
-                                () ->
-
-                                        new IllegalArgumentException(
-                                                "Imagen no encontrada o no te pertenece"
-                                        )
-                        );
-
-
-        Integer idHabitacion =
-
-                imagen
-                        .getHabitacion()
-                        .getIdHabitacion();
-
-
-        boolean eraPrincipal =
-
-                Boolean.TRUE.equals(
-                        imagen.getPrincipal()
-                );
-
-
-        /*
-         * Eliminamos la imagen.
-         */
-
-        imagenRepository.delete(
-                imagen
-        );
-
-
-        /*
-         * Forzamos el DELETE antes
-         * de consultar las imágenes restantes.
-         */
-
-        imagenRepository.flush();
-
-
-        /*
-         * Si eliminamos la principal,
-         * elegimos automáticamente otra.
-         */
-
-        if (eraPrincipal) {
-
-            List<ImagenHabitacion> imagenesRestantes =
-
-                    imagenRepository
-                            .findByHabitacionIdHabitacionOrderByOrdenAsc(
-                                    idHabitacion
-                            );
-
-
-            if (
-                    !imagenesRestantes.isEmpty()
-            ) {
-
-                ImagenHabitacion nuevaPrincipal =
-
-                        imagenesRestantes.get(0);
-
-
-                nuevaPrincipal.setPrincipal(
-                        true
-                );
-
-
-                imagenRepository.save(
-                        nuevaPrincipal
-                );
-            }
-        }
+    public void eliminarImagen(Integer user, Integer idImagen) {
+        int parentId = images.findOwnedParentId(idImagen, user).orElseThrow(() -> missing());
+        editable(user, parentId);
+        var rows = list(parentId);
+        var selected = rows.stream().filter(i -> i.getIdImagen().equals(idImagen)).findFirst().orElseThrow(() -> missing());
+        boolean primary = Boolean.TRUE.equals(selected.getPrincipal());
+        int oldPosition = selected.getOrden();
+        images.delete(selected); images.flush(); rows.remove(selected);
+        // Close the gap in ascending order; the preceding slot is free.
+        for (var row : rows) if (row.getOrden() > oldPosition) { row.setOrden(row.getOrden() - 1); images.saveAndFlush(row); }
+        if (primary && !rows.isEmpty()) { rows.get(0).setPrincipal(true); images.saveAndFlush(rows.get(0)); }
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER PROPIETARIO
-     * =========================================================
-     */
-
-    private Propietario obtenerPropietario(
-            Integer idUsuario
-    ) {
-
-        return propietarioRepository
-                .findByUsuarioIdUsuario(
-                        idUsuario
-                )
-                .orElseThrow(
-                        () ->
-
-                                new IllegalArgumentException(
-                                        "No tienes perfil de propietario"
-                                )
-                );
+    private Habitacion editable(Integer user, Integer id) {
+        Habitacion parent = parents.lockForImages(id, user).orElseThrow(() -> missing());
+        planPolicy.exigirPropietarioActivo(parent.getPropietario());
+        if ("eliminada".equals(parent.getEstado())) throw new ConflictException("El anuncio fue archivado y conserva su historial");
+        return parent;
     }
 
-
-    /*
-     * =========================================================
-     * OBTENER HABITACIÓN DEL PROPIETARIO
-     * =========================================================
-     */
-
-    private Habitacion obtenerHabitacionPropietario(
-            Integer idHabitacion,
-            Integer idPropietario
-    ) {
-
-        return habitacionRepository
-
-                .findByIdHabitacionAndPropietarioIdPropietario(
-
-                        idHabitacion,
-
-                        idPropietario
-
-                )
-
-                .orElseThrow(
-                        () ->
-
-                                new IllegalArgumentException(
-                                        "Habitación no encontrada o no te pertenece"
-                                )
-                );
+    private List<ImagenHabitacion> list(Integer id) { return images.findByHabitacionIdHabitacionOrderByOrdenAsc(id); }
+    private void clearPrimary(List<ImagenHabitacion> rows) {
+        for (var row : rows) if (Boolean.TRUE.equals(row.getPrincipal())) { row.setPrincipal(false); images.saveAndFlush(row); }
     }
+    private ResourceNotFoundException missing() { return new ResourceNotFoundException("Imagen o anuncio no disponible o no te pertenece"); }
 }

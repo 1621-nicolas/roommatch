@@ -10,7 +10,6 @@ public class FavoritoResponse {
     private Integer idUsuarioFavorito;
     private String nombres;
     private String apellidos;
-    private String email;
     private Integer edad;
     private String ocupacion;
     private String universidad;
@@ -27,7 +26,7 @@ public class FavoritoResponse {
             response.setIdUsuarioFavorito(favorito.getUsuarioFavorito().getIdUsuario());
             response.setNombres(favorito.getUsuarioFavorito().getNombres());
             response.setApellidos(favorito.getUsuarioFavorito().getApellidos());
-            response.setEmail(favorito.getUsuarioFavorito().getEmail());
+
             response.setEdad(favorito.getUsuarioFavorito().getEdad());
             response.setOcupacion(favorito.getUsuarioFavorito().getOcupacion());
             response.setUniversidad(favorito.getUsuarioFavorito().getUniversidad());
@@ -69,15 +68,7 @@ public class FavoritoResponse {
         this.apellidos = apellidos;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-  
-    public Integer getEdad() {
+public Integer getEdad() {
         return edad;
     }
 

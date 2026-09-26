@@ -1,41 +1,20 @@
 package com.roommatch.repository;
 
 import com.roommatch.model.ImagenPublicacion;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface ImagenPublicacionRepository extends JpaRepository<ImagenPublicacion, Integer> {
-
-    List<ImagenPublicacion> findByPublicacionIdPublicacionOrderByOrdenAsc(
-            Integer idPublicacion
-    );
-
-    Optional<ImagenPublicacion> findByIdImagenAndPublicacionUsuarioIdUsuario(
-            Integer idImagen,
-            Integer idUsuario
-    );
-
-    long countByPublicacionIdPublicacion(Integer idPublicacion);
-
-    @Modifying
     @Query("""
-            UPDATE ImagenPublicacion i
-            SET i.principal = false
-            WHERE i.publicacion.idPublicacion = :idPublicacion
-            """)
-    void desmarcarImagenesPrincipales(
-            @Param("idPublicacion") Integer idPublicacion
-    );
+        select new com.roommatch.dto.ImagePreviewRow(i.publicacion.idPublicacion, i.urlImagen)
+        from ImagenPublicacion i where i.publicacion.idPublicacion in :ids
+        order by i.principal desc, i.orden asc, i.idImagen asc
+        """)
+    List<com.roommatch.dto.ImagePreviewRow> findPreviews(@Param("ids") java.util.Collection<Integer> ids);
 
-    void deleteByPublicacionIdPublicacion(
-            Integer idPublicacion
-    );
-
+    List<ImagenPublicacion> findByPublicacionIdPublicacionOrderByOrdenAsc(Integer idPublicacion);
+    @Query("select i.publicacion.idPublicacion from ImagenPublicacion i where i.idImagen=:image and i.publicacion.usuario.idUsuario=:user")
+    Optional<Integer> findOwnedParentId(@Param("image") Integer image, @Param("user") Integer user);
 }

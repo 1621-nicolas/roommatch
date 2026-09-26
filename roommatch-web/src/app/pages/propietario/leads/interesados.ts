@@ -173,15 +173,6 @@ export class Interesados implements OnInit {
 
 
           this.ordenarPorFecha();
-
-
-          console.log(
-
-            '[RoomMatch interesados] Leads:',
-
-            this.leads
-
-          );
         },
 
 

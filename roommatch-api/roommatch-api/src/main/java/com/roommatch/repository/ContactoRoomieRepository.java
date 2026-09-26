@@ -9,6 +9,21 @@ import java.util.List;
 
 public interface ContactoRoomieRepository extends JpaRepository<ContactoRoomie, Integer> {
 
+    @Query(value = """
+            SELECT CASE WHEN a.idUsuario = :usuario THEN b.idUsuario ELSE a.idUsuario END AS idUsuario,
+                   CASE WHEN a.idUsuario = :usuario THEN b.nombres ELSE a.nombres END AS nombres,
+                   CASE WHEN a.idUsuario = :usuario THEN b.apellidos ELSE a.apellidos END AS apellidos,
+                   c.fechaDesbloqueo AS fechaConexion
+            FROM ContactoRoomie c JOIN c.usuarioA a JOIN c.usuarioB b
+            WHERE a.idUsuario = :usuario OR b.idUsuario = :usuario
+            ORDER BY c.fechaDesbloqueo DESC, c.idContactoRoomie DESC
+            """, countQuery = """
+            SELECT COUNT(c) FROM ContactoRoomie c
+            WHERE c.usuarioA.idUsuario = :usuario OR c.usuarioB.idUsuario = :usuario
+            """)
+    org.springframework.data.domain.Page<ContactoConexionProjection> paginaConexiones(
+            @Param("usuario") Integer usuario, org.springframework.data.domain.Pageable pageable);
+
     boolean existsBySolicitudIdSolicitud(Integer idSolicitud);
 
     @Query("""
