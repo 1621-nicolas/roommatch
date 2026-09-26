@@ -1,10 +1,18 @@
 <section class="admin-page" [attr.aria-busy]="loading()">
   <app-admin-nav />
   <header class="admin-head">
-    <div><h1>Revisión de reportes</h1><p>Lee la incidencia y sus antecedentes antes de decidir. Todas las decisiones quedan registradas.</p></div>
+    <div><h1 #listTitle tabindex="-1">Revisión de reportes</h1><p>Lee la incidencia y sus antecedentes antes de decidir. Todas las decisiones quedan registradas.</p></div>
     <button type="button" (click)="load(page()?.number ?? 0)" [disabled]="loading() || saving()">Actualizar lista</button>
   </header>
   @if (success()) { <p class="admin-alert admin-success" role="status">{{ success() }}</p> }
+  @if (conflictDraft(); as draft) {
+    <section class="admin-detail" aria-labelledby="draft-title">
+      <h2 id="draft-title">Borrador sin enviar · Reporte #{{ draft.id }} de {{ draft.kind }}</h2>
+      <p>El reporte cambió. Conservamos tu motivo para que puedas copiarlo. Revisa el estado y el historial actualizados antes de tomar otra decisión.</p>
+      <p class="description">{{ draft.motive }}</p>
+      <button type="button" (click)="conflictDraft.set(null)">Descartar borrador</button>
+    </section>
+  }
   <div class="admin-toolbar">
     <div class="admin-type" role="group" aria-label="Tipo de reporte">
       <button type="button" [attr.aria-pressed]="kind() === 'usuarios'" (click)="changeKind('usuarios')" [disabled]="saving()">Usuarios</button>
@@ -27,7 +35,8 @@
     @if (result.content.length === 0) {
       <app-empty-state title="No hay reportes con este filtro" message="Prueba otro estado o cambia entre usuarios y habitaciones." />
     } @else {
-      <div class="admin-table-wrap" role="region" aria-label="Lista de reportes" tabindex="0">
+      <p class="table-scroll-help" id="report-scroll-help">Desplaza la tabla horizontalmente para ver el estado y las acciones.</p>
+      <div class="admin-table-wrap" role="region" aria-label="Lista de reportes" aria-describedby="report-scroll-help" tabindex="0">
         <table>
           <thead><tr><th scope="col">Reporte</th><th scope="col">{{ kind() === 'usuarios' ? 'Usuario reportado' : 'Habitación' }}</th><th scope="col">Reportante</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
           <tbody>
@@ -88,7 +97,11 @@
       <textarea id="decision-reason" name="motivo" [(ngModel)]="motive" rows="4" maxlength="500" required autofocus [disabled]="saving()" aria-describedby="reason-hint"></textarea>
       <small id="reason-hint">El motivo se guardará junto con tu identidad administrativa y la fecha.</small>
       @if (actionError()) {<p class="admin-alert" role="alert">{{ actionError() }}</p>}
-      <footer><button type="button" (click)="cancel()" [disabled]="saving()">Cancelar</button><button type="submit" [class.danger]="decision()?.action === 'sancionado'" [class.primary]="decision()?.action !== 'sancionado'" [disabled]="saving() || !motive.trim()">{{ saving() ? 'Guardando…' : 'Confirmar decisión' }}</button></footer>
+      @if (conflict()) {<p>Actualiza la lista para revisar la decisión vigente. Tu motivo se conservará como borrador sin enviar.</p>}
+      <footer><button type="button" (click)="cancel()" [disabled]="saving()">{{ conflict() ? 'Cerrar y actualizar' : 'Cancelar' }}</button>
+        @if (conflict()) {<button type="button" class="primary" (click)="recoverConflict()">Actualizar estado</button>}
+        @else {<button type="submit" [class.danger]="decision()?.action === 'sancionado'" [class.primary]="decision()?.action !== 'sancionado'" [disabled]="saving() || !motive.trim()">{{ saving() ? 'Guardando…' : 'Confirmar decisión' }}</button>}
+      </footer>
     </form>
   </dialog>
 </section>

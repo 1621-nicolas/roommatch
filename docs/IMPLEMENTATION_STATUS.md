@@ -1,6 +1,6 @@
 # Estado de implementación
 
-Actualizado el 20 de septiembre de 2026. Trabajo en
+Actualizado el 26 de septiembre de 2026. Trabajo en
 [`audit/roommatch-hardening`, PR #4](https://github.com/1621-nicolas/roommatch/pull/4).
 No se ha modificado `main` ni realizado merge. Los cinco informes de la raíz
 conservan la auditoría inicial contra `8308ed4` y distinguen sus datos de los
@@ -8,6 +8,12 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
 
 ## Evidencia comprobada
 
+- [CI de URLs de foto de perfil](https://github.com/1621-nicolas/roommatch/actions/runs/36224996874):
+  180 pruebas unitarias backend + 18 de integración, cero fallos/omisiones.
+- [CI de miniaturas por lote](https://github.com/1621-nicolas/roommatch/actions/runs/36246998165):
+  184 unitarias backend + 19 de integración aprobadas, cero fallos/omisiones.
+- Validación local actual: 69 pruebas frontend y 22 de Chromium aprobadas,
+  escritorio/móvil. La publicación del nuevo gate de navegador está en curso.
 - [CI de navegación](https://github.com/1621-nicolas/roommatch/actions/runs/35489699513):
   backend 169 unitarias + 18 integración, cero fallos/omisiones; frontend 62
   pruebas, build y audit aprobados. SQL Server real mediante Testcontainers.
@@ -18,8 +24,9 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
 - `npm audit`: cero vulnerabilidades conocidas tras parches compatibles.
 - Bundle inicial local: 389,24 kB; CSS global: 48,21 kB. Sigue el warning de
   `mis-publicaciones.css`: 14,06 kB frente al presupuesto de 12 kB.
-- Consultas SQL medidas en integración: publicaciones 4 y contactos 3 por
-  página, tanto para 10 como para 20 y 50 resultados. No son pruebas de carga.
+- Consultas SQL medidas en integración: publicaciones con fotos 5,
+  habitaciones con fotos 3 y contactos 3 por página, tanto para 10 como para
+  20 y 50 resultados. No son pruebas de carga.
 
 ## Trabajo implementado
 
@@ -35,18 +42,19 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
 | Roles | Conversión de propietario conserva ADMIN; perfil de propietario como capacidad adicional | PropietarioService |
 | Matching | 13 criterios ponderados, compatibilidad parcial, presupuesto gradual, cobertura y cálculo vigente al leer | MATCHING.md |
 | Publicaciones | Ownership, referencia pública explícita, visibilidad y borrado lógico; compatibilidad batch | BUSINESS_RULES.md, V7 |
-| Galerías | Máximo cinco, orden/principal bajo lock y constraints SQL; URLs HTTPS en producción | V9, ImageUrlPolicy |
+| Galerías y fotos | Máximo cinco por galería, orden/principal bajo lock y constraints SQL; URLs de galería y foto de perfil validadas, HTTPS en producción | V9, ImageUrlPolicy, PROFILE_PHOTO.md |
 | Edición | PATCH de descripción y versiones para evitar sobrescrituras de perfil/contacto | V10/V12, tests API/web |
 | Admin | Métricas reales, reportes/filtros/paginación, resolución con motivo e historial inmutable | ADMIN.md, V11 |
 | Frontend | API relativa, interceptor limitado al API, sesión vencida, rutas lazy, admin/contactos/inicio/auth/nav conectados | HOME.md, NAVIGATION.md, AUTH_FORMS.md |
 | Limpieza | Cinco placeholders sin usos y archivo typo retirados; estilos antiguos eliminados tras comprobar consumidores | FRONTEND_CLEANUP.md |
-| CI y migraciones | Tests frontend, verify SQL Server, audit npm; Flyway V1–V12 sin upgrade destructivo | Workflow, database/README.md |
+| CI y migraciones | Tests frontend, Chromium, verify SQL Server, audit npm; Flyway V1–V12 sin upgrade destructivo | Workflow, BROWSER_TESTS.md, database/README.md |
 
 ## Pendientes que impiden cerrar el proyecto
 
-1. Ejecutar navegador real: escritorio/móvil, teclado, foco, zoom, contraste,
-   flujos completos y lectura asistida. No hay capturas actuales que permitan
-   declarar el diseño verificado ni conformidad WCAG AA.
+1. Ampliar la validación de navegador al resto de pantallas, flujos completos
+   con API real, zoom, contraste y lectura asistida. Siete pantallas ya tienen
+   capturas escritorio/móvil y pruebas de teclado, foco, errores y modales;
+   eso no equivale a conformidad WCAG AA ni aceptación de todo el producto.
 2. Completar renovación y revisión funcional del resto de pantallas. Verificar
    galerías en resultados/detalles públicos, filtros sobre páginas parciales,
    estados asíncronos y formularios de habitaciones/publicaciones/solicitudes.
@@ -55,7 +63,7 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
    final de la rama corregida.
 4. Completar auditoría de dependencias Maven. La resolución local de Maven no
    funciona; CI compila y prueba, pero eso no equivale a un escaneo de CVE.
-5. Revisar URLs de foto de perfil y listados sin paginación restantes; medir
+5. Revisar listados sin paginación restantes; medir
    consultas y carga reales de búsqueda/matching a escalas mayores.
 6. Recuperación de contraseña, verificación de correo y documentos legales
    aún no implementados. No hay enlaces ficticios que simulen esos flujos.
@@ -63,7 +71,7 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
    budgets para ocultar el warning.
 8. Validar infraestructura real, backup/restauración, proxy/TLS/CSP y operación
    de migraciones sobre una copia representativa de datos existentes.
-9. La protección de main sigue desactivada (verificada hoy). Configurar PR y
+9. La protección de main estaba desactivada al verificarla el 20/09. Configurar PR y
    checks obligatorios requiere la autorización específica del repositorio;
    se mantiene como propuesta y no se cambia automáticamente.
 

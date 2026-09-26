@@ -27,6 +27,7 @@ export class Reportes implements OnInit {
   private historyRequest?: Subscription;
   @ViewChild('decisionDialog', {static: true}) private dialog!: ElementRef<HTMLDialogElement>;
   @ViewChild('details') private details?: ElementRef<HTMLElement>;
+  @ViewChild('listTitle', {static: true}) private listTitle!: ElementRef<HTMLElement>;
   readonly kind = signal<ReportKind>('usuarios');
   readonly state = signal('pendiente');
   readonly page = signal<PageResponse<AdminReport> | null>(null);
@@ -40,6 +41,8 @@ export class Reportes implements OnInit {
   readonly decision = signal<Decision | null>(null);
   readonly saving = signal(false);
   readonly actionError = signal('');
+  readonly conflict = signal(false);
+  readonly conflictDraft = signal<{id: number; kind: ReportKind; motive: string} | null>(null);
   motive = '';
 
   ngOnInit(): void {
@@ -92,14 +95,24 @@ export class Reportes implements OnInit {
 
   prepare(action: ModerationAction): void {
     const report = this.selected(); if (!report || this.saving()) return;
-    this.decision.set({kind: this.kind(), report, action}); this.motive = ''; this.actionError.set('');
+    this.decision.set({kind: this.kind(), report, action}); this.motive = ''; this.actionError.set(''); this.conflict.set(false);
     this.dialog.nativeElement.showModal();
   }
 
   cancel(event?: Event): void {
     event?.preventDefault();
     if (this.saving()) return;
+    if (this.conflict()) {this.recoverConflict(); return;}
     this.dialog.nativeElement.close(); this.decision.set(null); this.actionError.set('');
+  }
+
+  recoverConflict(): void {
+    const decision = this.decision(); if (!decision || this.saving() || !this.conflict()) return;
+    this.conflictDraft.set({id: this.id(decision.report, decision.kind), kind: decision.kind, motive: this.motive});
+    this.dialog.nativeElement.close(); this.decision.set(null); this.actionError.set(''); this.conflict.set(false);
+    // Include resolved reports; the old pending-only filter could hide the winning decision.
+    this.state.set(''); this.load();
+    afterNextRender(() => this.listTitle.nativeElement.focus(), {injector: this.injector});
   }
 
   actionTitle(): string {
@@ -121,7 +134,7 @@ export class Reportes implements OnInit {
   }
 
   confirm(): void {
-    const decision = this.decision(); if (!decision || this.saving()) return;
+    const decision = this.decision(); if (!decision || this.saving() || this.conflict()) return;
     if (!this.motive.trim() || this.motive.length > 500) {this.actionError.set('Escribe un motivo de hasta 500 caracteres.'); return;}
     this.saving.set(true); this.actionError.set('');
     this.api.decidir(decision.kind, this.id(decision.report, decision.kind), decision.action, this.motive.trim())
@@ -131,7 +144,10 @@ export class Reportes implements OnInit {
           this.success.set('Decisión guardada. Puedes consultarla en el historial del reporte.');
           this.load();
         },
-        error: error => this.actionError.set(this.message(error, 'No se pudo guardar la decisión. Revisa el estado actual del reporte.'))
+        error: error => {
+          this.conflict.set(error?.status === 409);
+          this.actionError.set(this.message(error, 'No se pudo guardar la decisión. Revisa el estado actual del reporte.'));
+        }
       });
   }
 

@@ -147,13 +147,16 @@ cd roommatch-web
 npm ci
 npm run build
 npm test -- --watch=false
+npx playwright install --with-deps --only-shell chromium
+npm run test:browser
 ```
 
 El repositorio incluye GitHub Actions para validar ambas partes automáticamente.
 
 CI incluye integración con SQL Server mediante Testcontainers y `npm audit
---audit-level=high`, además del build y las pruebas frontend. Un resultado de
-CI no sustituye las pruebas de navegador ni la validación del despliegue.
+--audit-level=high`, además del build, las pruebas unitarias frontend y las
+[pruebas Chromium de escritorio y móvil](docs/BROWSER_TESTS.md). Estas últimas
+usan respuestas API controladas; no sustituyen la validación del despliegue.
 
 ## Auditoría y estado del proyecto
 

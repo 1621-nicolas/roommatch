@@ -36,6 +36,11 @@ describe('Report review workflow', () => {
     expect(component.motive).toBe('Evidencia revisada');
     expect(dialog.open).toBe(true);
     expect(component.saving()).toBe(false);
+    component.confirm();expect(decidir).toHaveBeenCalledTimes(1);
+    component.recoverConflict();
+    expect(component.conflictDraft()?.motive).toBe('Evidencia revisada');
+    expect(component.selected()).toBeNull();expect(component.state()).toBe('');
+    expect(dialog.open).toBe(false);
   });
   it('closes the confirmation only after a successful decision and reloads data', () => {
     const decidir=vi.fn().mockReturnValue(of({...row,estado:'rechazado'}));

@@ -17,7 +17,9 @@
 .admin-summary {display:grid;grid-template-columns:repeat(4,1fr);margin:0 0 2rem;padding:1.5rem 0;border-block:1px solid var(--rm-border);gap:1.5rem}
 .admin-summary dt {color:var(--rm-text-secondary);font-size:.875rem}
 .admin-summary dd {margin:.2rem 0 0;font-size:1.8rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
-.admin-columns {display:grid;grid-template-columns:1fr 1fr;gap:2.5rem}
+.admin-columns {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5rem}
+.admin-section {min-width:0}
+.table-scroll-help {display:none}
 .admin-section h2,.admin-detail h2 {font-size:1.25rem;line-height:1.35;margin:0 0 1rem}
 .admin-queue {list-style:none;padding:0;margin:0 0 1rem}
 .admin-queue li {border-bottom:1px solid var(--rm-border)}
@@ -58,7 +60,7 @@
 .admin-dialog p {color:var(--rm-text-secondary);margin:0 0 1.25rem}
 .admin-dialog footer {display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap}
 .admin-dialog .admin-alert {color:var(--rm-error)}
-@media(max-width:720px) {.admin-columns {grid-template-columns:1fr;gap:2rem}.admin-summary {grid-template-columns:repeat(2,1fr)}.admin-head {flex-direction:column}.admin-toolbar {align-items:stretch}.admin-filter {width:100%}.admin-filter>div {flex:1}.admin-detail dl {grid-template-columns:1fr;gap:.15rem}.admin-detail dd {margin-bottom:.65rem}.admin-table-wrap table {min-width:620px}}
+@media(max-width:720px) {.admin-columns {grid-template-columns:minmax(0,1fr);gap:2rem}.admin-summary {grid-template-columns:repeat(2,1fr)}.admin-head {flex-direction:column}.admin-toolbar {align-items:stretch}.admin-filter {width:100%}.admin-filter>div {flex:1}.admin-detail dl {grid-template-columns:1fr;gap:.15rem}.admin-detail dd {margin-bottom:.65rem}.admin-table-wrap table {min-width:620px}.admin-section .admin-table-wrap table {min-width:0}.table-scroll-help {display:block;color:var(--rm-text-secondary);font-size:.875rem}}
 @media(prefers-reduced-motion:reduce) {.admin-page * {scroll-behavior:auto}}
 
 .admin-page .sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
