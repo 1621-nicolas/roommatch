@@ -56,4 +56,7 @@ export class SolicitudService {
       {}
     );
   }
+  cancelarSolicitud(idSolicitud: number): Observable<ApiResponse<SolicitudContactoResponse>> {
+    return this.http.put<ApiResponse<SolicitudContactoResponse>>(`${this.apiUrl}/${idSolicitud}/cancelar`, {});
+  }
 }

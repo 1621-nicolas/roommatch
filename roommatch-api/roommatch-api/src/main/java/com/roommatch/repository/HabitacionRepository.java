@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface HabitacionRepository extends JpaRepository<Habitacion, Integer> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select h from Habitacion h where h.idHabitacion=:id and h.propietario.usuario.idUsuario=:user")
+    Optional<Habitacion> lockForImages(@Param("id") Integer id, @Param("user") Integer user);
+
 
     Optional<Habitacion> findByIdHabitacionAndPropietarioIdPropietario(
             Integer idHabitacion,
@@ -49,4 +53,7 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, Integer>
             @Param("permiteMascotas") Boolean permiteMascotas,
             Pageable pageable
     );
+    long countByPropietarioIdPropietarioAndDestacadaTrueAndEstadoNot(Integer propietario, String estado);
+    @Query("select h.idHabitacion from Habitacion h where h.idHabitacion in :ids and " + PublicRoomQuery.VISIBLE)
+    java.util.List<Integer> findPublicIds(@Param("ids") java.util.Collection<Integer> ids, @Param("ahora") java.time.LocalDateTime ahora);
 }

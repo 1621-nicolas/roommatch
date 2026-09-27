@@ -8,7 +8,7 @@
       <section class="publication-loading">
 
         <div>
-          👥
+          <app-icon name="people" />
         </div>
 
         <h2>
@@ -55,7 +55,7 @@
         class="publication-back"
       >
 
-        ← Volver a publicaciones
+        <app-icon name="arrow-left" /> Volver a publicaciones
 
       </a>
 
@@ -86,7 +86,7 @@
 
           <div class="publication-location">
 
-            📍 {{ publicacion.distrito }}
+            <app-icon name="geo-alt" /> {{ publicacion.distrito }}
 
             <span>
               ·
@@ -141,12 +141,14 @@
              CONTENIDO PRINCIPAL
         ================================================== -->
 
-        <main>
+        <div class="publication-main">
 
 
           <!-- ===============================================
                AUTOR
           ================================================ -->
+
+          <app-listing-gallery kind="publicacion" [parentId]="publicacion.idPublicacion" [title]="publicacion.titulo" />
 
           <section class="publication-author-card">
 
@@ -225,10 +227,6 @@
 
           <section class="publication-section">
 
-            <span class="publication-section-label">
-              Sobre la publicación
-            </span>
-
             <h2>
               ¿Qué está buscando?
             </h2>
@@ -251,7 +249,7 @@
             <article>
 
               <div>
-                📍
+                <app-icon name="geo-alt" />
               </div>
 
               <section>
@@ -293,7 +291,7 @@
             <article>
 
               <div>
-                👥
+                <app-icon name="people" />
               </div>
 
               <section>
@@ -320,7 +318,7 @@
             <article>
 
               <div>
-                ♡
+                <app-icon name="heart" />
               </div>
 
               <section>
@@ -341,7 +339,7 @@
 
                   } @else {
 
-                    Sin calcular
+                    No disponible
 
                   }
 
@@ -363,10 +361,6 @@
           ) {
 
             <section class="publication-section compatibility-section">
-
-              <span class="publication-section-label">
-                Compatibilidad RoomMatch
-              </span>
 
 
               <h2>
@@ -432,7 +426,7 @@
                   <article class="compatibility-positive">
 
                     <h3>
-                      ✓ Coincidencias
+                      <app-icon name="check-lg" /> Coincidencias
                     </h3>
 
 
@@ -444,7 +438,7 @@
                       <div>
 
                         <span>
-                          ✓
+                          <app-icon name="check-lg" />
                         </span>
 
                         {{ coincidencia }}
@@ -503,28 +497,25 @@
                 <div class="compatibility-unavailable">
 
                   <div>
-                    ♡
+                    <app-icon name="heart" />
                   </div>
 
                   <section>
 
                     <h3>
-                      Compatibilidad todavía no calculada
+                      Compatibilidad no disponible
                     </h3>
 
                     <p>
 
-                      Completa tu perfil de convivencia y
-                      calcula tus matches para conocer tu
-                      nivel de compatibilidad con
-                      {{ publicacion.nombreUsuario }}.
+                      La compatibilidad requiere iniciar sesión y suficiente información en tu perfil y el de {{ publicacion.nombreUsuario }}.
 
                     </p>
 
 
                     <a routerLink="/matches">
 
-                      Ir a mis matches →
+                      Ir a mis matches <app-icon name="arrow-right" />
 
                     </a>
 
@@ -538,7 +529,7 @@
 
           }
 
-        </main>
+        </div>
 
 
         <!-- =================================================
@@ -584,10 +575,6 @@
           } @else {
 
             <section class="publication-sidebar-card sticky-card">
-
-              <span class="sidebar-label">
-                Conecta de forma segura
-              </span>
 
 
               <h2>
@@ -682,12 +669,11 @@
 
               <div class="publication-privacy">
 
-                🔒
+                <app-icon name="lock" />
 
                 <span>
 
-                  Tu privacidad está protegida por
-                  RoomMatch.
+                  Comparte solo los datos que quieras enviar en tu mensaje.
 
                 </span>
 

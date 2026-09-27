@@ -1,11 +1,8 @@
 package com.roommatch.service;
 
 import com.roommatch.dto.DashboardAdminResponse;
-import com.roommatch.model.Usuario;
 import com.roommatch.repository.DashboardAdminRepository;
-import com.roommatch.repository.UsuarioRepository;
 import com.roommatch.util.ApiConstants;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,19 +10,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class DashboardAdminService {
 
     private final DashboardAdminRepository dashboardRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final AdminAuthorization admins;
 
     public DashboardAdminService(
             DashboardAdminRepository dashboardRepository,
-            UsuarioRepository usuarioRepository
+            AdminAuthorization admins
     ) {
         this.dashboardRepository = dashboardRepository;
-        this.usuarioRepository = usuarioRepository;
+        this.admins = admins;
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public DashboardAdminResponse obtenerDashboard(Integer idAdmin) {
-        validarAdmin(idAdmin);
+        admins.require(idAdmin);
 
         DashboardAdminResponse response = new DashboardAdminResponse();
         response.setTotalUsuarios(dashboardRepository.totalUsuarios());
@@ -66,21 +64,4 @@ public class DashboardAdminService {
         return response;
     }
 
-    private void validarAdmin(Integer idUsuario) {
-        if (idUsuario == null || idUsuario <= 0) {
-            throw new AccessDeniedException("No tienes permisos de administrador");
-        }
-
-        Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new AccessDeniedException(
-                        "No tienes permisos de administrador"
-                ));
-
-        if (
-                usuario.getRol() == null ||
-                !ApiConstants.ROL_ADMIN.equalsIgnoreCase(usuario.getRol().getNombreRol())
-        ) {
-            throw new AccessDeniedException("No tienes permisos de administrador");
-        }
-    }
 }

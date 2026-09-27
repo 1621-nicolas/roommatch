@@ -1,443 +1,106 @@
-import {
-  Component,
-  OnInit
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Observable, Subscription, finalize, map, of, catchError } from 'rxjs';
+import { AuthService } from '../../core/services/auth.service';
+import { HomeService } from '../../core/services/home.service';
+import { MatchService } from '../../core/services/match.service';
+import { SolicitudService } from '../../core/services/solicitud.service';
+import { PerfilService } from '../../core/services/perfil.service';
+import { ContactoService } from '../../core/services/contacto.service';
+import { HabitacionResponse } from '../../core/models/habitacion-response';
+import { PublicacionRoomieResponse } from '../../core/models/publicacion-roomie-response';
+import { MatchResponse } from '../../core/models/match-response';
+import { SolicitudContactoResponse } from '../../core/models/solicitud-contacto-response';
+import { ApiResponse } from '../../core/models/api-response';
+import { requirePage } from '../../core/validation/api-page';
 
-import {
-  RouterLink
-} from '@angular/router';
-
-import {
-  AuthService
-} from '../../core/services/auth.service';
-
-import {
-  HomeService
-} from '../../core/services/home.service';
-
-import {
-  MatchService
-} from '../../core/services/match.service';
-
-import {
-  SolicitudService
-} from '../../core/services/solicitud.service';
-
-import {
-  PerfilService
-} from '../../core/services/perfil.service';
-
-import {
-  ContactoService
-} from '../../core/services/contacto.service';
-
-import {
-  HabitacionResponse
-} from '../../core/models/habitacion-response';
-
-import {
-  PublicacionRoomieResponse
-} from '../../core/models/publicacion-roomie-response';
-
-import {
-  MatchResponse
-} from '../../core/models/match-response';
-
-import {
-  SolicitudContactoResponse
-} from '../../core/models/solicitud-contacto-response';
-
+type Section = 'habitaciones' | 'publicaciones' | 'matches' | 'solicitudes' | 'perfil' | 'contacto';
 
 @Component({
   selector: 'app-home',
-
-  imports: [
-    RouterLink
-  ],
-
-  templateUrl: './home.html'
+  imports: [RouterLink],
+  templateUrl: './home.html',
+  styleUrl: './home.css'
 })
-export class Home implements OnInit {
-
+export class Home implements OnInit, OnDestroy {
   habitaciones: HabitacionResponse[] = [];
-
   publicaciones: PublicacionRoomieResponse[] = [];
-
   mejoresMatches: MatchResponse[] = [];
-
   solicitudesRecibidas: SolicitudContactoResponse[] = [];
-
-
-  cargandoHabitaciones = false;
-
-  cargandoPublicaciones = false;
-
-  cargandoDashboard = false;
-
-
-  errorHabitaciones = '';
-
-  errorPublicaciones = '';
-
-  mensajeDashboard = '';
-
-
-  perfilCompleto = false;
-
+  perfilCreado = false;
   contactoConfigurado = false;
+  readonly loading: Partial<Record<Section, boolean>> = {};
+  readonly errors: Partial<Record<Section, string>> = {};
+  private readonly requests = new Map<Section, Subscription>();
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
-
-  constructor(
-    public authService: AuthService,
-    private homeService: HomeService,
-    private matchService: MatchService,
-    private solicitudService: SolicitudService,
-    private perfilService: PerfilService,
-    private contactoService: ContactoService
-  ) {}
-
+  constructor(public authService: AuthService, private homeService: HomeService,
+    private matchService: MatchService, private solicitudService: SolicitudService,
+    private perfilService: PerfilService, private contactoService: ContactoService) {}
 
   ngOnInit(): void {
-
-    if (
-      this.authService.estaAutenticado()
-    ) {
-
-      this.cargarHomeAutenticado();
-
-      return;
-    }
-
-    this.cargarHomePublico();
-  }
-
-
-  cargarHomePublico(): void {
-
     this.cargarHabitaciones();
-
     this.cargarPublicaciones();
+    if (this.authService.estaAutenticado()) this.cargarResumen();
   }
 
+  ngOnDestroy(): void { this.requests.forEach(request => request.unsubscribe()); }
 
-  cargarHomeAutenticado(): void {
-
-    this.cargandoDashboard = true;
-
-    this.cargarHabitaciones();
-
-    let peticionesCompletadas = 0;
-
-    const comprobarCarga = (): void => {
-
-      peticionesCompletadas++;
-
-      if (
-        peticionesCompletadas === 4
-      ) {
-
-        this.cargandoDashboard = false;
-      }
-    };
-
-
-    /*
-     * Cargamos los mejores matches.
-     */
-    this.matchService
-      .listarMatches(
-        null,
-        0,
-        3
-      )
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status === 'success' &&
-            response.data
-          ) {
-
-            this.mejoresMatches =
-              response.data.content.slice(
-                0,
-                3
-              );
-          }
-
-          comprobarCarga();
-        },
-
-        error: () => {
-
-          this.mejoresMatches = [];
-
-          comprobarCarga();
-        }
-
-      });
-
-
-    /*
-     * Consultamos solicitudes recibidas.
-     */
-    this.solicitudService
-      .listarRecibidas()
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status === 'success' &&
-            response.data
-          ) {
-
-            this.solicitudesRecibidas =
-              response.data;
-          }
-
-          comprobarCarga();
-        },
-
-        error: () => {
-
-          this.solicitudesRecibidas = [];
-
-          comprobarCarga();
-        }
-
-      });
-
-
-    /*
-     * Verificamos el perfil de convivencia.
-     */
-    this.perfilService
-      .obtenerMiPerfil()
-      .subscribe({
-
-        next: response => {
-
-          this.perfilCompleto =
-            response.status === 'success' &&
-            !!response.data;
-
-          comprobarCarga();
-        },
-
-        error: () => {
-
-          this.perfilCompleto = false;
-
-          comprobarCarga();
-        }
-
-      });
-
-
-    /*
-     * Verificamos si tiene contacto configurado.
-     */
-    this.contactoService
-      .obtenerMiContacto()
-      .subscribe({
-
-        next: response => {
-
-          this.contactoConfigurado =
-            response.status === 'success' &&
-            !!response.data;
-
-          comprobarCarga();
-        },
-
-        error: () => {
-
-          this.contactoConfigurado = false;
-
-          comprobarCarga();
-        }
-
-      });
+  private load<T>(section: Section, source: Observable<T>, assign: (value: T) => void): void {
+    this.requests.get(section)?.unsubscribe();
+    this.loading[section] = true;
+    this.errors[section] = '';
+    this.requests.set(section, source.pipe(finalize(() => {
+      this.loading[section] = false;
+      this.changeDetector.markForCheck();
+    })).subscribe({
+      next: value => { assign(value); this.changeDetector.markForCheck(); },
+      error: () => this.errors[section] = 'No pudimos cargar esta información. Vuelve a intentarlo.'
+    }));
   }
-
 
   cargarHabitaciones(): void {
-
-    this.cargandoHabitaciones = true;
-
-    this.errorHabitaciones = '';
-
-    this.homeService
-      .listarHabitacionesDestacadas()
-      .subscribe({
-
-        next: response => {
-
-          this.cargandoHabitaciones = false;
-
-          if (
-            response.status === 'success' &&
-            response.data
-          ) {
-
-            this.habitaciones =
-              response.data.content;
-          }
-
-        },
-
-        error: () => {
-
-          this.cargandoHabitaciones = false;
-
-          this.errorHabitaciones =
-            'No se pudieron cargar las habitaciones.';
-        }
-
-      });
+    this.load('habitaciones', this.homeService.listarHabitacionesDestacadas().pipe(
+      map(response => requirePage<HabitacionResponse>(response).content)), data => this.habitaciones = data);
   }
-
 
   cargarPublicaciones(): void {
-
-    this.cargandoPublicaciones = true;
-
-    this.errorPublicaciones = '';
-
-    this.homeService
-      .listarPublicacionesRoomie()
-      .subscribe({
-
-        next: response => {
-
-          this.cargandoPublicaciones = false;
-
-          if (
-            response.status === 'success' &&
-            response.data
-          ) {
-
-            this.publicaciones =
-              response.data.content;
-          }
-
-        },
-
-        error: () => {
-
-          this.cargandoPublicaciones = false;
-
-          this.errorPublicaciones =
-            'No se pudieron cargar las publicaciones Roomie.';
-        }
-
-      });
+    this.load('publicaciones', this.homeService.listarPublicacionesRoomie().pipe(
+      map(response => requirePage<PublicacionRoomieResponse>(response).content)), data => this.publicaciones = data);
   }
 
-
-  obtenerPrimerNombre(): string {
-
-    const usuario =
-      this.authService.getUsuario();
-
-    if (!usuario) {
-      return '';
-    }
-
-    return usuario.nombres
-      .trim()
-      .split(/\s+/)[0];
+  cargarMatches(): void {
+    this.load('matches', this.matchService.listarMatches(null, 0, 3).pipe(
+      map(response => requirePage<MatchResponse>(response).content.slice(0, 3))), data => this.mejoresMatches = data);
   }
 
-
-  obtenerInicialesMatch(
-    match: MatchResponse
-  ): string {
-
-    const nombre =
-      match.nombres?.charAt(0) ?? '';
-
-    const apellido =
-      match.apellidos?.charAt(0) ?? '';
-
-    return (
-      nombre + apellido
-    ).toUpperCase();
+  cargarResumen(): void {
+    this.cargarMatches();
+    this.load('solicitudes', this.solicitudService.listarRecibidas().pipe(map(response => {
+      if (response?.status !== 'success' || !Array.isArray(response.data)) throw new Error('Formato inesperado');
+      return response.data;
+    })), data => this.solicitudesRecibidas = data);
+    this.load('perfil', this.exists(this.perfilService.obtenerMiPerfil()), exists => this.perfilCreado = exists);
+    this.load('contacto', this.exists(this.contactoService.obtenerMiContacto(), true), exists => this.contactoConfigurado = exists);
   }
 
-
-  obtenerNombreMatch(
-    match: MatchResponse
-  ): string {
-
-    return (
-      `${match.nombres} ${match.apellidos}`
-    ).trim();
+  /** The contact endpoint also explicitly supports a successful null response. */
+  private exists(source: Observable<ApiResponse<unknown>>, allowNull = false): Observable<boolean> {
+    return source.pipe(map(response => {
+      if (allowNull && response?.status === 'success' && response.data === null) return false;
+      if (response?.status !== 'success' || !response.data) throw new Error('Formato inesperado');
+      return true;
+    }), catchError(error => {
+      if (error?.status === 404) return of(false);
+      throw error;
+    }));
   }
 
-
-  obtenerSolicitudesPendientes(): number {
-
-    return this.solicitudesRecibidas
-      .filter(
-        solicitud =>
-          solicitud.estado === 'pendiente'
-      )
-      .length;
-  }
-
-
-  obtenerNivelCompatibilidad(
-    porcentaje: number
-  ): string {
-
-    if (porcentaje >= 90) {
-      return 'Excelente match';
-    }
-
-    if (porcentaje >= 80) {
-      return 'Alta compatibilidad';
-    }
-
-    if (porcentaje >= 70) {
-      return 'Buen match';
-    }
-
-    if (porcentaje >= 50) {
-      return 'Compatibilidad media';
-    }
-
-    return 'Compatibilidad baja';
-  }
-
-
-  obtenerTipoPublicacion(
-    tipo: string
-  ): string {
-
-    if (
-      tipo === 'busco_roomie'
-    ) {
-
-      return 'Busco roomie';
-    }
-
-    if (
-      tipo === 'busco_cuarto'
-    ) {
-
-      return 'Busco cuarto';
-    }
-
-    if (
-      tipo === 'busco_compartir'
-    ) {
-
-      return 'Busco compartir';
-    }
-
-    return tipo;
+  obtenerPrimerNombre(): string { return this.authService.getUsuario()?.nombres?.trim().split(/\s+/)[0] ?? ''; }
+  obtenerNombreMatch(match: MatchResponse): string { return `${match.nombres} ${match.apellidos}`.trim(); }
+  obtenerInicialesMatch(match: MatchResponse): string { return `${match.nombres?.charAt(0) ?? ''}${match.apellidos?.charAt(0) ?? ''}`.toUpperCase(); }
+  obtenerSolicitudesPendientes(): number { return this.solicitudesRecibidas.filter(row => row.estado === 'pendiente').length; }
+  obtenerTipoPublicacion(tipo: string): string {
+    return ({busco_roomie: 'Busco roomie', busco_cuarto: 'Busco cuarto', busco_compartir: 'Busco compartir'} as Record<string, string>)[tipo] ?? tipo;
   }
 }

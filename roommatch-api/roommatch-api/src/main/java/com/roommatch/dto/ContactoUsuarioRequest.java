@@ -5,6 +5,12 @@ import jakarta.validation.constraints.Size;
 
 public class ContactoUsuarioRequest {
 
+    @jakarta.validation.constraints.PositiveOrZero
+    private Long version;
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
     @Size(max = 20, message = "El teléfono no puede superar 20 caracteres")
     private String telefono;
 
@@ -18,6 +24,7 @@ public class ContactoUsuarioRequest {
     private String facebook;
 
     @Email(message = "El email de contacto no tiene un formato válido")
+    @Size(max = 150, message = "El email de contacto no puede superar 150 caracteres")
     private String emailContacto;
 
     private Boolean mostrarTelefono;

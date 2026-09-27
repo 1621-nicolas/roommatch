@@ -1,1 +1,14 @@
-<p>pagination works!</p>
+@if (totalElements > 0) {
+  <nav aria-label="Paginación">
+    <p>{{ totalElements }} resultados · Página {{ page + 1 }} de {{ totalPages }}</p>
+    @if (totalPages > 1) {
+      <div class="pages">
+        <button type="button" (click)="go(page - 1)" [disabled]="loading || page === 0">Anterior</button>
+        @for (number of pages; track number) {
+          <button type="button" (click)="go(number)" [disabled]="loading" [attr.aria-current]="number === page ? 'page' : null" [attr.aria-label]="'Página ' + (number + 1)">{{ number + 1 }}</button>
+        }
+        <button type="button" (click)="go(page + 1)" [disabled]="loading || page >= totalPages - 1">Siguiente</button>
+      </div>
+    }
+  </nav>
+}

@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "usuario")
 public class Usuario {
+    @Version
+    private long version;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

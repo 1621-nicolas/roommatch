@@ -1,5 +1,10 @@
+import { Icon } from '../../shared/components/icon/icon';
+import { requirePage } from '../../core/validation/api-page';
+import { map } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ListingImage } from '../../shared/components/listing-image/listing-image';
 import {
-  Component,
+  Component, ChangeDetectorRef, DestroyRef, inject,
   OnInit
 } from '@angular/core';
 
@@ -36,6 +41,8 @@ import {
   selector: 'app-habitaciones',
 
   imports: [
+    Icon,
+    ListingImage,
     CommonModule,
     FormsModule,
     RouterLink
@@ -46,6 +53,8 @@ import {
   styleUrl: './habitaciones.css'
 })
 export class Habitaciones implements OnInit {
+  private readonly destroy = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /*
    * =========================================================
@@ -186,10 +195,13 @@ export class Habitaciones implements OnInit {
         this.tamanioPagina
       )
       .pipe(
+        map(response => { requirePage<HabitacionResponse>(response); return response; }),
+        takeUntilDestroyed(this.destroy),
 
         finalize(() => {
 
           this.cargando = false;
+          this.cdr.markForCheck();
 
         })
 

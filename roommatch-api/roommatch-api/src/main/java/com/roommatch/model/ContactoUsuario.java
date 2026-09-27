@@ -45,7 +45,14 @@ public class ContactoUsuario {
     private Boolean mostrarFacebook = false;
 
     @Column(name = "mostrar_email", nullable = false)
-    private Boolean mostrarEmail = true;
+    private Boolean mostrarEmail = false;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     @Column(name = "fecha_actualizacion", nullable = false)
     private LocalDateTime fechaActualizacion;

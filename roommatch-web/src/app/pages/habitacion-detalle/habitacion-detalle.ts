@@ -1,5 +1,8 @@
+import { Icon } from '../../shared/components/icon/icon';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ListingGallery } from '../../shared/components/listing-gallery/listing-gallery';
 import {
-  Component,
+  Component, ChangeDetectorRef, DestroyRef, inject,
   OnInit
 } from '@angular/core';
 
@@ -46,6 +49,8 @@ import {
   selector: 'app-habitacion-detalle',
 
   imports: [
+    Icon,
+    ListingGallery,
     CommonModule,
     FormsModule,
     RouterLink
@@ -56,6 +61,8 @@ import {
   styleUrl: './habitacion-detalle.css'
 })
 export class HabitacionDetalle implements OnInit {
+  private readonly destroy = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /*
    * =========================================================
@@ -71,6 +78,7 @@ export class HabitacionDetalle implements OnInit {
    * =========================================================
    */
   mensajeInteres = '';
+  emailContacto = '';
 
 
   /*
@@ -184,10 +192,12 @@ export class HabitacionDetalle implements OnInit {
         this.idHabitacion
       )
       .pipe(
+        takeUntilDestroyed(this.destroy),
 
         finalize(() => {
 
           this.cargando = false;
+          this.cdr.markForCheck();
 
         })
 
@@ -310,13 +320,17 @@ export class HabitacionDetalle implements OnInit {
     }
 
 
+    if (this.emailContacto.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.emailContacto.trim())) {
+      this.mensajeError = 'Revisa el correo de contacto o déjalo vacío.';
+      return;
+    }
     this.enviandoInteres = true;
 
 
     const request: LeadHabitacionRequest = {
 
-      mensaje
-
+      mensaje,
+      emailContacto: this.emailContacto.trim() || null
     };
 
 
@@ -326,10 +340,12 @@ export class HabitacionDetalle implements OnInit {
         request
       )
       .pipe(
+        takeUntilDestroyed(this.destroy),
 
         finalize(() => {
 
           this.enviandoInteres = false;
+          this.cdr.markForCheck();
 
         })
 

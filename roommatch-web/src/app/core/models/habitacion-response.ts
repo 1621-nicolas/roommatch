@@ -1,6 +1,7 @@
 export interface HabitacionResponse {
 
   idHabitacion: number;
+  imagenPrincipal?: string | null;
 
   idPropietario: number;
 
@@ -37,6 +38,8 @@ export interface HabitacionResponse {
   destacada: boolean;
 
   estado: string;
+
+  bloqueada: boolean;
 
   fechaPublicacion: string;
 

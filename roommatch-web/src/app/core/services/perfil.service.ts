@@ -38,6 +38,12 @@ export class PerfilService {
     );
   }
 
+  actualizarDescripcion(descripcionPersonal: string, version: number): Observable<ApiResponse<PerfilConvivenciaResponse>> {
+    return this.http.patch<ApiResponse<PerfilConvivenciaResponse>>(
+      `${this.apiUrl}/me/descripcion`, {descripcionPersonal, version}
+    );
+  }
+
   actualizarPerfil(
     request: PerfilConvivenciaRequest
   ): Observable<ApiResponse<PerfilConvivenciaResponse>> {

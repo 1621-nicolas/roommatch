@@ -323,6 +323,7 @@
   font-weight: 700;
 }
 
+.interest-card input,
 .interest-card textarea {
   width: 100%;
   padding: 13px;
@@ -334,7 +335,8 @@
   outline: none;
 }
 
-.interest-card textarea:focus {
+.interest-card input:focus-visible,
+.interest-card textarea:focus-visible {
   border-color: #6656f2;
   box-shadow:
     0 0 0 3px
@@ -466,3 +468,4 @@
   }
 
 }
+.interest-card input {min-height:44px;box-sizing:border-box;background:var(--rm-surface)}

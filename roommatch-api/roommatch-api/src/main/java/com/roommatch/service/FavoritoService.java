@@ -1,5 +1,9 @@
 package com.roommatch.service;
 
+import com.roommatch.exception.ResourceNotFoundException;
+
+import com.roommatch.exception.ConflictException;
+
 import com.roommatch.dto.FavoritoResponse;
 import com.roommatch.model.FavoritoUsuario;
 import com.roommatch.model.Usuario;
@@ -39,16 +43,16 @@ public class FavoritoService {
                 usuarioId,
                 favoritoId
         )) {
-            throw new IllegalArgumentException("Este usuario ya está en tus favoritos");
+            throw new ConflictException("Este usuario ya está en tus favoritos");
         }
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario autenticado no encontrado"
                 ));
 
         Usuario usuarioFavorito = usuarioRepository.findById(favoritoId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario favorito no encontrado"
                 ));
 
@@ -90,7 +94,7 @@ public class FavoritoService {
                         usuarioId,
                         favoritoId
                 )
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "El usuario no está en tus favoritos"
                 ));
 

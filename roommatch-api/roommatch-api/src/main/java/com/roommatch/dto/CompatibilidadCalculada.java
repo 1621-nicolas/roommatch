@@ -6,6 +6,22 @@ import java.math.BigDecimal;
 public class CompatibilidadCalculada {
 
     private BigDecimal porcentaje;
+    private int cobertura;
+    private String versionAlgoritmo;
+    private Boolean hayImporteComun;
+    private java.util.List<com.roommatch.matching.CompatibilityCalculator.Criterion> criterios = java.util.List.of();
+    public int getCobertura() { return cobertura; }
+    public String getVersionAlgoritmo() { return versionAlgoritmo; }
+    public Boolean getHayImporteComun() { return hayImporteComun; }
+    public java.util.List<com.roommatch.matching.CompatibilityCalculator.Criterion> getCriterios() { return criterios; }
+    public CompatibilidadCalculada(com.roommatch.matching.CompatibilityCalculator.Result result) {
+        this(result.porcentaje(), result.coincidencias(), result.diferencias());
+        cobertura = result.cobertura();
+        versionAlgoritmo = com.roommatch.matching.CompatibilityCalculator.VERSION;
+        hayImporteComun = result.hayImporteComun();
+        criterios = result.criterios();
+    }
+
 
     private String coincidencias;
 

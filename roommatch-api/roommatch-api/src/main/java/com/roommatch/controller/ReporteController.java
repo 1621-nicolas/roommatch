@@ -1,15 +1,10 @@
 package com.roommatch.controller;
 
-import com.roommatch.dto.ApiResponse;
-import com.roommatch.dto.ReporteHabitacionResponse;
-import com.roommatch.dto.ReporteRequest;
-import com.roommatch.dto.ReporteUsuarioResponse;
+import com.roommatch.dto.*;
 import com.roommatch.model.Usuario;
 import com.roommatch.service.ReporteService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -17,218 +12,70 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/reportes")
 public class ReporteController {
+    private final ReporteService service;
+    public ReporteController(ReporteService service) { this.service = service; }
 
-    private final ReporteService reporteService;
-
-    public ReporteController(ReporteService reporteService) {
-        this.reporteService = reporteService;
+    @PostMapping("/usuarios/{id}")
+    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> reportarUsuario(Authentication auth, @PathVariable Integer id, @Valid @RequestBody ReporteRequest request) {
+        return ok(service.reportarUsuario(actor(auth), id, request), "Reporte enviado");
     }
-
-    @PostMapping("/usuarios/{idUsuarioReportado}")
-    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> reportarUsuario(
-            Authentication authentication,
-            @PathVariable Integer idUsuarioReportado,
-            @Valid @RequestBody ReporteRequest request
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteUsuarioResponse response = reporteService.reportarUsuario(
-                    usuario.getIdUsuario(),
-                    idUsuarioReportado,
-                    request
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Usuario reportado correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
-    }
-
-    @PostMapping("/habitaciones/{idHabitacion}")
-    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> reportarHabitacion(
-            Authentication authentication,
-            @PathVariable Integer idHabitacion,
-            @Valid @RequestBody ReporteRequest request
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteHabitacionResponse response = reporteService.reportarHabitacion(
-                    usuario.getIdUsuario(),
-                    idHabitacion,
-                    request
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación reportada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+    @PostMapping("/habitaciones/{id}")
+    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> reportarHabitacion(Authentication auth, @PathVariable Integer id, @Valid @RequestBody ReporteRequest request) {
+        return ok(service.reportarHabitacion(actor(auth), id, request), "Reporte enviado");
     }
 
     @GetMapping("/admin/usuarios")
-    public ResponseEntity<ApiResponse<Page<ReporteUsuarioResponse>>> listarReportesUsuarios(
-            Authentication authentication,
-            @RequestParam(required = false) String estado,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-            Pageable pageable = PageRequest.of(page, size);
-
-            Page<ReporteUsuarioResponse> reportes = reporteService.listarReportesUsuarios(
-                    usuario.getIdUsuario(),
-                    estado,
-                    pageable
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(reportes, "Reportes de usuarios obtenidos correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+    public ResponseEntity<ApiResponse<Page<ReporteUsuarioResponse>>> listarUsuario(Authentication auth, @RequestParam(required=false) String estado,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="10") int size) {
+        return ok(service.listarReportesUsuarios(actor(auth), estado, page(page,size)), "Reportes obtenidos");
+    }
+    @PutMapping("/admin/usuarios/{id}/revisar")
+    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> revisarUsuario(Authentication auth, @PathVariable Integer id,
+            @RequestParam String estado, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.revisarReporteUsuario(actor(auth), id, estado, request.motivo()), "Revisión registrada");
+    }
+    @PutMapping("/admin/usuarios/{id}/sancionar")
+    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> sancionarUsuario(Authentication auth, @PathVariable Integer id, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.sancionarUsuario(actor(auth), id, request.motivo()), "Sanción registrada");
+    }
+    @PutMapping("/admin/usuarios/{id}/restaurar")
+    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> restaurarUsuario(Authentication auth, @PathVariable Integer id, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.restaurarUsuario(actor(auth), id, request.motivo()), "Restauración registrada");
+    }
+    @GetMapping("/admin/usuarios/{id}/historial")
+    public ResponseEntity<ApiResponse<Page<ModeracionEventoResponse>>> historialUsuario(Authentication auth, @PathVariable Integer id,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="10") int size) {
+        return ok(service.historialUsuario(actor(auth), id, page(page,size)), "Historial obtenido");
     }
 
     @GetMapping("/admin/habitaciones")
-    public ResponseEntity<ApiResponse<Page<ReporteHabitacionResponse>>> listarReportesHabitaciones(
-            Authentication authentication,
-            @RequestParam(required = false) String estado,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-            Pageable pageable = PageRequest.of(page, size);
-
-            Page<ReporteHabitacionResponse> reportes = reporteService.listarReportesHabitaciones(
-                    usuario.getIdUsuario(),
-                    estado,
-                    pageable
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(reportes, "Reportes de habitaciones obtenidos correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+    public ResponseEntity<ApiResponse<Page<ReporteHabitacionResponse>>> listarHabitacion(Authentication auth, @RequestParam(required=false) String estado,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="10") int size) {
+        return ok(service.listarReportesHabitaciones(actor(auth), estado, page(page,size)), "Reportes obtenidos");
+    }
+    @PutMapping("/admin/habitaciones/{id}/revisar")
+    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> revisarHabitacion(Authentication auth, @PathVariable Integer id,
+            @RequestParam String estado, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.revisarReporteHabitacion(actor(auth), id, estado, request.motivo()), "Revisión registrada");
+    }
+    @PutMapping("/admin/habitaciones/{id}/sancionar")
+    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> sancionarHabitacion(Authentication auth, @PathVariable Integer id, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.sancionarHabitacion(actor(auth), id, request.motivo()), "Sanción registrada");
+    }
+    @PutMapping("/admin/habitaciones/{id}/restaurar")
+    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> restaurarHabitacion(Authentication auth, @PathVariable Integer id, @Valid @RequestBody DecisionModeracionRequest request) {
+        return ok(service.restaurarHabitacion(actor(auth), id, request.motivo()), "Restauración registrada");
+    }
+    @GetMapping("/admin/habitaciones/{id}/historial")
+    public ResponseEntity<ApiResponse<Page<ModeracionEventoResponse>>> historialHabitacion(Authentication auth, @PathVariable Integer id,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="10") int size) {
+        return ok(service.historialHabitacion(actor(auth), id, page(page,size)), "Historial obtenido");
     }
 
-    @PutMapping("/admin/usuarios/{idReporte}/revisar")
-    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> revisarReporteUsuario(
-            Authentication authentication,
-            @PathVariable Integer idReporte,
-            @RequestParam String estado
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteUsuarioResponse response = reporteService.revisarReporteUsuario(
-                    usuario.getIdUsuario(),
-                    idReporte,
-                    estado
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Reporte de usuario actualizado correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+    private Integer actor(Authentication auth) { return ((Usuario) auth.getPrincipal()).getIdUsuario(); }
+    private PageRequest page(int page, int size) {
+        if (page<0 || page>1000 || size<1 || size>100) throw new IllegalArgumentException("Usa page entre 0 y 1000 y size entre 1 y 100");
+        return PageRequest.of(page,size);
     }
-
-    @PutMapping("/admin/habitaciones/{idReporte}/revisar")
-    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> revisarReporteHabitacion(
-            Authentication authentication,
-            @PathVariable Integer idReporte,
-            @RequestParam String estado
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteHabitacionResponse response = reporteService.revisarReporteHabitacion(
-                    usuario.getIdUsuario(),
-                    idReporte,
-                    estado
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Reporte de habitación actualizado correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
-    }
-
-    @PutMapping("/admin/usuarios/{idReporte}/sancionar")
-    public ResponseEntity<ApiResponse<ReporteUsuarioResponse>> sancionarUsuario(
-            Authentication authentication,
-            @PathVariable Integer idReporte
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteUsuarioResponse response = reporteService.sancionarUsuario(
-                    usuario.getIdUsuario(),
-                    idReporte
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Usuario sancionado y suspendido correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
-    }
-
-    @PutMapping("/admin/habitaciones/{idReporte}/sancionar")
-    public ResponseEntity<ApiResponse<ReporteHabitacionResponse>> sancionarHabitacion(
-            Authentication authentication,
-            @PathVariable Integer idReporte
-    ) {
-        try {
-            Usuario usuario = (Usuario) authentication.getPrincipal();
-
-            ReporteHabitacionResponse response = reporteService.sancionarHabitacion(
-                    usuario.getIdUsuario(),
-                    idReporte
-            );
-
-            return ResponseEntity.ok(
-                    ApiResponse.success(response, "Habitación sancionada y pausada correctamente")
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
-    }
+    private <T> ResponseEntity<ApiResponse<T>> ok(T data, String message) { return ResponseEntity.ok(ApiResponse.success(data,message)); }
 }

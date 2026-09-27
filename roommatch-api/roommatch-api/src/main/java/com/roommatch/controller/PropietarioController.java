@@ -52,7 +52,7 @@ public class PropietarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -82,20 +82,7 @@ public class PropietarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 

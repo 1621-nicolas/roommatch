@@ -714,6 +714,14 @@
 
                   }
 
+                  @if (solicitud.estado === 'pendiente') {
+                    <button type="button" class="request-cancel-button" [disabled]="accionandoId !== null" (click)="cancelarSolicitud(solicitud)">Cancelar solicitud</button>
+                  }
+                  @if (solicitud.estado === 'rechazada' || solicitud.estado === 'cancelada') {
+                    <button type="button" class="request-cancel-button" [disabled]="accionandoId !== null" (click)="reenviarSolicitud(solicitud)">Volver a solicitar contacto</button>
+                    <p>El envío está sujeto a un plazo de espera para evitar insistencias. Si aún no vence, te indicaremos cuándo puedes volver a intentar.</p>
+                  }
+
                 </article>
 
               } @empty {

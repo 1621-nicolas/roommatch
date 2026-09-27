@@ -60,7 +60,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -92,20 +92,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -121,20 +108,19 @@ public class ImagenHabitacionController {
     public ResponseEntity<
             ApiResponse<List<ImagenHabitacionResponse>>
             > listarImagenes(
-
+            Authentication authentication,
             @PathVariable
             Integer idHabitacion
 
     ) {
 
-        try {
+
 
             List<ImagenHabitacionResponse> response =
 
                     imagenService
-                            .listarImagenesPorHabitacion(
-                                    idHabitacion
-                            );
+                            .listarImagenesPorHabitacion(idHabitacion,
+                                    authentication != null && authentication.getPrincipal() instanceof Usuario actor ? actor.getIdUsuario() : null);
 
 
             return ResponseEntity.ok(
@@ -149,20 +135,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -186,7 +159,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -217,20 +190,7 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -254,7 +214,7 @@ public class ImagenHabitacionController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -282,19 +242,6 @@ public class ImagenHabitacionController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 }

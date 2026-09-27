@@ -35,7 +35,7 @@ public class SolicitudContacto {
 
     @PrePersist
     public void prePersist() {
-        this.fechaSolicitud = LocalDateTime.now();
+        if (this.fechaSolicitud == null) this.fechaSolicitud = LocalDateTime.now();
         this.estado = "pendiente";
     }
 

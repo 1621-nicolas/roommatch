@@ -1,1 +1,60 @@
-<p>dashboard works!</p>
+<section class="admin-page" [attr.aria-busy]="loading()">
+  <app-admin-nav />
+  <header class="admin-head">
+    <div><h1>Resumen de RoomMatch</h1><p>Consulta el estado de la plataforma y prioriza los reportes que necesitan revisión.</p></div>
+    <button type="button" (click)="load()" [disabled]="loading()">Actualizar resumen</button>
+  </header>
+  @if (loading()) {
+    <p class="admin-loading" role="status">Consultando los datos de la plataforma…</p>
+  } @else if (error()) {
+    <div class="admin-alert" role="alert"><p>{{ error() }}</p><button type="button" (click)="load()">Reintentar</button></div>
+  } @else if (metrics(); as m) {
+    <dl class="admin-summary">
+      <div><dt>Cuentas registradas</dt><dd>{{ m.totalUsuarios | number }}</dd></div>
+      <div><dt>Perfiles de convivencia</dt><dd>{{ m.totalPerfilesConvivencia | number }}</dd></div>
+      <div><dt>Habitaciones registradas</dt><dd>{{ m.totalHabitaciones | number }}</dd></div>
+      <div><dt>Publicaciones de roomies</dt><dd>{{ m.totalPublicacionesRoomie | number }}</dd></div>
+    </dl>
+    <div class="admin-columns">
+      <section class="admin-section">
+        <h2>Reportes pendientes</h2>
+        @if (m.reportesUsuariosPendientes + m.reportesHabitacionesPendientes === 0) {
+          <app-empty-state title="No hay reportes nuevos pendientes" message="Puedes consultar los casos en revisión y los ya resueltos desde la sección de reportes.">
+            <a routerLink="/admin/reportes" class="admin-button">Ver reportes</a>
+          </app-empty-state>
+        } @else {
+          <ul class="admin-queue">
+            <li><a routerLink="/admin/reportes" [queryParams]="{tipo:'usuarios',estado:'pendiente'}"><span>Reportes de usuarios</span><strong>{{ m.reportesUsuariosPendientes | number }}</strong></a></li>
+            <li><a routerLink="/admin/reportes" [queryParams]="{tipo:'habitaciones',estado:'pendiente'}"><span>Reportes de habitaciones</span><strong>{{ m.reportesHabitacionesPendientes | number }}</strong></a></li>
+          </ul>
+          <p class="admin-note">Un reporte necesita evaluación: recibirlo no implica que la persona o el anuncio hayan incumplido las reglas.</p>
+        }
+      </section>
+      <section class="admin-section">
+        <h2>Estado de las cuentas y anuncios</h2>
+        <div class="admin-table-wrap">
+          <table><caption class="sr-only">Conteos actuales por estado registrado</caption><thead><tr><th scope="col">Estado</th><th scope="col">Cantidad</th></tr></thead><tbody>
+            <tr><td>Cuentas activas</td><td class="numeric">{{ m.usuariosActivos | number }}</td></tr>
+            <tr><td>Cuentas suspendidas</td><td class="numeric">{{ m.usuariosSuspendidos | number }}</td></tr>
+            <tr><td>Propietarios registrados</td><td class="numeric">{{ m.totalPropietarios | number }}</td></tr>
+            <tr><td>Habitaciones con estado activo</td><td class="numeric">{{ m.habitacionesActivas | number }}</td></tr>
+            <tr><td>Habitaciones pausadas</td><td class="numeric">{{ m.habitacionesPausadas | number }}</td></tr>
+            <tr><td>Publicaciones de roomies activas</td><td class="numeric">{{ m.publicacionesActivas | number }}</td></tr>
+          </tbody></table>
+        </div>
+        <p class="admin-note">Una habitación con estado activo puede no ser pública si su plan venció o su propietario está suspendido.</p>
+      </section>
+      <section class="admin-section">
+        <h2>Solicitudes y seguimiento</h2>
+        <div class="admin-table-wrap"><table><thead><tr><th scope="col">Registro</th><th scope="col">Cantidad</th></tr></thead><tbody>
+          <tr><td>Solicitudes de contacto pendientes</td><td class="numeric">{{ m.solicitudesPendientes | number }}</td></tr>
+          <tr><td>Interesados pendientes de atención</td><td class="numeric">{{ m.leadsPendientes | number }}</td></tr>
+          <tr><td>Notificaciones sin leer</td><td class="numeric">{{ m.notificacionesNoLeidas | number }}</td></tr>
+          <tr><td>Matches almacenados históricos</td><td class="numeric">{{ m.totalMatches | number }}</td></tr>
+        </tbody></table></div>
+        <p class="admin-note">La compatibilidad actual se calcula al consultar. El conteo histórico no mide las recomendaciones actuales.</p>
+      </section>
+    </div>
+    <p class="admin-note">Consultado el {{ updated() | date:'dd/MM/yyyy HH:mm' }}. Los conteos reflejan consultas de lectura y pueden cambiar durante la actividad.</p>
+  }
+</section>

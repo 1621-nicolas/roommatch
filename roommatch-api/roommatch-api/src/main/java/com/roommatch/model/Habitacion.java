@@ -31,10 +31,10 @@ public class Habitacion {
     @Column(name = "direccion_referencial", length = 250)
     private String direccionReferencial;
 
-    @Column(name = "precio", nullable = false)
+    @Column(name = "precio", nullable = false, precision = 10, scale = 2)
     private BigDecimal precio;
 
-    @Column(name = "area_m2")
+    @Column(name = "area_m2", precision = 6, scale = 2)
     private BigDecimal areaM2;
 
     @Column(name = "amoblado", nullable = false)
@@ -69,6 +69,16 @@ public class Habitacion {
 
     @Column(name = "fecha_actualizacion", nullable = false)
     private LocalDateTime fechaActualizacion;
+
+    @Column(name = "bloqueada", nullable = false)
+    private Boolean bloqueada = false;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
+    public Boolean getBloqueada() { return bloqueada; }
+    public void setBloqueada(Boolean bloqueada) { this.bloqueada = bloqueada; }
 
     @PrePersist
     public void prePersist() {

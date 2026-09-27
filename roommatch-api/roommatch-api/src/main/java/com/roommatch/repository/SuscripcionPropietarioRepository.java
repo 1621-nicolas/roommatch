@@ -11,4 +11,5 @@ public interface SuscripcionPropietarioRepository extends JpaRepository<Suscripc
             Integer idPropietario,
             String estado
     );
+    Optional<SuscripcionPropietario> findFirstByPropietarioIdPropietarioOrderByFechaInicioDesc(Integer propietario);
 }

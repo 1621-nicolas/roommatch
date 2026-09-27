@@ -1106,60 +1106,25 @@
                   ======================================== -->
 
                   <div class="room-actions">
-
-                    <button
-                      type="button"
-                      class="action-button primary-action"
-                      (click)="editarHabitacion(habitacion)"
-                    >
-                      Editar
-                    </button>
-
-
-                    <button
-                      type="button"
-                      class="action-button image-action"
-                      (click)="abrirGestorImagenes(habitacion)"
-                    >
-                      🖼️ Imágenes
-                    </button>
-
-
-                    @if (
-                      habitacion.estado.toLowerCase() === 'activa'
-                    ) {
-
-                      <button
-                        type="button"
-                        class="action-button"
-                        (click)="pausarHabitacion(habitacion)"
-                      >
-                        Pausar
-                      </button>
-
-                    } @else {
-
-                      <button
-                        type="button"
-                        class="action-button"
-                        (click)="activarHabitacion(habitacion)"
-                      >
-                        Activar
-                      </button>
-
+                    @if (habitacion.bloqueada) {
+                      <p role="status">Bloqueada por moderación. Puedes editar la información, pero no reactivarla.</p>
                     }
-
-
-                    <a
-                      [routerLink]="[
-                        '/habitaciones',
-                        habitacion.idHabitacion
-                      ]"
-                      class="detail-link"
-                    >
-                      Ver detalle →
-                    </a>
-
+                    @if (habitacion.estado !== 'eliminada') {
+                      <button type="button" class="action-button primary-action" (click)="editarHabitacion(habitacion)">Editar</button>
+                      <button type="button" class="action-button image-action" (click)="abrirGestorImagenes(habitacion)">Imágenes</button>
+                      @if (habitacion.estado === 'activa') {
+                        <button type="button" class="action-button" (click)="pausarHabitacion(habitacion)">Pausar</button>
+                      } @else if (!habitacion.bloqueada) {
+                        <button type="button" class="action-button" (click)="activarHabitacion(habitacion)">Activar</button>
+                      }
+                      @if (habitacion.estado !== 'alquilada') {
+                        <button type="button" class="action-button" [disabled]="cambiandoEstado" (click)="retirarHabitacion(habitacion, false)">Marcar como alquilada</button>
+                      }
+                      <button type="button" class="action-button" [disabled]="cambiandoEstado" (click)="retirarHabitacion(habitacion, true)">Archivar</button>
+                    }
+                    @if (habitacion.estado === 'activa' && !habitacion.bloqueada) {
+                      <a [routerLink]="['/habitaciones', habitacion.idHabitacion]" class="detail-link">Ver detalle</a>
+                    }
                   </div>
 
                 </div>

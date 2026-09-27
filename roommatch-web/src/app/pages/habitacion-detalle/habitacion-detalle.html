@@ -9,7 +9,7 @@
       routerLink="/habitaciones"
       class="back-link"
     >
-      ← Volver a habitaciones
+      <app-icon name="arrow-left" /> Volver a habitaciones
     </a>
 
 
@@ -44,7 +44,7 @@
     >
 
       <div class="state-icon">
-        ⌂
+        <app-icon name="house" />
       </div>
 
       <h2>
@@ -79,7 +79,7 @@
               *ngIf="habitacion.destacada"
               class="featured-badge"
             >
-              ★ Destacada
+              <app-icon name="star-fill" /> Destacada
             </span>
 
 
@@ -87,7 +87,7 @@
               *ngIf="habitacion.propietarioVerificado"
               class="verified-badge"
             >
-              ✓ Propietario verificado
+              <app-icon name="check-lg" /> Propietario verificado
             </span>
 
           </div>
@@ -100,7 +100,7 @@
 
           <p class="detail-location">
 
-            ⌖
+            <app-icon name="geo-alt" />
 
             {{ habitacion.distrito }}
 
@@ -146,29 +146,9 @@
         <!-- =================================================
              INFORMACIÓN
         ================================================== -->
-        <main class="detail-main">
+        <div class="detail-main">
 
-          <!-- IMAGEN -->
-          <section class="detail-image">
-
-            <div class="detail-image-placeholder">
-
-              <span>
-                ⌂
-              </span>
-
-              <strong>
-                {{ habitacion.distrito }}
-              </strong>
-
-              <small>
-                Imágenes próximamente
-              </small>
-
-            </div>
-
-          </section>
-
+          <app-listing-gallery kind="habitacion" [parentId]="habitacion.idHabitacion" [title]="habitacion.titulo" />
 
           <!-- DESCRIPCIÓN -->
           <section class="detail-card">
@@ -200,7 +180,7 @@
               <div class="feature-item">
 
                 <span class="feature-icon">
-                  ▣
+                  <app-icon name="aspect-ratio" />
                 </span>
 
                 <div>
@@ -227,7 +207,7 @@
               <div class="feature-item">
 
                 <span class="feature-icon">
-                  🛏
+                  <app-icon name="lamp" />
                 </span>
 
                 <div>
@@ -254,7 +234,7 @@
               <div class="feature-item">
 
                 <span class="feature-icon">
-                  ◫
+                  <app-icon name="door-open" />
                 </span>
 
                 <div>
@@ -281,7 +261,7 @@
               <div class="feature-item">
 
                 <span class="feature-icon">
-                  🐾
+                  <app-icon name="heart" />
                 </span>
 
                 <div>
@@ -417,7 +397,7 @@
 
           </section>
 
-        </main>
+        </div>
 
 
         <!-- =================================================
@@ -457,7 +437,7 @@
                   *ngIf="habitacion.propietarioVerificado"
                   class="owner-verified"
                 >
-                  ✓ Propietario verificado
+                  <app-icon name="check-lg" /> Propietario verificado
                 </span>
 
               </div>
@@ -493,6 +473,11 @@
                 para solicitar más información.
               </p>
 
+
+              <label for="emailContacto">Correo para que te respondan (opcional)</label>
+              <input id="emailContacto" name="emailContacto" type="email" autocomplete="email"
+                [(ngModel)]="emailContacto" maxlength="150" aria-describedby="correoCompartido">
+              <p id="correoCompartido">Si lo completas, el propietario recibirá este correo junto con tu mensaje. Tu correo de cuenta no se comparte automáticamente.</p>
 
               <label for="mensajeInteres">
 
@@ -539,8 +524,7 @@
 
               <small class="privacy-note">
 
-                🔒 Tu información está protegida
-                por RoomMatch.
+                Comparte en el mensaje únicamente lo que quieras que vea el propietario.
 
               </small>
 
@@ -554,7 +538,7 @@
 
               <div class="interest-success-icon">
 
-                ✓
+                <app-icon name="check-lg" />
 
               </div>
 

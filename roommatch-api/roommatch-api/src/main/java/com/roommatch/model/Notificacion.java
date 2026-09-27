@@ -13,7 +13,7 @@ public class Notificacion {
     @Column(name = "id_notificacion")
     private Integer idNotificacion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 

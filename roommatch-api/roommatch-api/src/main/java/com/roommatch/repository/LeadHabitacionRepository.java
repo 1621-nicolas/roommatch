@@ -17,6 +17,7 @@ public interface LeadHabitacionRepository extends JpaRepository<LeadHabitacion, 
             Integer idUsuarioInteresado
     );
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"usuarioInteresado", "usuarioInteresado.rol", "habitacion", "habitacion.propietario", "habitacion.propietario.usuario", "habitacion.propietario.usuario.rol"})
     List<LeadHabitacion> findByUsuarioInteresadoIdUsuarioOrderByFechaLeadDesc(
             Integer idUsuarioInteresado
     );
@@ -26,12 +27,13 @@ public interface LeadHabitacionRepository extends JpaRepository<LeadHabitacion, 
             Integer idPropietario
     );
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"usuarioInteresado", "usuarioInteresado.rol", "habitacion", "habitacion.propietario", "habitacion.propietario.usuario", "habitacion.propietario.usuario.rol"})
     @Query("""
             SELECT l
             FROM LeadHabitacion l
             WHERE l.habitacion.propietario.idPropietario = :idPropietario
             AND (:estado IS NULL OR l.estado = :estado)
-            ORDER BY l.fechaLead DESC
+            ORDER BY l.fechaLead DESC, l.idLead DESC
             """)
     Page<LeadHabitacion> listarLeadsDePropietario(
             @Param("idPropietario") Integer idPropietario,

@@ -10,8 +10,19 @@ import java.time.LocalDateTime;
 
 
 public class PublicacionRoomieResponse {
+    private String imagenPrincipal;
+    public String getImagenPrincipal() { return imagenPrincipal; }
+    public void setImagenPrincipal(String imagenPrincipal) { this.imagenPrincipal = imagenPrincipal; }
 
     private Integer idPublicacion;
+    private Boolean viviendaReferenciaDisponible;
+    private Integer coberturaCompatibilidad;
+    private String versionAlgoritmo;
+    public Boolean getViviendaReferenciaDisponible() { return viviendaReferenciaDisponible; }
+    public void setViviendaReferenciaDisponible(Boolean value) { viviendaReferenciaDisponible = value; }
+    public Integer getCoberturaCompatibilidad() { return coberturaCompatibilidad; }
+    public String getVersionAlgoritmo() { return versionAlgoritmo; }
+
 
 
     /*
@@ -193,6 +204,8 @@ public class PublicacionRoomieResponse {
 
 
         if (compatibilidad != null) {
+            response.coberturaCompatibilidad = compatibilidad.getCobertura();
+            response.versionAlgoritmo = compatibilidad.getVersionAlgoritmo();
 
             response.setPorcentajeCompatibilidad(
                     compatibilidad.getPorcentaje()

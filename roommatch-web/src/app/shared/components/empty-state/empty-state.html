@@ -1,1 +1,5 @@
-<p>empty-state works!</p>
+<section role="status">
+  <h2>{{ title }}</h2>
+  @if (message) { <p>{{ message }}</p> }
+  <ng-content />
+</section>

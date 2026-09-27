@@ -1,5 +1,7 @@
 package com.roommatch.controller;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+
 import com.roommatch.dto.ActualizarUsuarioRequest;
 import com.roommatch.dto.ApiResponse;
 import com.roommatch.dto.UsuarioResponse;
@@ -79,7 +81,7 @@ public class UsuarioController {
                 !authentication.isAuthenticated()
         ) {
 
-            throw new IllegalArgumentException(
+            throw new AuthenticationCredentialsNotFoundException(
                     "Usuario no autenticado"
             );
         }
@@ -92,7 +94,7 @@ public class UsuarioController {
             return usuario;
         }
 
-        throw new IllegalArgumentException(
+        throw new AuthenticationCredentialsNotFoundException(
                 "No se pudo identificar al usuario autenticado"
         );
     }

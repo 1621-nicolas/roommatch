@@ -24,6 +24,16 @@ public class LeadHabitacion {
     @Column(name = "mensaje", length = 500)
     private String mensaje;
 
+    @Column(name = "email_contacto", length = 150)
+    private String emailContacto;
+
+    @Version
+    private long version;
+
+    public String getEmailContacto() { return emailContacto; }
+    public void setEmailContacto(String value) { emailContacto = value; }
+
+
     @Column(name = "estado", nullable = false, length = 30)
     private String estado = "pendiente";
 
@@ -32,7 +42,7 @@ public class LeadHabitacion {
 
     @PrePersist
     public void prePersist() {
-        this.fechaLead = LocalDateTime.now();
+        if (this.fechaLead == null) this.fechaLead = LocalDateTime.now(java.time.Clock.systemUTC());
         this.estado = "pendiente";
     }
 

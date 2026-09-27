@@ -14,7 +14,7 @@ export interface LeadHabitacionResponse {
 
   nombreInteresado: string;
 
-  emailInteresado: string;
+  emailInteresado: string | null;
 
   idPropietario: number;
 

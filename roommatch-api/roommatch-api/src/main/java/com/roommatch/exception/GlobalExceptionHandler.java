@@ -23,6 +23,33 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiResponse<Void>> rateLimit(RateLimitException ex) {
+        return ResponseEntity.status(429).header("Retry-After", Long.toString(ex.getRetryAfter()))
+                .body(ApiResponse.fail(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> notFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(404).body(ApiResponse.fail(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> conflict(ConflictException ex) {
+        return ResponseEntity.status(409).body(ApiResponse.fail(ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> concurrentUpdate(Exception ex) {
+        return ResponseEntity.status(409).body(ApiResponse.fail("Los datos cambiaron. Actualiza la página y vuelve a intentarlo"));
+    }
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class})
+    public ResponseEntity<ApiResponse<Void>> invalidPayload(Exception ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.fail("La solicitud contiene datos incompletos o con formato inválido"));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> manejarIllegalArgument(
             IllegalArgumentException ex
@@ -80,7 +107,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> manejarErrorIntegridadBaseDatos(
             DataIntegrityViolationException ex
     ) {
-        log.warn("Restricción de base de datos en RoomMatch", ex);
+        log.warn("Restricción de integridad en RoomMatch: {}", ex.getClass().getSimpleName());
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -93,7 +120,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> manejarAccesoBaseDatos(
             DataAccessException ex
     ) {
-        log.error("Error de acceso a la base de datos de RoomMatch", ex);
+        log.error("Error de acceso a datos: {}", ex.getClass().getSimpleName());
 
         return ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -111,6 +138,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("No estás autenticado o el token no es válido"));
     }
 
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> invalidCredentials(Exception ex) {
+        return ResponseEntity.status(401).body(ApiResponse.fail("El correo o la contraseña son incorrectos"));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> manejarAccesoDenegado(
             AccessDeniedException ex
@@ -124,7 +156,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> manejarExcepcionGeneral(
             Exception ex
     ) {
-        log.error("Error interno no controlado en RoomMatch", ex);
+        log.error("Error interno no controlado: {}", ex.getClass().getSimpleName());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

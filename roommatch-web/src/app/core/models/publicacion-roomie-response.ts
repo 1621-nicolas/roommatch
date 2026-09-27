@@ -1,4 +1,8 @@
 export interface PublicacionRoomieResponse {
+  imagenPrincipal?: string | null;
+  viviendaReferenciaDisponible: boolean;
+  coberturaCompatibilidad: number | null;
+  versionAlgoritmo: string | null;
 
   /*
    * =========================================================

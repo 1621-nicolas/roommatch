@@ -79,7 +79,7 @@ public class PlanPropietarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -107,20 +107,7 @@ public class PlanPropietarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 
 
@@ -142,7 +129,7 @@ public class PlanPropietarioController {
 
     ) {
 
-        try {
+
 
             Usuario usuario =
                     (Usuario)
@@ -172,19 +159,6 @@ public class PlanPropietarioController {
 
             );
 
-        } catch (
-                IllegalArgumentException e
-        ) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-
-                            ApiResponse.fail(
-                                    e.getMessage()
-                            )
-
-                    );
-        }
     }
 }

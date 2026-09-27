@@ -181,7 +181,7 @@
   gap: 22px;
 }
 
-.room-card {
+.rooms-catalog-card {
   overflow: hidden;
   border: 1px solid #e0e5ed;
   border-radius: 18px;
@@ -191,12 +191,12 @@
     box-shadow 0.2s ease;
 }
 
-.room-card:hover {
+.rooms-catalog-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(20, 28, 50, 0.1);
 }
 
-.room-card.featured {
+.rooms-catalog-card.featured {
   border-color: #bfb6ff;
 }
 

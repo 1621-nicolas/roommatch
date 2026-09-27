@@ -5,6 +5,11 @@ import com.roommatch.model.ReporteHabitacion;
 import java.time.LocalDateTime;
 
 public class ReporteHabitacionResponse {
+    private String estadoObjetivo;
+    public String getEstadoObjetivo() { return estadoObjetivo; }
+    private Boolean habitacionBloqueada;
+    public Boolean getHabitacionBloqueada() { return habitacionBloqueada; }
+
 
     private Integer idReporteHabitacion;
     private Integer idUsuarioReportante;
@@ -27,6 +32,8 @@ public class ReporteHabitacionResponse {
         response.setEstado(reporte.getEstado());
         response.setFechaReporte(reporte.getFechaReporte());
         response.setFechaRevision(reporte.getFechaRevision());
+        response.estadoObjetivo = reporte.getHabitacion().getEstado();
+        response.habitacionBloqueada = reporte.getHabitacion().getBloqueada();
 
         if (reporte.getUsuarioReportante() != null) {
             response.setIdUsuarioReportante(reporte.getUsuarioReportante().getIdUsuario());

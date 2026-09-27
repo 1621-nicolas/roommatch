@@ -414,7 +414,7 @@
         </h3>
 
         <p>
-          Esta información es opcional. Puedes vincular una
+          Esta información es opcional. Puedes referenciar una
           habitación de RoomMatch o agregar una referencia externa.
         </p>
 
@@ -1327,6 +1327,9 @@ formulario.descripcion.length
                   === 'roommatch'
                 ) {
 
+                  @if (!publicacion.viviendaReferenciaDisponible) {
+                    <p>La habitación referenciada ya no está disponible. Edita o quita la referencia.</p>
+                  }
                   <div class="linked-housing linked-roommatch">
 
                     <div class="linked-housing-icon">
@@ -1336,7 +1339,7 @@ formulario.descripcion.length
                     <div class="linked-housing-content">
 
                       <small>
-                        Habitación vinculada en RoomMatch
+                        Referencia a un anuncio público
                       </small>
 
                       <strong>
@@ -1641,7 +1644,7 @@ formulario.descripcion.length
 
           </strong>
 
-          de tus publicaciones.
+          de los listados. Conservaremos su historial y sus imágenes, pero no podrás reactivarla.
 
         </p>
 

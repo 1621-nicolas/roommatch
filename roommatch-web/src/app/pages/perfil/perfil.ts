@@ -73,6 +73,7 @@ export class Perfil implements OnInit {
           this.perfilExiste = true;
 
           this.perfilData = {
+            version: response.data.version,
             presupuestoMin:
               response.data.presupuestoMin,
 
@@ -134,11 +135,7 @@ export class Perfil implements OnInit {
         const mensaje =
           error.error?.message ?? '';
 
-        if (
-          mensaje
-            .toLowerCase()
-            .includes('perfil')
-        ) {
+        if (error.status === 404) {
 
           this.perfilExiste = false;
           return;
@@ -196,6 +193,7 @@ export class Perfil implements OnInit {
     this.guardando = true;
 
     const request: PerfilConvivenciaRequest = {
+      version: this.perfilData.version,
 
   presupuestoMin:
     this.perfilData.presupuestoMin,
@@ -265,6 +263,7 @@ export class Perfil implements OnInit {
         }
 
         this.perfilExiste = true;
+        this.perfilData.version = response.data.version;
 
         this.mensajeExito =
           'Tu perfil de convivencia se guardó correctamente';

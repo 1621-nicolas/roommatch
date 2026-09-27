@@ -25,7 +25,7 @@ public class FavoritoController {
             Authentication authentication,
             @PathVariable Integer idUsuarioFavorito
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             FavoritoResponse response = favoritoService.agregarFavorito(
@@ -37,11 +37,7 @@ public class FavoritoController {
                     ApiResponse.success(response, "Usuario agregado a favoritos correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 
     @GetMapping
@@ -64,7 +60,7 @@ public class FavoritoController {
             Authentication authentication,
             @PathVariable Integer idUsuarioFavorito
     ) {
-        try {
+
             Usuario usuario = (Usuario) authentication.getPrincipal();
 
             favoritoService.eliminarFavorito(
@@ -76,10 +72,6 @@ public class FavoritoController {
                     ApiResponse.success(null, "Favorito eliminado correctamente")
             );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.fail(e.getMessage())
-            );
-        }
+
     }
 }

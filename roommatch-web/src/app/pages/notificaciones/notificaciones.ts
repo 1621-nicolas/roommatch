@@ -1,705 +1,127 @@
-import {
-  Component,
-  OnInit
-} from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize, map, of, Subscription, switchMap } from 'rxjs';
+import { NotificacionService } from '../../core/services/notificacion.service';
+import { NotificacionResponse } from '../../core/models/notificacion-response';
+import { PageResponse } from '../../core/models/page-response';
+import { requirePage } from '../../core/validation/api-page';
+import { Icon, IconName } from '../../shared/components/icon/icon';
 
-import {
-  CommonModule
-} from '@angular/common';
-
-import {
-  Router
-} from '@angular/router';
-
-import {
-  finalize
-} from 'rxjs/operators';
-
-import {
-  NotificacionService
-} from '../../core/services/notificacion.service';
-
-import {
-  NotificacionResponse
-} from '../../core/models/notificacion-response';
-
+type Filter = 'todas' | 'no-leidas';
 
 @Component({
   selector: 'app-notificaciones',
-
-  imports: [
-    CommonModule
-  ],
-
+  imports: [DatePipe, Icon],
   templateUrl: './notificaciones.html',
-
   styleUrl: './notificaciones.css'
 })
 export class Notificaciones implements OnInit {
+  private readonly api = inject(NotificacionService);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  private listRequest?: Subscription;
+  private countRequest?: Subscription;
+  readonly pagina = signal<PageResponse<NotificacionResponse> | null>(null);
+  readonly filtro = signal<Filter>('todas');
+  readonly cargando = signal(false);
+  readonly noLeidas = signal<number | null>(null);
+  readonly contando = signal(false);
+  readonly errorLista = signal('');
+  readonly errorContador = signal('');
+  readonly errorAccion = signal('');
+  readonly exito = signal('');
+  readonly procesando = signal<number | 'todas' | null>(null);
+  readonly tamanioPagina = 10;
 
-  notificaciones: NotificacionResponse[] = [];
+  ngOnInit(): void { this.cargarNotificaciones(); }
 
-  filtro:
-    'todas' |
-    'no-leidas' = 'todas';
-
-
-  cargando = false;
-
-  procesandoTodas = false;
-
-
-  paginaActual = 0;
-
-  tamanioPagina = 10;
-
-  totalPaginas = 0;
-
-  totalElementos = 0;
-
-
-  mensajeError = '';
-
-  mensajeExito = '';
-
-
-  constructor(
-    private notificacionService: NotificacionService,
-    private router: Router
-  ) {}
-
-
-  ngOnInit(): void {
-
-    this.cargarNotificaciones();
-
+  cargarNotificaciones(page = 0): void {
+    this.listRequest?.unsubscribe();
+    this.cargando.set(true); this.errorLista.set('');
+    const leido = this.filtro() === 'no-leidas' ? false : null;
+    this.listRequest = this.api.listar(page, this.tamanioPagina, leido).pipe(
+      map(requirePage<NotificacionResponse>),
+      // Reading the final item (also in another tab) can remove the last unread page.
+      switchMap(result => result.content.length === 0 && page > 0
+        ? this.api.listar(Math.max(0, result.totalPages - 1), this.tamanioPagina, leido).pipe(map(requirePage<NotificacionResponse>))
+        : of(result)),
+      takeUntilDestroyed(this.destroy), finalize(() => this.cargando.set(false))
+    ).subscribe({
+      next: result => this.pagina.set(result),
+      error: () => {this.pagina.set(null); this.errorLista.set('No se pudieron cargar tus notificaciones. Intenta de nuevo.');}
+    });
+    this.cargarContador();
   }
 
-
-  /*
-   * =========================================================
-   * CARGAR NOTIFICACIONES
-   * =========================================================
-   */
-  cargarNotificaciones(
-    pagina: number = 0
-  ): void {
-
-    if (this.cargando) {
-
-      return;
-
-    }
-
-
-    this.cargando = true;
-
-    this.mensajeError = '';
-
-
-    this.notificacionService
-      .listar(
-        pagina,
-        this.tamanioPagina
-      )
-      .pipe(
-
-        finalize(() => {
-
-          this.cargando = false;
-
-        })
-
-      )
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status !== 'success' ||
-            !response.data
-          ) {
-
-            this.notificaciones = [];
-
-            this.mensajeError =
-              response.message ||
-              'No se pudieron cargar las notificaciones';
-
-            return;
-
-          }
-
-
-          this.notificaciones =
-            response.data.content ?? [];
-
-
-          this.paginaActual =
-            response.data.number;
-
-
-          this.totalPaginas =
-            response.data.totalPages;
-
-
-          this.totalElementos =
-            response.data.totalElements;
-
-        },
-
-
-        error: error => {
-
-          console.error(
-            'Error cargando notificaciones:',
-            error
-          );
-
-
-          this.notificaciones = [];
-
-
-          this.mensajeError =
-
-            error.error?.message ||
-
-            'No se pudieron cargar las notificaciones';
-
-        }
-
-      });
-
+  cargarContador(): void {
+    this.countRequest?.unsubscribe(); this.contando.set(true); this.errorContador.set('');
+    this.countRequest = this.api.contarNoLeidas().pipe(
+      map(response => {
+        if (response.status !== 'success' || !Number.isSafeInteger(response.data) || response.data < 0) throw new Error('Invalid unread count');
+        return response.data;
+      }), takeUntilDestroyed(this.destroy), finalize(() => this.contando.set(false))
+    ).subscribe({next: count => this.noLeidas.set(count), error: () => {
+      this.noLeidas.set(null); this.errorContador.set('No se pudo obtener el total sin leer.');
+    }});
   }
 
-
-  /*
-   * =========================================================
-   * NOTIFICACIONES VISIBLES
-   * =========================================================
-   */
-  obtenerNotificacionesVisibles():
-    NotificacionResponse[] {
-
-
-    if (
-      this.filtro === 'no-leidas'
-    ) {
-
-      return this.notificaciones
-        .filter(
-          notificacion =>
-            !notificacion.leido
-        );
-
-    }
-
-
-    return this.notificaciones;
-
+  cambiarFiltro(filter: Filter): void {
+    if (this.procesando() !== null) return;
+    this.filtro.set(filter); this.cargarNotificaciones();
   }
 
-
-  /*
-   * =========================================================
-   * CONTADOR NO LEÍDAS
-   * =========================================================
-   */
-  contarNoLeidas(): number {
-
-    return this.notificaciones
-      .filter(
-        notificacion =>
-          !notificacion.leido
-      )
-      .length;
-
+  marcarComoLeida(notification: NotificacionResponse, abrir = false): void {
+    if (this.procesando() !== null) return;
+    if (notification.leido) {if (abrir) this.navegar(notification); return;}
+    this.procesando.set(notification.idNotificacion); this.errorAccion.set(''); this.exito.set('');
+    this.api.marcarComoLeida(notification.idNotificacion).pipe(
+      map(response => {
+        if (response.status !== 'success' || response.data?.idNotificacion !== notification.idNotificacion || response.data.leido !== true) throw new Error('Invalid read response');
+        return response.data;
+      }), takeUntilDestroyed(this.destroy), finalize(() => this.procesando.set(null))
+    ).subscribe({next: () => {
+      this.exito.set('Notificación marcada como leída.');
+      if (abrir && this.destino(notification)) this.navegar(notification);
+      else this.cargarNotificaciones(this.pagina()?.number ?? 0);
+    }, error: () => this.errorAccion.set('No se pudo marcar la notificación como leída. Puedes volver a intentarlo.')});
   }
 
-
-  /*
-   * =========================================================
-   * CAMBIAR FILTRO
-   * =========================================================
-   */
-  cambiarFiltro(
-    filtro:
-      'todas' |
-      'no-leidas'
-  ): void {
-
-    this.filtro = filtro;
-
-  }
-
-
-  /*
-   * =========================================================
-   * ABRIR NOTIFICACIÓN
-   * =========================================================
-   */
-  abrirNotificacion(
-    notificacion: NotificacionResponse
-  ): void {
-
-
-    if (notificacion.leido) {
-
-      this.navegarDestino(
-        notificacion
-      );
-
-      return;
-
-    }
-
-
-    this.notificacionService
-      .marcarComoLeida(
-        notificacion.idNotificacion
-      )
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status === 'success'
-          ) {
-
-            notificacion.leido = true;
-
-          }
-
-
-          this.navegarDestino(
-            notificacion
-          );
-
-        },
-
-
-        error: error => {
-
-          console.error(
-            'Error marcando notificación:',
-            error
-          );
-
-
-          this.mensajeError =
-
-            error.error?.message ||
-
-            'No se pudo actualizar la notificación';
-
-        }
-
-      });
-
-  }
-
-
-  /*
-   * =========================================================
-   * MARCAR UNA COMO LEÍDA
-   * =========================================================
-   */
-  marcarComoLeida(
-    notificacion: NotificacionResponse,
-    event: Event
-  ): void {
-
-    event.stopPropagation();
-
-
-    if (notificacion.leido) {
-
-      return;
-
-    }
-
-
-    this.mensajeError = '';
-
-
-    this.notificacionService
-      .marcarComoLeida(
-        notificacion.idNotificacion
-      )
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status !== 'success'
-          ) {
-
-            this.mensajeError =
-              response.message ||
-              'No se pudo marcar la notificación como leída';
-
-            return;
-
-          }
-
-
-          notificacion.leido = true;
-
-        },
-
-
-        error: error => {
-
-          this.mensajeError =
-
-            error.error?.message ||
-
-            'No se pudo marcar la notificación como leída';
-
-        }
-
-      });
-
-  }
-
-
-  /*
-   * =========================================================
-   * MARCAR TODAS COMO LEÍDAS
-   * =========================================================
-   */
   marcarTodasComoLeidas(): void {
-
-    if (
-      this.procesandoTodas ||
-      this.contarNoLeidas() === 0
-    ) {
-
-      return;
-
-    }
-
-
-    this.procesandoTodas = true;
-
-    this.mensajeError = '';
-
-    this.mensajeExito = '';
-
-
-    this.notificacionService
-      .marcarTodasComoLeidas()
-      .pipe(
-
-        finalize(() => {
-
-          this.procesandoTodas = false;
-
-        })
-
-      )
-      .subscribe({
-
-        next: response => {
-
-          if (
-            response.status !== 'success'
-          ) {
-
-            this.mensajeError =
-              response.message ||
-              'No se pudieron actualizar las notificaciones';
-
-            return;
-
-          }
-
-
-          this.notificaciones =
-            this.notificaciones.map(
-              notificacion => ({
-
-                ...notificacion,
-
-                leido: true
-
-              })
-            );
-
-
-          this.mensajeExito =
-            'Todas las notificaciones fueron marcadas como leídas';
-
-        },
-
-
-        error: error => {
-
-          this.mensajeError =
-
-            error.error?.message ||
-
-            'No se pudieron actualizar las notificaciones';
-
-        }
-
-      });
-
+    if (this.procesando() !== null || this.cargando() || this.contando() || !this.noLeidas()) return;
+    this.procesando.set('todas'); this.errorAccion.set(''); this.exito.set('');
+    this.api.marcarTodasComoLeidas().pipe(
+      map(response => {
+        if (response.status !== 'success' || !Number.isSafeInteger(response.data) || response.data < 0) throw new Error('Invalid update count');
+        return response.data;
+      }), takeUntilDestroyed(this.destroy), finalize(() => this.procesando.set(null))
+    ).subscribe({next: count => {
+      this.exito.set(count === 1 ? 'Se marcó 1 notificación como leída.' : `Se marcaron ${count} notificaciones como leídas.`);
+      // Re-query: notifications arriving during the update must remain visible and unread.
+      this.cargarNotificaciones(this.filtro() === 'no-leidas' ? 0 : this.pagina()?.number ?? 0);
+    }, error: () => this.errorAccion.set('No se pudieron actualizar las notificaciones. Puedes volver a intentarlo.')});
   }
 
-
-  /*
-   * =========================================================
-   * NAVEGAR
-   * =========================================================
-   */
-  private navegarDestino(
-    notificacion: NotificacionResponse
-  ): void {
-
-    if (!notificacion.urlDestino) {
-
-      return;
-
-    }
-
-
-    this.router.navigateByUrl(
-      notificacion.urlDestino
-    );
-
+  cambiarPagina(delta: number): void {
+    const current = this.pagina();
+    if (!current || this.cargando() || this.procesando() !== null) return;
+    const next = current.number + delta;
+    if (next >= 0 && next < current.totalPages) this.cargarNotificaciones(next);
   }
 
-
-  /*
-   * =========================================================
-   * ICONO
-   * =========================================================
-   */
-  obtenerIcono(
-    tipo: string
-  ): string {
-
-
-    switch (
-      tipo?.toLowerCase()
-    ) {
-
-      case 'solicitud':
-        return '👤';
-
-
-      case 'contacto':
-        return '💜';
-
-
-      case 'match':
-        return '♡';
-
-
-      case 'habitacion':
-        return '⌂';
-
-
-      case 'lead':
-        return '✉';
-
-
-      case 'sistema':
-        return 'ⓘ';
-
-
-      default:
-        return '●';
-
-    }
-
+  destino(notification: NotificacionResponse): string | null {
+    const url = notification.urlDestino;
+    // Notifications navigate only within RoomMatch; legacy external/malformed destinations stay inert.
+    return typeof url === 'string' && /^\/(?!\/)[^\\\s\u0000-\u001f]*$/.test(url) ? url : null;
   }
-
-
-  /*
-   * =========================================================
-   * TEXTO DEL TIPO
-   * =========================================================
-   */
-  obtenerNombreTipo(
-    tipo: string
-  ): string {
-
-
-    switch (
-      tipo?.toLowerCase()
-    ) {
-
-      case 'solicitud':
-        return 'Solicitud';
-
-
-      case 'contacto':
-        return 'Contacto';
-
-
-      case 'match':
-        return 'Match';
-
-
-      case 'habitacion':
-        return 'Habitación';
-
-
-      case 'lead':
-        return 'Interés';
-
-
-      case 'sistema':
-        return 'RoomMatch';
-
-
-      default:
-        return 'Notificación';
-
-    }
-
+  private navegar(notification: NotificacionResponse): void {
+    const url = this.destino(notification); if (url) void this.router.navigateByUrl(url);
   }
-
-
-  /*
-   * =========================================================
-   * FECHA
-   * =========================================================
-   */
-  formatearFecha(
-    fecha: string
-  ): string {
-
-
-    if (!fecha) {
-
-      return '';
-
-    }
-
-
-    const fechaNotificacion =
-      new Date(fecha);
-
-
-    const ahora =
-      new Date();
-
-
-    const diferencia =
-      ahora.getTime() -
-      fechaNotificacion.getTime();
-
-
-    const minutos =
-      Math.floor(
-        diferencia / 60000
-      );
-
-
-    const horas =
-      Math.floor(
-        diferencia / 3600000
-      );
-
-
-    const dias =
-      Math.floor(
-        diferencia / 86400000
-      );
-
-
-    if (minutos < 1) {
-
-      return 'Ahora';
-
-    }
-
-
-    if (minutos < 60) {
-
-      return `Hace ${minutos} min`;
-
-    }
-
-
-    if (horas < 24) {
-
-      return `Hace ${horas} h`;
-
-    }
-
-
-    if (dias === 1) {
-
-      return 'Ayer';
-
-    }
-
-
-    if (dias < 7) {
-
-      return `Hace ${dias} días`;
-
-    }
-
-
-    return fechaNotificacion
-      .toLocaleDateString(
-        'es-PE',
-        {
-
-          day: '2-digit',
-
-          month: 'short',
-
-          year: 'numeric'
-
-        }
-      );
-
+  nombreTipo(type: string): string {
+    return ({solicitud:'Solicitud',contacto:'Contacto',match:'Match',habitacion:'Habitación',lead:'Interés',reporte:'Reporte',sistema:'RoomMatch'} as Record<string,string>)[type] ?? 'Notificación';
   }
-
-
-  /*
-   * =========================================================
-   * PAGINACIÓN
-   * =========================================================
-   */
-  paginaAnterior(): void {
-
-    if (this.paginaActual <= 0) {
-
-      return;
-
-    }
-
-
-    this.cargarNotificaciones(
-      this.paginaActual - 1
-    );
-
+  icono(type: string): IconName {
+    return ({solicitud:'people',contacto:'people',match:'heart',habitacion:'house',lead:'key',reporte:'search'} as Record<string,IconName>)[type] ?? 'check-lg';
   }
-
-
-  paginaSiguiente(): void {
-
-    if (
-      this.paginaActual >=
-      this.totalPaginas - 1
-    ) {
-
-      return;
-
-    }
-
-
-    this.cargarNotificaciones(
-      this.paginaActual + 1
-    );
-
-  }
-
 }

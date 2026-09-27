@@ -9,6 +9,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: roommatch-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     name: Backend Java 17
@@ -27,11 +34,62 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Enable Maven Wrapper
-        run: chmod +x mvnw
+      - name: Verify backend
+        run: ./mvnw --batch-mode clean verify -Psqlserver
 
-      - name: Run backend tests
-        run: ./mvnw --batch-mode clean test
+      - name: Inventory resolved Maven dependencies
+        run: >-
+          ./mvnw --batch-mode org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom
+          -DincludeTestScope=true -DoutputFormat=json -Dcyclonedx.skipAttach=true
+
+      - name: Install pinned dependency scanner
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/osv-scanner" https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
+          printf '%s  %s\n' 'ca69b3d3cd08f889a49dc0a383122f71cc528b83803671df5fd874d97485b108' "$RUNNER_TEMP/osv-scanner" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+
+      - name: Audit Maven dependencies
+        run: '"$RUNNER_TEMP/osv-scanner" scan source --lockfile=target/bom.json --format=json --output=target/osv.json'
+
+      - name: Summarize dependency findings
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          bom = Path('target/bom.json')
+          report = Path('target/osv.json')
+          if bom.exists():
+              print('MAVEN_SBOM_COMPONENTS', len(json.loads(bom.read_text()).get('components', [])))
+          if not report.exists():
+              raise SystemExit('Dependency scan did not produce a report; this is not a clean audit.')
+          findings = json.loads(report.read_text())
+          for result in findings.get('results', []):
+              for item in result.get('packages', []):
+                  package = item.get('package', {})
+                  for vulnerability in item.get('vulnerabilities', []):
+                      print('MAVEN_FINDING', package.get('name'), package.get('version'), vulnerability.get('id'), vulnerability.get('summary', ''))
+          PY
+
+      - name: Save dependency inventory and audit
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: backend-dependency-audit
+          path: |
+            roommatch-api/roommatch-api/target/bom.json
+            roommatch-api/roommatch-api/target/osv.json
+          retention-days: 14
+
+      - name: Save test reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: backend-test-reports
+          path: |
+            roommatch-api/roommatch-api/target/surefire-reports/
+            roommatch-api/roommatch-api/target/failsafe-reports/
+          retention-days: 14
 
   frontend:
     name: Frontend Angular
@@ -53,5 +111,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
       - name: Build frontend
         run: npm run build
+
+      - name: Test frontend
+        run: npm test -- --watch=false
+
+      - name: Install browser for UI tests
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Test desktop and mobile UI
+        run: npm run test:browser
+
+      - name: Save browser reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: frontend-browser-reports
+          path: |
+            roommatch-web/playwright-report/
+            roommatch-web/test-results/
+          retention-days: 14

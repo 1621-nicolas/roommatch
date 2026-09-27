@@ -127,49 +127,11 @@ export class Matches implements OnInit {
 
 
   calcularCompatibilidad(): void {
-
-    this.calculando = true;
-
-    this.mensajeError = '';
+    // GET always scores current profiles; avoid an identical POST + GET scan.
+    this.page = 0;
     this.mensajeExito = '';
-
-    this.matchService
-      .calcularMatches()
-      .subscribe({
-
-        next: response => {
-
-          this.calculando = false;
-
-          if (response.status !== 'success') {
-
-            this.mensajeError =
-              response.message ||
-              'No se pudo calcular la compatibilidad';
-
-            return;
-          }
-
-          this.mensajeExito =
-            'Compatibilidad calculada correctamente';
-
-          this.page = 0;
-
-          this.cargarMatches();
-        },
-
-        error: error => {
-
-          this.calculando = false;
-
-          this.mensajeError =
-            error.error?.message ||
-            'No se pudo calcular la compatibilidad';
-        }
-
-      });
+    this.cargarMatches();
   }
-
 
   aplicarFiltro(): void {
 

@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "reporte_habitacion")
 public class ReporteHabitacion {
+    @Version
+    private long version;
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +41,7 @@ public class ReporteHabitacion {
 
     @PrePersist
     public void prePersist() {
-        this.fechaReporte = LocalDateTime.now();
+        this.fechaReporte = LocalDateTime.now(java.time.Clock.systemUTC());
         this.estado = "pendiente";
     }
 

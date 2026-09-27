@@ -1,3 +1,4 @@
+import { activeToken, clearSession, sessionUser } from '../auth/session-storage';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -50,23 +51,11 @@ export class AuthService {
     localStorage.setItem(this.USER_KEY, JSON.stringify(usuario));
   }
 
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
+  getToken(): string | null { return activeToken(); }
 
   getUsuario(): UsuarioResponse | null {
-    const usuarioStorage = localStorage.getItem(this.USER_KEY);
-
-    if (!usuarioStorage) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(usuarioStorage) as UsuarioResponse;
-    } catch {
-      this.cerrarSesion();
-      return null;
-    }
+    if (!this.getToken()) return null;
+    return sessionUser();
   }
 
   getNombreUsuario(): string {
@@ -89,11 +78,10 @@ export class AuthService {
   }
 
   estaAutenticado(): boolean {
-    return Boolean(this.getToken());
+    return Boolean(this.getToken() && this.getUsuario());
   }
 
   cerrarSesion(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    clearSession();
   }
 }

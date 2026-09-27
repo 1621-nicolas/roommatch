@@ -7,10 +7,6 @@
     ====================================================== -->
     <header class="rooms-header">
 
-      <span class="rooms-eyebrow">
-        Espacios para ti
-      </span>
-
       <h1>
         Encuentra tu próxima
         <span>habitación</span>
@@ -265,7 +261,7 @@
     >
 
       <div class="state-icon">
-        ⌂
+        <app-icon name="house" />
       </div>
 
       <h2>
@@ -295,39 +291,22 @@
           let habitacion
           of habitaciones
         "
-        class="room-card"
+        class="rooms-catalog-card"
         [class.featured]="habitacion.destacada"
       >
 
         <!-- IMAGEN -->
         <div class="room-image">
 
-          <!--
-            La API de habitaciones todavía no devuelve
-            la imagen principal.
-
-            Luego conectaremos imagen_habitacion.
-          -->
-
           <span
             *ngIf="habitacion.destacada"
             class="featured-badge"
           >
-            ★ Destacada
+            <app-icon name="star-fill" /> Destacada
           </span>
 
 
-          <div class="room-placeholder">
-
-            <span>
-              ⌂
-            </span>
-
-            <small>
-              {{ habitacion.distrito }}
-            </small>
-
-          </div>
+          <app-listing-image [src]="habitacion.imagenPrincipal" [description]="habitacion.titulo" />
 
         </div>
 
@@ -346,7 +325,7 @@
               *ngIf="habitacion.propietarioVerificado"
               class="verified-owner"
             >
-              ✓ Verificado
+              <app-icon name="check-lg" /> Verificado
             </span>
 
           </div>
@@ -359,7 +338,7 @@
 
           <p class="room-location">
 
-            ⌖
+            <app-icon name="geo-alt" />
             {{ habitacion.distrito }}
 
           </p>
@@ -469,7 +448,7 @@
             Ver detalle
 
             <span>
-              →
+              <app-icon name="arrow-right" />
             </span>
 
           </a>
@@ -494,7 +473,7 @@
     >
 
       <div class="state-icon">
-        ⌕
+        <app-icon name="search" />
       </div>
 
 
@@ -536,7 +515,7 @@
         [disabled]="paginaActual === 0"
         (click)="paginaAnterior()"
       >
-        ← Anterior
+        <app-icon name="arrow-left" /> Anterior
       </button>
 
 
@@ -558,7 +537,7 @@
         "
         (click)="paginaSiguiente()"
       >
-        Siguiente →
+        Siguiente <app-icon name="arrow-right" />
       </button>
 
     </nav>

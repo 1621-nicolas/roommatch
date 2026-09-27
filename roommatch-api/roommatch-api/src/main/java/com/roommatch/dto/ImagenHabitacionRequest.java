@@ -11,6 +11,7 @@ public class ImagenHabitacionRequest {
     private String urlImagen;
 
     @Min(value = 1, message = "El orden debe ser mínimo 1")
+    @jakarta.validation.constraints.Max(5)
     private Integer orden;
 
     private Boolean principal;

@@ -1034,23 +1034,6 @@ export class MisHabitaciones implements OnInit {
     this.limpiarMensajes();
 
 
-    if (
-      this.alcanzoLimitePlan()
-    ) {
-
-      this.mensajeError =
-
-        `Tu plan ${
-          this.obtenerNombrePlan()
-        } permite ${
-          this.propietario?.limiteHabitaciones ?? 0
-        } habitación(es) activa(s).`;
-
-
-      return;
-    }
-
-
     this.habitacionService
       .activar(
         habitacion.idHabitacion
@@ -1319,7 +1302,7 @@ export class MisHabitaciones implements OnInit {
 
     return (
 
-      this.contarActivas() >=
+      (this.contarActivas() + this.contarPausadas()) >=
       limite
 
     );
@@ -1355,7 +1338,7 @@ export class MisHabitaciones implements OnInit {
       Math.round(
 
         (
-          this.contarActivas() /
+          (this.contarActivas() + this.contarPausadas()) /
           limite
         ) * 100
 
@@ -1384,7 +1367,7 @@ export class MisHabitaciones implements OnInit {
       0,
 
       limite -
-      this.contarActivas()
+      (this.contarActivas() + this.contarPausadas())
 
     );
   }
@@ -1535,5 +1518,27 @@ export class MisHabitaciones implements OnInit {
       destacada: false
 
     };
+  }
+  cambiandoEstado = false;
+
+  retirarHabitacion(habitacion: HabitacionResponse, archivar: boolean): void {
+    const pregunta = archivar
+      ? '¿Archivar esta habitación? Se conservará su historial y no podrá reactivarse.'
+      : '¿Marcar esta habitación como alquilada? Dejará de aparecer en la búsqueda y liberará cupo.';
+    if (this.cambiandoEstado || !window.confirm(pregunta)) return;
+    this.cambiandoEstado = true;
+    this.limpiarMensajes();
+    const accion = archivar ? this.habitacionService.archivar(habitacion.idHabitacion) : this.habitacionService.alquilar(habitacion.idHabitacion);
+    accion.subscribe({
+      next: () => {
+        this.cambiandoEstado = false;
+        this.mensajeExito = archivar ? 'Habitación archivada. Conservamos su historial.' : 'Habitación marcada como alquilada.';
+        this.cargarDatos();
+      },
+      error: error => {
+        this.cambiandoEstado = false;
+        this.mensajeError = error.error?.message || 'No se pudo actualizar el estado de la habitación.';
+      }
+    });
   }
 }
