@@ -17,7 +17,7 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Inte
             FROM Notificacion n
             WHERE n.usuario.idUsuario = :idUsuario
             AND (:leido IS NULL OR n.leido = :leido)
-            ORDER BY n.fechaCreacion DESC
+            ORDER BY n.fechaCreacion DESC, n.idNotificacion DESC
             """)
     Page<Notificacion> listarPorUsuario(
             @Param("idUsuario") Integer idUsuario,

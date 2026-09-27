@@ -52,7 +52,49 @@ class SqlServerIT {
     @Autowired com.roommatch.service.PublicacionRoomieService publicaciones;
     @Autowired com.roommatch.service.ImagenPublicacionService imagenesPublicacion;
     @Autowired com.roommatch.service.ImagenHabitacionService imagenesHabitacion;
+    @Autowired com.roommatch.service.NotificacionService notificaciones;
     @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void notificationFilteringCountsAndReadOperationsStayWithinTheOwnerAcrossPages() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        int owner = addUser(jdbc), other = addUser(jdbc);
+        var ids = new java.util.ArrayList<Integer>();
+        for (int i = 0; i < 23; i++) {
+            // Same timestamp deliberately exercises stable pagination by ID.
+            jdbc.update("INSERT INTO notificacion(id_usuario,titulo,mensaje,tipo,leido,fecha_creacion) VALUES(?,'Aviso','Contenido','sistema',?,'2026-09-27T06:00:00')", owner, i >= 13);
+        }
+        ids.addAll(jdbc.queryForList("SELECT id_notificacion FROM notificacion WHERE id_usuario=? ORDER BY id_notificacion DESC", Integer.class, owner));
+        jdbc.update("INSERT INTO notificacion(id_usuario,titulo,mensaje,tipo) VALUES(?,'Privado','Otro usuario','sistema')", other);
+        int privateId = jdbc.queryForObject("SELECT id_notificacion FROM notificacion WHERE id_usuario=?", Integer.class, other);
+        var stats = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        try {
+            stats.clear();
+            var first = notificaciones.listarMisNotificaciones(owner, null, org.springframework.data.domain.PageRequest.of(0,10));
+            long queries = stats.getPrepareStatementCount();
+            assertThat(queries).isLessThanOrEqualTo(2);
+            System.out.printf("NOTIFICATION_QUERIES size=10 queries=%d%n", queries);
+            assertThat(first.getTotalElements()).isEqualTo(23);
+            assertThat(first.getContent()).extracting(com.roommatch.dto.NotificacionResponse::getIdNotificacion).containsExactlyElementsOf(ids.subList(0,10));
+            assertThat(first.getContent()).allSatisfy(row -> {assertThat(row.getLeido()).isTrue(); assertThat(row.getIdUsuario()).isEqualTo(owner);});
+        } finally {stats.setStatisticsEnabled(false);}
+        assertThat(notificaciones.contarNoLeidas(owner)).isEqualTo(13);
+        var unread = notificaciones.listarMisNotificaciones(owner, false, org.springframework.data.domain.PageRequest.of(0,10));
+        var second = notificaciones.listarMisNotificaciones(owner, false, org.springframework.data.domain.PageRequest.of(1,10));
+        assertThat(unread.getTotalElements()).isEqualTo(13);
+        assertThat(unread.getContent()).extracting(com.roommatch.dto.NotificacionResponse::getIdNotificacion).containsExactlyElementsOf(ids.subList(10,20));
+        assertThat(second.getContent()).extracting(com.roommatch.dto.NotificacionResponse::getIdNotificacion).containsExactlyElementsOf(ids.subList(20,23));
+        assertThatThrownBy(() -> notificaciones.marcarComoLeida(owner, privateId)).isInstanceOf(com.roommatch.exception.ResourceNotFoundException.class);
+        int id = second.getContent().get(0).getIdNotificacion();
+        assertThat(notificaciones.marcarComoLeida(owner, id).getLeido()).isTrue();
+        notificaciones.marcarComoLeida(owner, id); // Idempotent.
+        assertThat(notificaciones.contarNoLeidas(owner)).isEqualTo(12);
+        assertThat(notificaciones.marcarTodasComoLeidas(owner)).isEqualTo(12);
+        assertThat(notificaciones.marcarTodasComoLeidas(owner)).isZero();
+        assertThat(notificaciones.contarNoLeidas(owner)).isZero();
+        assertThat(notificaciones.contarNoLeidas(other)).isEqualTo(1);
+    }
 
     @Test
     void contactPagesAreBilateralPrivateAndUseAtMostThreeQueries() {

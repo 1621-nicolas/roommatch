@@ -19,6 +19,7 @@ public class NotificacionService {
         this.notificacionRepository = notificacionRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<NotificacionResponse> listarMisNotificaciones(
             Integer idUsuario,
             Boolean leido,
@@ -29,6 +30,7 @@ public class NotificacionService {
                 .map(NotificacionResponse::fromEntity);
     }
 
+    @Transactional(readOnly = true)
     public long contarNoLeidas(Integer idUsuario) {
         return notificacionRepository.countByUsuarioIdUsuarioAndLeidoFalse(idUsuario);
     }

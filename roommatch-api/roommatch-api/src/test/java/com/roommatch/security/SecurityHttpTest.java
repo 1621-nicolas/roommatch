@@ -31,6 +31,18 @@ class SecurityHttpTest {
         mvc.perform(get("/api/habitaciones/mis")).andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("status").value("error"));
     }
+    @Test @WithMockUser void notificationPaginationRejectsUnboundedOrInvalidRequests() throws Exception {
+        for (String query : new String[]{"page=-1", "page=10001", "size=0", "size=101"}) {
+            mvc.perform(get("/api/notificaciones?" + query)).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("status").value("fail"));
+        }
+    }
+    @Test void notificationsAndCountersRequireAuthentication() throws Exception {
+        mvc.perform(get("/api/notificaciones")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/notificaciones/no-leidas/count")).andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/notificaciones/1/leer")).andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/notificaciones/leer-todas")).andExpect(status().isUnauthorized());
+    }
     @Test void publicCatalogDoesNotRequireAuthentication() throws Exception {
         mvc.perform(get("/api/planes")).andExpect(status().isOk());
     }

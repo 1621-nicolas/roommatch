@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/notificaciones")
+@org.springframework.validation.annotation.Validated
 public class NotificacionController {
 
     private final NotificacionService notificacionService;
@@ -25,8 +26,8 @@ public class NotificacionController {
     public ResponseEntity<ApiResponse<Page<NotificacionResponse>>> listarMisNotificaciones(
             Authentication authentication,
             @RequestParam(required = false) Boolean leido,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(10000) int page,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int size
     ) {
         Usuario usuario = (Usuario) authentication.getPrincipal();
 
