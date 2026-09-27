@@ -11,10 +11,6 @@
 
       <div>
 
-        <span class="roomie-pill">
-          Comunidad RoomMatch
-        </span>
-
         <h1>
 
           Encuentra personas
@@ -70,7 +66,7 @@
         [class.active]="tipoSeleccionado === 'busco_roomie'"
         (click)="cambiarTipo('busco_roomie')"
       >
-        👥 Busco roomie
+        <app-icon name="people" /> Busco roomie
       </button>
 
 
@@ -79,7 +75,7 @@
         [class.active]="tipoSeleccionado === 'busco_cuarto'"
         (click)="cambiarTipo('busco_cuarto')"
       >
-        🏠 Busco habitación
+        <app-icon name="house" /> Busco habitación
       </button>
 
 
@@ -88,7 +84,7 @@
         [class.active]="tipoSeleccionado === 'busco_compartir'"
         (click)="cambiarTipo('busco_compartir')"
       >
-        🔑 Busco compartir
+        <app-icon name="key" /> Busco compartir
       </button>
 
     </nav>
@@ -274,7 +270,7 @@
       <section class="roomie-loading">
 
         <div class="roomie-loading-icon">
-          ♡
+          <app-icon name="heart" />
         </div>
 
         <h2>
@@ -305,6 +301,9 @@
         ) {
 
           <article class="roomie-card">
+            @if (publicacion.imagenPrincipal) {
+              <app-listing-image [src]="publicacion.imagenPrincipal" [description]="publicacion.titulo" />
+            }
 
 
             <!-- =============================================
@@ -411,7 +410,7 @@
                   </strong>
 
                   <span>
-                    sin calcular
+                    no disponible
                   </span>
 
                 </div>
@@ -464,7 +463,7 @@
                 <div>
 
                   <span>
-                    📍
+                    <app-icon name="geo-alt" />
                   </span>
 
                   <section>
@@ -572,7 +571,7 @@
 
                         <span>
 
-                          ✓ {{ coincidencia }}
+                          <app-icon name="check-lg" /> {{ coincidencia }}
 
                         </span>
 
@@ -587,19 +586,18 @@
                   <div class="roomie-no-compatibility">
 
                     <div>
-                      ♡
+                      <app-icon name="heart" />
                     </div>
 
                     <section>
 
                       <strong>
-                        Compatibilidad sin calcular
+                        Compatibilidad no disponible
                       </strong>
 
                       <p>
 
-                        Calcula tus matches para conocer
-                        qué tan compatible eres con esta persona.
+                        La compatibilidad requiere iniciar sesión y suficiente información en ambos perfiles.
 
                       </p>
 
@@ -650,7 +648,7 @@
                   Administrar publicación
 
                   <span>
-                    →
+                    <app-icon name="arrow-right" />
                   </span>
 
                 </a>
@@ -668,7 +666,7 @@
                   Ver publicación
 
                   <span>
-                    →
+                    <app-icon name="arrow-right" />
                   </span>
 
                 </a>
@@ -684,7 +682,7 @@
           <section class="roomie-empty">
 
             <div>
-              👥
+              <app-icon name="people" />
             </div>
 
             <h2>
@@ -734,7 +732,7 @@
           (click)="paginaAnterior()"
         >
 
-          ← Anterior
+          <app-icon name="arrow-left" /> Anterior
 
         </button>
 
@@ -764,7 +762,7 @@
           (click)="paginaSiguiente()"
         >
 
-          Siguiente →
+          Siguiente <app-icon name="arrow-right" />
 
         </button>
 

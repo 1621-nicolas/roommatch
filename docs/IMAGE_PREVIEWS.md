@@ -30,7 +30,24 @@ debe mostrar un estado de imagen no disponible y no una foto inventada.
   las cuatro anteriores siguen siendo página, total, compatibilidad y
   referencias de vivienda. Es una medición de consultas, no un SLA de carga.
 
-La compilación/prueba Maven local del 26/09 está bloqueada antes de compilar
-por DNS de Maven Central. La ejecución de GitHub Actions con SQL Server es el
-gate de aceptación de este cambio. La conexión visual de estas fotos se
-entrega en el siguiente grupo de frontend.
+La compilación/prueba Maven local del 26/09 quedó bloqueada antes de compilar
+por DNS de Maven Central. [GitHub Actions con SQL Server](https://github.com/1621-nicolas/roommatch/actions/runs/36246998165)
+aprobó 184 pruebas unitarias y 19 de integración, sin fallos ni omisiones.
+Las consultas medidas fueron tres para habitaciones y cinco para publicaciones
+en los tres tamaños de página.
+
+## Presentación en Angular
+
+Los catálogos consumen `imagenPrincipal` directamente, sin consultar una galería
+por tarjeta. El detalle consulta su galería una sola vez y permite seleccionar
+la foto. `ListingImage` valida la URL antes de insertarla, usa `no-referrer` y
+reserva espacio; un error de descarga muestra texto de recuperación, sin foto
+inventada. `ListingGallery` diferencia error del API, carga y galería vacía,
+ofrece reintento y cancela peticiones al cambiar de anuncio o salir.
+
+La revisión y los límites visuales están en [GALLERY_UI.md](GALLERY_UI.md).
+La validación local del grupo aprobó 75 pruebas unitarias frontend y 34 de
+Chromium (12 de galerías), con cero fallos u omisiones. Las fotos sintéticas
+rotuladas de las pruebas se limitan a `e2e/`; el producto muestra URLs del API.
+El recorrido de navegador utiliza fixtures; no sustituye una prueba completa
+navegador → API → SQL Server.

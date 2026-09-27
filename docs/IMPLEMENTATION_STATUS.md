@@ -12,8 +12,10 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
   180 pruebas unitarias backend + 18 de integración, cero fallos/omisiones.
 - [CI de miniaturas por lote](https://github.com/1621-nicolas/roommatch/actions/runs/36246998165):
   184 unitarias backend + 19 de integración aprobadas, cero fallos/omisiones.
-- Validación local actual: 69 pruebas frontend y 22 de Chromium aprobadas,
-  escritorio/móvil. La publicación del nuevo gate de navegador está en curso.
+- [CI de navegador y recuperación 409](https://github.com/1621-nicolas/roommatch/actions/runs/36274320520):
+  ambos jobs aprobados; incluye 22 pruebas Chromium y 69 unitarias frontend.
+- Galerías públicas: validación local de 75 pruebas frontend y 34 de Chromium
+  aprobadas, escritorio/móvil; revisión independiente `ship` en ese alcance.
 - [CI de navegación](https://github.com/1621-nicolas/roommatch/actions/runs/35489699513):
   backend 169 unitarias + 18 integración, cero fallos/omisiones; frontend 62
   pruebas, build y audit aprobados. SQL Server real mediante Testcontainers.
@@ -56,8 +58,10 @@ cambios posteriores. **RoomMatch aún no cumple todos los criterios de cierre.**
    capturas escritorio/móvil y pruebas de teclado, foco, errores y modales;
    eso no equivale a conformidad WCAG AA ni aceptación de todo el producto.
 2. Completar renovación y revisión funcional del resto de pantallas. Verificar
-   galerías en resultados/detalles públicos, filtros sobre páginas parciales,
+   filtros sobre páginas parciales,
    estados asíncronos y formularios de habitaciones/publicaciones/solicitudes.
+   Las galerías de resultados/detalles públicos ya están conectadas y probadas
+   en navegador; faltan los editores de imágenes y otros listados.
 3. Consolidar el inventario y la matriz campo por campo con el esquema después
    de V12 y todos los DTO actuales. El inventario histórico no es una matriz
    final de la rama corregida.

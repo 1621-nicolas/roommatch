@@ -14,7 +14,7 @@ npm run test:browser
 
 `ROOMMATCH_CHROMIUM_PATH` permite indicar un Chromium local compatible cuando
 el entorno no permite descargar el navegador habitual. No es necesario en CI.
-La ejecución local del 26/09/2026 utilizó Chromium 153.0.8010.0: **22 pruebas
+La ejecución local del 26/09/2026 utilizó Chromium 153.0.8010.0: **34 pruebas
 aprobadas, cero fallos, cero omitidas**, sin reintentos automáticos.
 
 ## Qué comprueba
@@ -37,6 +37,12 @@ en móvil. La tabla de reportes conserva desplazamiento horizontal dentro de
 su contenedor y un aviso visible, sin desplazar toda la página.
 
 ## Evidencia y límites
+
+Las 12 pruebas añadidas de galerías verifican fotos del API en catálogos y
+detalles de habitaciones/publicaciones, selección principal y cambio de foto,
+ausencia de peticiones API por tarjeta, `no-referrer`, error con reintento y
+fallback ante una URL que devuelve 404. Sus ocho capturas también se adjuntan.
+El SVG rotulado como foto de prueba vive exclusivamente en el interceptor e2e.
 
 Las capturas de las siete pantallas y del diálogo se adjuntan al informe HTML
 `playwright-report/index.html`. CI publica `frontend-browser-reports` durante

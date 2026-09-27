@@ -1,5 +1,9 @@
+import { Icon } from '../../../shared/components/icon/icon';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ListingGallery } from '../../../shared/components/listing-gallery/listing-gallery';
 import {
-  Component,
+  Component, ChangeDetectorRef, DestroyRef, inject,
   OnInit
 } from '@angular/core';
 
@@ -29,6 +33,8 @@ import {
   selector: 'app-publicaciones-detail',
   standalone: true,
   imports: [
+    Icon,
+    ListingGallery,
     FormsModule,
     RouterLink
   ],
@@ -36,6 +42,8 @@ import {
   styleUrl: './publicaciones-detail.css'
 })
 export class PublicacionesDetail implements OnInit {
+  private readonly destroy = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   publicacion:
     PublicacionRoomieResponse | null = null;
@@ -104,6 +112,7 @@ export class PublicacionesDetail implements OnInit {
       .obtenerPorId(
         idPublicacion
       )
+      .pipe(takeUntilDestroyed(this.destroy), finalize(() => this.cdr.markForCheck()))
       .subscribe({
 
         next: response => {
@@ -219,6 +228,7 @@ export class PublicacionesDetail implements OnInit {
         mensaje
 
       )
+      .pipe(takeUntilDestroyed(this.destroy), finalize(() => this.cdr.markForCheck()))
       .subscribe({
 
         next: response => {

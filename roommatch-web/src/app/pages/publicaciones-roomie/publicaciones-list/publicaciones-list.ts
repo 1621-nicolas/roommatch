@@ -1,5 +1,11 @@
+import { Icon } from '../../../shared/components/icon/icon';
+import { requirePage } from '../../../core/validation/api-page';
+import { map } from 'rxjs';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ListingImage } from '../../../shared/components/listing-image/listing-image';
 import {
-  Component,
+  Component, ChangeDetectorRef, DestroyRef, inject,
   OnInit
 } from '@angular/core';
 
@@ -24,6 +30,8 @@ import {
   selector: 'app-publicaciones-list',
   standalone: true,
   imports: [
+    Icon,
+    ListingImage,
     FormsModule,
     RouterLink
   ],
@@ -33,6 +41,8 @@ import {
   ]
 })
 export class PublicacionesList implements OnInit {
+  private readonly destroy = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   publicaciones: PublicacionRoomieResponse[] = [];
 
@@ -118,6 +128,7 @@ export class PublicacionesList implements OnInit {
         this.paginaActual,
         this.tamanioPagina
       )
+      .pipe(map(response => { requirePage<PublicacionRoomieResponse>(response); return response; }), takeUntilDestroyed(this.destroy), finalize(() => this.cdr.markForCheck()))
       .subscribe({
 
         next: response => {

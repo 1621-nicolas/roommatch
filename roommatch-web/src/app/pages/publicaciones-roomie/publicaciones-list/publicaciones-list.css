@@ -61,7 +61,7 @@
   color: #11182c;
   font-size: clamp(2.2rem, 4vw, 3.8rem);
   line-height: 1.02;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.025em;
 }
 
 .roomie-header h1 span {

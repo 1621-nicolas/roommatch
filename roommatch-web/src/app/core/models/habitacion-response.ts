@@ -1,6 +1,7 @@
 export interface HabitacionResponse {
 
   idHabitacion: number;
+  imagenPrincipal?: string | null;
 
   idPropietario: number;
 
