@@ -32,6 +32,27 @@ rechazo de ID ajeno y aislamiento del marcado masivo. El presupuesto del
 listado es dos consultas, datos y total.
 
 La ejecución Maven local del 27/09/2026 se bloqueó antes de compilar porque no
-resuelve el DNS de Maven Central. Los nuevos casos requieren el gate de GitHub
-Actions con `clean verify -Psqlserver`; no se presentan como aprobados antes
-de su resultado. La corrección de Angular se entrega en un grupo separado.
+resuelve el DNS de Maven Central. GitHub Actions ejecutó `clean verify -Psqlserver`
+en [36339247668](https://github.com/1621-nicolas/roommatch/actions/runs/36339247668):
+**186 pruebas unitarias y 20 de integración aprobadas**, sin omisiones. El log
+SQL Server registra `NOTIFICATION_QUERIES size=10 queries=2`.
+
+## Interfaz
+
+Angular envía `leido=false` al servidor al elegir «Sin leer». La cifra pendiente
+procede de `/no-leidas/count`, independientemente de los diez elementos visibles.
+La lista, el contador y las acciones conservan errores y reintentos separados.
+No se interpreta un contador fallido como cero ni una respuesta mal formada
+como una lista vacía. Cambiar de filtro cancela la petición anterior.
+
+Los botones de lectura impiden envíos repetidos mientras la operación está en
+curso. Tras confirmar una lectura se consultan nuevamente listado y contador;
+si la última página queda vacía, se vuelve a la última página disponible. El
+marcado masivo conserva las notificaciones nuevas que puedan llegar después.
+La navegación solo admite rutas internas; la lectura no activa enlaces externos.
+
+La verificación local del 27/09/2026 aprobó **84 pruebas unitarias en 25 archivos**
+y **44 pruebas Chromium** con viewports de escritorio y móvil. El build finalizó
+con el warning heredado de presupuesto CSS de `mis-publicaciones.css`
+(14.06 kB frente a 12 kB). Las pruebas de navegador interceptan el API y no
+sustituyen una prueba del despliegue conectado a SQL Server.

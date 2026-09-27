@@ -1,322 +1,77 @@
 <section class="notifications-page">
-
   <div class="notifications-container">
-
-    <!-- CABECERA -->
     <header class="notifications-header">
-
-      <div>
-
-        <span class="notifications-badge">
-          Tus novedades
-        </span>
-
-        <h1>
-          Mis
-          <span>notificaciones</span>
-        </h1>
-
-        <p>
-          Mantente al día con tus conexiones,
-          matches y actividad dentro de RoomMatch.
-        </p>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="mark-all-button"
-        [disabled]="
-          procesandoTodas ||
-          contarNoLeidas() === 0
-        "
-        (click)="marcarTodasComoLeidas()"
-      >
-
-        {{ procesandoTodas
-          ? 'Actualizando...'
-          : 'Marcar todo como leído'
-        }}
-
+      <div><h1>Mis notificaciones</h1><p>Revisa tus solicitudes, conexiones y novedades de RoomMatch.</p></div>
+      <button type="button" class="mark-all-button" (click)="marcarTodasComoLeidas()"
+        [disabled]="procesando() !== null || cargando() || contando() || !noLeidas()">
+        {{ procesando() === 'todas' ? 'Actualizando…' : 'Marcar todo como leído' }}
       </button>
-
     </header>
-
-
-    <!-- ERROR -->
-    <div
-      *ngIf="mensajeError"
-      class="notification-message error"
-    >
-
-      {{ mensajeError }}
-
+    @if (errorAccion()) {<p class="notification-message error" role="alert">{{ errorAccion() }}</p>}
+    @if (exito()) {<p class="notification-message success" role="status">{{ exito() }}</p>}
+    <section class="notifications-summary" aria-label="Estado y filtro de notificaciones">
+      <div class="unread-summary" aria-live="polite">
+        @if (contando()) {<span>Consultando total sin leer…</span>}
+        @else if (errorContador()) {
+          <p role="alert">{{ errorContador() }} <button type="button" (click)="cargarContador()">Reintentar contador</button></p>
+        } @else {<strong>{{ noLeidas() }}</strong><span>{{ noLeidas() === 1 ? 'notificación sin leer' : 'notificaciones sin leer' }}</span>}
+      </div>
+      <div class="notification-filters" role="group" aria-label="Filtrar notificaciones">
+        <button type="button" [class.active]="filtro() === 'todas'" [attr.aria-pressed]="filtro() === 'todas'"
+          [disabled]="procesando() !== null" (click)="cambiarFiltro('todas')">Todas</button>
+        <button type="button" [class.active]="filtro() === 'no-leidas'" [attr.aria-pressed]="filtro() === 'no-leidas'"
+          [disabled]="procesando() !== null" (click)="cambiarFiltro('no-leidas')">No leídas</button>
+      </div>
+    </section>
+    <div [attr.aria-busy]="cargando()">
+      @if (cargando()) {
+        <section class="notifications-state" role="status"><h2>Cargando notificaciones…</h2><p>Estamos consultando tus novedades.</p></section>
+      } @else if (errorLista()) {
+        <section class="notifications-state"><p role="alert">{{ errorLista() }}</p><button type="button" (click)="cargarNotificaciones()">Reintentar notificaciones</button></section>
+      } @else if (pagina(); as result) {
+        @if (result.content.length === 0) {
+          <section class="notifications-state" role="status">
+            <h2>{{ filtro() === 'no-leidas' ? 'Estás al día' : 'Todavía no tienes notificaciones' }}</h2>
+            <p>{{ filtro() === 'no-leidas' ? 'No tienes notificaciones pendientes por leer.' : 'Cuando exista actividad nueva en RoomMatch, aparecerá aquí.' }}</p>
+          </section>
+        } @else {
+          <p class="results-total">{{ result.totalElements }} {{ filtro() === 'no-leidas' ? 'sin leer' : 'en total' }}</p>
+          <ul class="notifications-list" aria-label="Tus notificaciones">
+            @for (notification of result.content; track notification.idNotificacion) {
+              <li class="notification-card" [class.unread]="!notification.leido">
+                <app-icon [name]="icono(notification.tipo)" class="notification-icon" />
+                <div class="notification-content">
+                  <div class="notification-top">
+                    <span class="notification-type">{{ nombreTipo(notification.tipo) }}</span>
+                    <time [attr.datetime]="notification.fechaCreacion">{{ notification.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</time>
+                    @if (!notification.leido) {<span class="unread-label">Sin leer</span>}
+                  </div>
+                  <h2>{{ notification.titulo }}</h2><p>{{ notification.mensaje }}</p>
+                </div>
+                <div class="notification-actions">
+                  @if (!notification.leido) {
+                    <button type="button" [disabled]="procesando() !== null" (click)="marcarComoLeida(notification)"
+                      [attr.aria-label]="'Marcar como leída: ' + notification.titulo">
+                      {{ procesando() === notification.idNotificacion ? 'Actualizando…' : 'Marcar leída' }}
+                    </button>
+                  }
+                  @if (destino(notification)) {
+                    <button type="button" class="open-notification" [disabled]="procesando() !== null"
+                      (click)="marcarComoLeida(notification, true)" [attr.aria-label]="'Ver: ' + notification.titulo">Ver <app-icon name="arrow-right" /></button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+          @if (result.totalPages > 1) {
+            <nav class="notifications-pagination" aria-label="Páginas de notificaciones">
+              <button type="button" (click)="cambiarPagina(-1)" [disabled]="result.number === 0 || procesando() !== null">Anterior</button>
+              <span>Página {{ result.number + 1 }} de {{ result.totalPages }}</span>
+              <button type="button" (click)="cambiarPagina(1)" [disabled]="result.last || result.number >= result.totalPages - 1 || procesando() !== null">Siguiente</button>
+            </nav>
+          }
+        }
+      }
     </div>
-
-
-    <!-- ÉXITO -->
-    <div
-      *ngIf="mensajeExito"
-      class="notification-message success"
-    >
-
-      {{ mensajeExito }}
-
-    </div>
-
-
-    <!-- RESUMEN -->
-    <section class="notifications-summary">
-
-      <div class="unread-summary">
-
-        <strong>
-          {{ contarNoLeidas() }}
-        </strong>
-
-        <span>
-          {{
-            contarNoLeidas() === 1
-              ? 'notificación sin leer'
-              : 'notificaciones sin leer'
-          }}
-        </span>
-
-      </div>
-
-
-      <div class="notification-filters">
-
-        <button
-          type="button"
-          [class.active]="filtro === 'todas'"
-          (click)="cambiarFiltro('todas')"
-        >
-          Todas
-        </button>
-
-
-        <button
-          type="button"
-          [class.active]="filtro === 'no-leidas'"
-          (click)="cambiarFiltro('no-leidas')"
-        >
-          No leídas
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- CARGANDO -->
-    <section
-      *ngIf="cargando"
-      class="notifications-state"
-    >
-
-      <div class="state-icon">
-        ◌
-      </div>
-
-      <h2>
-        Cargando notificaciones...
-      </h2>
-
-      <p>
-        Estamos consultando tus novedades.
-      </p>
-
-    </section>
-
-
-    <!-- LISTA -->
-    <section
-      *ngIf="
-        !cargando &&
-        obtenerNotificacionesVisibles().length > 0
-      "
-      class="notifications-list"
-    >
-
-      <article
-        *ngFor="
-          let notificacion
-          of obtenerNotificacionesVisibles()
-        "
-        class="notification-card"
-        [class.unread]="!notificacion.leido"
-        (click)="abrirNotificacion(notificacion)"
-      >
-
-        <span
-          *ngIf="!notificacion.leido"
-          class="unread-dot"
-        >
-        </span>
-
-
-        <div class="notification-icon">
-
-          {{
-            obtenerIcono(
-              notificacion.tipo
-            )
-          }}
-
-        </div>
-
-
-        <div class="notification-content">
-
-          <div class="notification-top">
-
-            <span class="notification-type">
-
-              {{
-                obtenerNombreTipo(
-                  notificacion.tipo
-                )
-              }}
-
-            </span>
-
-
-            <span class="notification-date">
-
-              {{
-                formatearFecha(
-                  notificacion.fechaCreacion
-                )
-              }}
-
-            </span>
-
-          </div>
-
-
-          <h2>
-            {{ notificacion.titulo }}
-          </h2>
-
-
-          <p>
-            {{ notificacion.mensaje }}
-          </p>
-
-        </div>
-
-
-        <div class="notification-actions">
-
-          <button
-            *ngIf="!notificacion.leido"
-            type="button"
-            class="read-button"
-            (click)="
-              marcarComoLeida(
-                notificacion,
-                $event
-              )
-            "
-          >
-            Marcar leída
-          </button>
-
-
-          <span
-            *ngIf="notificacion.urlDestino"
-            class="open-notification"
-          >
-            Ver →
-          </span>
-
-        </div>
-
-      </article>
-
-    </section>
-
-
-    <!-- VACÍO -->
-    <section
-      *ngIf="
-        !cargando &&
-        obtenerNotificacionesVisibles().length === 0
-      "
-      class="notifications-state"
-    >
-
-      <div class="state-icon">
-        ✓
-      </div>
-
-
-      <h2>
-
-        {{
-          filtro === 'no-leidas'
-            ? 'Estás al día'
-            : 'Todavía no tienes notificaciones'
-        }}
-
-      </h2>
-
-
-      <p>
-
-        {{
-          filtro === 'no-leidas'
-            ? 'No tienes notificaciones pendientes por leer.'
-            : 'Cuando exista actividad nueva en RoomMatch, aparecerá aquí.'
-        }}
-
-      </p>
-
-    </section>
-
-
-    <!-- PAGINACIÓN -->
-    <nav
-      *ngIf="
-        !cargando &&
-        totalPaginas > 1
-      "
-      class="notifications-pagination"
-    >
-
-      <button
-        type="button"
-        [disabled]="paginaActual === 0"
-        (click)="paginaAnterior()"
-      >
-        ← Anterior
-      </button>
-
-
-      <span>
-
-        Página
-        {{ paginaActual + 1 }}
-        de
-        {{ totalPaginas }}
-
-      </span>
-
-
-      <button
-        type="button"
-        [disabled]="
-          paginaActual >= totalPaginas - 1
-        "
-        (click)="paginaSiguiente()"
-      >
-        Siguiente →
-      </button>
-
-    </nav>
-
   </div>
-
 </section>

@@ -16,16 +16,22 @@ export class NotificacionService {
 
   listar(
     page: number = 0,
-    size: number = 10
+    size: number = 10,
+    leido: boolean | null = null
   ): Observable<ApiResponse<PageResponse<NotificacionResponse>>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
+    if (leido !== null) params = params.set('leido', String(leido));
 
     return this.http.get<ApiResponse<PageResponse<NotificacionResponse>>>(
       this.apiUrl,
       { params }
     );
+  }
+
+  contarNoLeidas(): Observable<ApiResponse<number>> {
+    return this.http.get<ApiResponse<number>>(`${this.apiUrl}/no-leidas/count`);
   }
 
   marcarComoLeida(
